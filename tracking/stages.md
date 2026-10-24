@@ -36,7 +36,7 @@
 | M0.0 | تثبيت القرارات وتجهيز الوصول | ✅ | إيميل المدير الأول مؤجل؛ تم تجاوزه مؤقتًا بمستخدم اختبار (D-14) |
 | M0.1 | إنشاء المشروع والهيكل الأساسي | ✅ | commit `48eb1c1` + Push ناجح |
 | M0.2 | الهوية البصرية وتخطيط التطبيق | ✅ | Design System + App Shell + اختبار 390/768/1440 — commit `e4bd55a` |
-| M0.3 | Supabase وتسجيل الدخول | ✅ | Migration مطبقة + RLS + trigger + مستخدم اختبار + E2E + Lighthouse |
+| M0.3 | Supabase وتسجيل الدخول | ✅ | Migration مطبقة + RLS + trigger + مستخدم اختبار + E2E + Lighthouse — commit `2b4fd20` |
 | M0.4 | Cloudinary والنشر والمراقبة | ⬜ | يحتاج Cloudinary API Secret وإعداد Vercel |
 
 ## M1 — الأمان والصلاحيات والبيانات الأساسية
