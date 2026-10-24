@@ -22,8 +22,8 @@ export const APP_INFO = {
 } as const
 
 export const STAGE = {
-  current: 'M0.1',
-  currentTitle: 'إنشاء المشروع والهيكل الأساسي',
-  next: 'M0.2',
-  nextTitle: 'الهوية البصرية وتخطيط التطبيق',
+  current: 'M0.3',
+  currentTitle: 'Supabase وتسجيل الدخول',
+  next: 'M0.4',
+  nextTitle: 'Cloudinary والنشر والمراقبة',
 } as const

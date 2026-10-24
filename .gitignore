@@ -37,5 +37,10 @@ coverage
 .eslintcache
 *.tsbuildinfo
 
+# Supabase CLI local state
+supabase/.temp
+supabase/.branches
+supabase/.env
+
 # Vercel
 .vercel

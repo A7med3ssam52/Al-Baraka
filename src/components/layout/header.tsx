@@ -9,7 +9,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { Breadcrumbs } from '@/components/layout/breadcrumbs'
@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { getRoleLabel } from '@/features/auth/roles'
+import { useAuth } from '@/features/auth/use-auth'
 import { APP_INFO } from '@/lib/constants'
 
 interface HeaderProps {
@@ -31,9 +33,21 @@ interface HeaderProps {
 }
 
 export function Header({ onOpenSidebar }: HeaderProps) {
+  const { appUser, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  const displayName = appUser?.name ?? 'مستخدم'
+  const roleLabel = getRoleLabel(appUser?.role)
+  const initial = displayName.trim().charAt(0) || 'م'
+
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     toast.info('البحث الموحد سيتوفر في مرحلة لاحقة.')
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -94,22 +108,37 @@ export function Header({ onOpenSidebar }: HeaderProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="ghost" className="h-10 gap-2 px-1.5 sm:px-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-10 gap-2 px-1.5 sm:px-2"
+                aria-label="قائمة الحساب"
+              >
                 <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-extrabold text-primary-foreground">
-                  أ
+                  {initial}
                 </span>
                 <span className="hidden text-start sm:block">
-                  <span className="block text-xs font-bold">أحمد عبد الهادي</span>
-                  <span className="block text-[10px] text-muted-foreground">مدير المعرض</span>
+                  <span className="block max-w-32 truncate text-xs font-bold">{displayName}</span>
+                  <span className="block text-[10px] text-muted-foreground">{roleLabel}</span>
                 </span>
                 <ChevronDown className="hidden size-3.5 text-muted-foreground sm:block" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>الحساب</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => toast.info('الملف الشخصي سيتوفر في M1.3.')}>
-                <UserRound className="size-4" />
-                الملف الشخصي
+              <DropdownMenuLabel>
+                <span className="block truncate text-xs font-bold">{displayName}</span>
+                <span
+                  className="block truncate text-[10px] font-normal text-muted-foreground"
+                  dir="ltr"
+                >
+                  {appUser?.email}
+                </span>
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/profile">
+                  <UserRound className="size-4" />
+                  الملف الشخصي
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings">
@@ -118,10 +147,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => toast.info('تسجيل الدخول والخروج سيتوفر في M0.3.')}
-              >
+              <DropdownMenuItem variant="destructive" onSelect={() => void handleSignOut()}>
                 <LogOut className="size-4" />
                 تسجيل الخروج
               </DropdownMenuItem>

@@ -26,6 +26,7 @@ export function Breadcrumbs() {
             <li>
               <Link
                 to="/"
+                aria-label="الرئيسية"
                 className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Home className="size-4" />

@@ -8,6 +8,7 @@ import {
   Palette,
   Settings,
   ShoppingCart,
+  UserRound,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -85,7 +86,16 @@ export const secondaryNavigation: NavItem[] = [
   },
 ]
 
-export const allNavigation = [...mainNavigation, ...secondaryNavigation]
+export const accountNavigation: NavItem[] = [
+  {
+    label: 'الملف الشخصي',
+    href: '/profile',
+    icon: UserRound,
+    description: 'بيانات الحساب وتغيير كلمة المرور',
+  },
+]
+
+export const allNavigation = [...mainNavigation, ...secondaryNavigation, ...accountNavigation]
 
 export function getNavItem(pathname: string) {
   if (pathname === '/') return mainNavigation[0]

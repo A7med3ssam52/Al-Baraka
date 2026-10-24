@@ -1,7 +1,9 @@
 import { Building2, MoreHorizontal, Settings } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 
+import { getRoleLabel } from '@/features/auth/roles'
+import { useAuth } from '@/features/auth/use-auth'
 import { mainNavigation, secondaryNavigation } from '@/lib/navigation'
 import { APP_INFO } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -39,6 +41,11 @@ interface SidebarContentProps {
 }
 
 export function SidebarContent({ onNavigate }: SidebarContentProps) {
+  const { appUser } = useAuth()
+  const displayName = appUser?.name ?? 'مستخدم'
+  const roleLabel = getRoleLabel(appUser?.role)
+  const initial = displayName.trim().charAt(0) || 'م'
+
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-3 px-5 py-6">
@@ -101,16 +108,20 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           <p className="mt-2 text-[10px] text-sidebar-muted">3 من 5 مراحل في M0</p>
         </div>
 
-        <div className="mt-3 flex items-center gap-3 px-1">
+        <Link
+          to="/profile"
+          onClick={onNavigate}
+          className="mt-3 flex items-center gap-3 rounded-lg px-1 py-1 transition-colors hover:bg-white/5"
+        >
           <div className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-active text-xs font-extrabold text-sidebar-active-foreground">
-            أ
+            {initial}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold">أحمد عبد الهادي</p>
-            <p className="truncate text-[10px] text-sidebar-muted">مدير المعرض</p>
+            <p className="truncate text-xs font-bold">{displayName}</p>
+            <p className="truncate text-[10px] text-sidebar-muted">{roleLabel}</p>
           </div>
           <MoreHorizontal className="ms-auto size-4 shrink-0 text-sidebar-muted" />
-        </div>
+        </Link>
       </div>
     </div>
   )
