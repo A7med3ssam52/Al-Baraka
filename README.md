@@ -2,9 +2,9 @@
 
 نظام ويب عربي RTL لإدارة وحسابات معرض التكاتك والموتوسيكلات والمركبات.
 
-> **الحالة الحالية:** M0.4 — Cloudinary والنشر والمراقبة 🟨
+> **آخر مرحلة مكتملة:** M0.4 — Cloudinary والنشر والمراقبة ✅
 >
-> **المرحلة التالية:** اختبار الرفع بعد ضبط `CLOUDINARY_API_SECRET` ثم نشر Vercel والمراقبة
+> **المرحلة التالية:** M1.1 — تصميم الجداول الأساسية
 
 ## نظرة سريعة
 
@@ -101,6 +101,7 @@ $dbUrl = $line.Substring('SUPABASE_DB_URL='.Length).Trim().Trim('"').Trim("'")
 | `/forgot-password` | طلب رابط استعادة كلمة المرور                                  |
 | `/reset-password`  | تعيين كلمة مرور جديدة من رابط الاستعادة                       |
 | `/profile`         | الملف الشخصي وتغيير كلمة المرور                               |
+| `/upload-test`     | اختبار الرفع الموقّع إلى Cloudinary (M0.4)                    |
 | `/`                | لوحة تحكم تجريبية مع مؤشرات وحركة مبيعات وتنبيهات أقساط       |
 | `/design-system`   | مرجع حي للألوان والخطوط والأزرار والجداول والنوافذ والتنبيهات |
 | `/customers`       | صفحة مؤقتة لوحدة العملاء — M2.1                               |
@@ -175,10 +176,11 @@ $dbUrl = $line.Substring('SUPABASE_DB_URL='.Length).Trim().Trim('"').Trim("'")
 
 ## النشر
 
-- أُضيف `vercel.json` لإعداد Vite وSPA rewrites؛ الربط الفعلي بـ Vercel ينتظر صلاحية الحساب.
+- النشر على Vercel يديره المستخدم؛ مسؤوليتنا هي وجود `vercel.json` لإعادة توجيه SPA ومنع 404 عند فتح المسارات مباشرة أو تحديث الصفحة.
 - Edge Function `cloudinary-sign` منشورة على مشروع التطوير مع `verify_jwt=true`.
 - أسرار Edge Function المطلوبة: `CLOUDINARY_CLOUD_NAME`، `CLOUDINARY_API_KEY`، `CLOUDINARY_API_SECRET`، `APP_ENV`.
-- بعد تسجيل الدخول، مسار `/upload-test` يختبر الرفع الموقّع. الرفع الفعلي ينتظر ضبط `CLOUDINARY_API_SECRET`.
+- بعد تسجيل الدخول، مسار `/upload-test` يختبر الرفع الموقّع. تم اختباره بنجاح على سطح المكتب و390×844.
+- المراقبة (Sentry) مؤجلة إلى M9؛ يُستخدم Error Boundary وlogs مؤقتًا.
 
 ---
 

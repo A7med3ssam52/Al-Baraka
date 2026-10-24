@@ -1,6 +1,6 @@
 # لوحة تقدم المشروع
 
-> آخر تحديث: 24 أكتوبر 2026 — بدء M0.4
+> آخر تحديث: 24 أكتوبر 2026 — إغلاق M0.4
 >
 > المرجع: `../stages.md` و`stages.md`
 
@@ -8,18 +8,18 @@
 
 | البند | القيمة |
 |---|---|
-| المرحلة الرئيسية | M0 — التأسيس وتجهيز البيئة |
-| المرحلة الحالية | M0.4 — Cloudinary والنشر والمراقبة |
-| حالة المرحلة | 🟨 قيد التنفيذ |
-| آخر مرحلة مكتملة | M0.3 — Supabase وتسجيل الدخول |
-| العائق الحالي | `CLOUDINARY_API_SECRET` غير موجود في سجل الشات أو `.env.local`؛ مطلوب لاختبار الرفع الفعلي. صلاحية Vercel وSentry مؤجلتان |
-| الخطوة التالية | ضبط `CLOUDINARY_API_SECRET` في Edge secrets، اختبار الرفع من `/upload-test`، ثم نشر Vercel والمراقبة وإغلاق M0.4 |
+| المرحلة الرئيسية | M1 — الأمان والصلاحيات والبيانات الأساسية |
+| المرحلة الحالية | M1.1 — تصميم الجداول الأساسية |
+| حالة المرحلة | ⬜ لم تبدأ — تبدأ غدًا |
+| آخر مرحلة مكتملة | M0.4 — Cloudinary والنشر والمراقبة |
+| العائق الحالي | لا يوجد عائق تقني. مطلوب تدوير الأسرار المكشوفة أمنيًا: Cloudinary API Secret وPAT وSupabase secret key |
+| الخطوة التالية | بدء M1.1: تصميم الجداول الأساسية، مع إبقاء تدوير الأسرار مهمة أمنية قبل الإنتاج |
 
 ## تقدم المراحل الرئيسية
 
 | المرحلة | النطاق | المكتمل | الإجمالي | الحالة |
 |---|---|---:|---:|---|
-| M0 — التأسيس | M0.0 → M0.4 | 4 | 5 | 🟨 |
+| M0 — التأسيس | M0.0 → M0.4 | 5 | 5 | ✅ |
 | M1 — الأمان والصلاحيات | M1.1 → M1.5 | 0 | 5 | ⬜ |
 | M2 — العملاء والموردون | M2.1 → M2.5 | 0 | 5 | ⬜ |
 | M3 — المخزون والمشتريات | M3.1 → M3.8 | 0 | 8 | ⬜ |
@@ -76,26 +76,26 @@
 - [x] التحقق من RLS وtrigger إنشاء الملف الشخصي.
 - [x] اجتياز الفحوصات والبناء وLighthouse وتحديث التتبع ثم commit وPush.
 
-## معيار إنجاز M0.4 (قيد التنفيذ)
+## معيار إنجاز M0.4
 
-- [x] ضبط `CLOUDINARY_CLOUD_NAME` و`CLOUDINARY_API_KEY` و`APP_ENV=staging` في Edge Function secrets.
+- [x] ضبط `CLOUDINARY_CLOUD_NAME` و`CLOUDINARY_API_KEY` و`CLOUDINARY_API_SECRET` و`APP_ENV=staging` في Edge Function secrets.
 - [x] نشر Edge Function `cloudinary-sign` مع `verify_jwt=true` عبر `--use-api`.
 - [x] التحقق من CORS: `OPTIONS` = 200 و`Access-Control-Allow-Origin=*`.
 - [x] التحقق من رفض الزائر: `POST` بدون Authorization = 401.
-- [x] التحقق من وصول المستخدم المسجل: `POST` مع JWT = 500 `cloudinary_not_configured` (متوقع حتى ضبط السر).
+- [x] التحقق من وصول المستخدم المسجل: `POST` مع JWT = 200 وتوقيع مؤقت بعد ضبط السر.
 - [x] إنشاء عميل الرفع `uploadToCloudinary` والتحقق من نوع/حجم الصورة.
 - [x] إنشاء مسار محمي `/upload-test` وربطه من صفحة الملف الشخصي.
 - [x] إضافة GitHub Actions CI (`npm ci` + `npm run check` + `npm run build`).
 - [x] نجاح GitHub Actions CI على `main` بعد Push.
 - [x] إضافة `vercel.json` لإعادة توجيه SPA.
 - [x] نجاح `npm run check` و`npm run build`.
-- [ ] ضبط `CLOUDINARY_API_SECRET` في Edge secrets.
-- [ ] اختبار رفع صورة فعلي من سطح المكتب والموبايل.
-- [ ] نشر Vercel والتحقق من المسارات المحمية.
-- [ ] تفعيل المراقبة (Sentry أو بديل).
-- [ ] إغلاق M0.4 وتحديث التتبع النهائي.
+- [x] اختبار رفع صورة فعلي من سطح المكتب: Edge Function 200 + Cloudinary 200 + Secure URL + Public ID.
+- [x] اختبار رفع صورة فعلي من الموبايل 390×844: نجاح + لا تجاوز أفقي + لا أخطاء Console.
+- [x] تسليم إعداد Vercel (`vercel.json`)؛ النشر والتحقق النهائي مسؤولية المستخدم (D-17).
+- [x] تأجيل المراقبة (Sentry) إلى M9 بقرار موثق (D-17) مع Error Boundary وlogs مؤقتًا.
+- [x] إغلاق M0.4 وتحديث التتبع النهائي.
 
-> ملاحظة: سجل الشات يحتوي Cloud Name وAPI Key فقط. الـ `sb_secret_...` الموجود هو مفتاح Supabase وليس Cloudinary API Secret. التوقيع لا يعمل بالـ API Key وحده.
+> ملاحظة: تم إثبات الرفع الموقّع end-to-end. الصور التجريبية محفوظة في `albaraka/staging/uploads` ويمكن حذفها من Cloudinary. الأسرار التي ظهرت في سجل الشات يجب تدويرها قبل الإنتاج.
 
 ## سجل مختصر
 
@@ -120,3 +120,6 @@
 | 2026-10-24 | اختبار Edge Function: OPTIONS 200، زائر 401، مستخدم مسجل 500 `cloudinary_not_configured` — الرفع الفعلي ينتظر `CLOUDINARY_API_SECRET` |
 | 2026-10-24 | إضافة عميل الرفع الموقّع ومسار `/upload-test` وCI و`vercel.json`؛ نجاح `npm run check` و`npm run build` |
 | 2026-10-24 | نجاح GitHub Actions CI على commit `d83b4b1` (npm ci + check + build) |
+| 2026-10-24 | ضبط `CLOUDINARY_API_SECRET` في Edge secrets والتحقق من استجابة التوقيع 200 بدل `cloudinary_not_configured` |
+| 2026-10-24 | نجاح الرفع الموقّع end-to-end من `/upload-test` على سطح المكتب و390×844: Edge Function 200 + Cloudinary 200 + Secure URL، بلا أخطاء Console |
+| 2026-10-24 | إغلاق M0.4: تسليم `vercel.json` (النشر مسؤولية المستخدم) وتأجيل Sentry إلى M9 (D-17) |
