@@ -86,6 +86,7 @@
 - [x] إنشاء عميل الرفع `uploadToCloudinary` والتحقق من نوع/حجم الصورة.
 - [x] إنشاء مسار محمي `/upload-test` وربطه من صفحة الملف الشخصي.
 - [x] إضافة GitHub Actions CI (`npm ci` + `npm run check` + `npm run build`).
+- [x] نجاح GitHub Actions CI على `main` بعد Push.
 - [x] إضافة `vercel.json` لإعادة توجيه SPA.
 - [x] نجاح `npm run check` و`npm run build`.
 - [ ] ضبط `CLOUDINARY_API_SECRET` في Edge secrets.
@@ -118,3 +119,4 @@
 | 2026-10-24 | بدء M0.4: نشر `cloudinary-sign` وضبط Cloud Name وAPI Key وAPP_ENV كأسرار Edge Function |
 | 2026-10-24 | اختبار Edge Function: OPTIONS 200، زائر 401، مستخدم مسجل 500 `cloudinary_not_configured` — الرفع الفعلي ينتظر `CLOUDINARY_API_SECRET` |
 | 2026-10-24 | إضافة عميل الرفع الموقّع ومسار `/upload-test` وCI و`vercel.json`؛ نجاح `npm run check` و`npm run build` |
+| 2026-10-24 | نجاح GitHub Actions CI على commit `d83b4b1` (npm ci + check + build) |
