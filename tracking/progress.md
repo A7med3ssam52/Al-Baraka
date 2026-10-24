@@ -1,6 +1,6 @@
 # لوحة تقدم المشروع
 
-> آخر تحديث: 24 أكتوبر 2026 — إنجاز M0.3
+> آخر تحديث: 24 أكتوبر 2026 — بدء M0.4
 >
 > المرجع: `../stages.md` و`stages.md`
 
@@ -10,10 +10,10 @@
 |---|---|
 | المرحلة الرئيسية | M0 — التأسيس وتجهيز البيئة |
 | المرحلة الحالية | M0.4 — Cloudinary والنشر والمراقبة |
-| حالة المرحلة | ⬜ لم تبدأ |
+| حالة المرحلة | 🟨 قيد التنفيذ |
 | آخر مرحلة مكتملة | M0.3 — Supabase وتسجيل الدخول |
-| العائق الحالي | M0.4 يحتاج Cloudinary API Secret وإعداد Vercel؛ لا يوجد عائق متبقٍ في M0.3 |
-| الخطوة التالية | بدء M0.4: تجهيز Cloudinary وEdge Function والنشر والمراقبة |
+| العائق الحالي | `CLOUDINARY_API_SECRET` غير موجود في سجل الشات أو `.env.local`؛ مطلوب لاختبار الرفع الفعلي. صلاحية Vercel وSentry مؤجلتان |
+| الخطوة التالية | ضبط `CLOUDINARY_API_SECRET` في Edge secrets، اختبار الرفع من `/upload-test`، ثم نشر Vercel والمراقبة وإغلاق M0.4 |
 
 ## تقدم المراحل الرئيسية
 
@@ -76,6 +76,26 @@
 - [x] التحقق من RLS وtrigger إنشاء الملف الشخصي.
 - [x] اجتياز الفحوصات والبناء وLighthouse وتحديث التتبع ثم commit وPush.
 
+## معيار إنجاز M0.4 (قيد التنفيذ)
+
+- [x] ضبط `CLOUDINARY_CLOUD_NAME` و`CLOUDINARY_API_KEY` و`APP_ENV=staging` في Edge Function secrets.
+- [x] نشر Edge Function `cloudinary-sign` مع `verify_jwt=true` عبر `--use-api`.
+- [x] التحقق من CORS: `OPTIONS` = 200 و`Access-Control-Allow-Origin=*`.
+- [x] التحقق من رفض الزائر: `POST` بدون Authorization = 401.
+- [x] التحقق من وصول المستخدم المسجل: `POST` مع JWT = 500 `cloudinary_not_configured` (متوقع حتى ضبط السر).
+- [x] إنشاء عميل الرفع `uploadToCloudinary` والتحقق من نوع/حجم الصورة.
+- [x] إنشاء مسار محمي `/upload-test` وربطه من صفحة الملف الشخصي.
+- [x] إضافة GitHub Actions CI (`npm ci` + `npm run check` + `npm run build`).
+- [x] إضافة `vercel.json` لإعادة توجيه SPA.
+- [x] نجاح `npm run check` و`npm run build`.
+- [ ] ضبط `CLOUDINARY_API_SECRET` في Edge secrets.
+- [ ] اختبار رفع صورة فعلي من سطح المكتب والموبايل.
+- [ ] نشر Vercel والتحقق من المسارات المحمية.
+- [ ] تفعيل المراقبة (Sentry أو بديل).
+- [ ] إغلاق M0.4 وتحديث التتبع النهائي.
+
+> ملاحظة: سجل الشات يحتوي Cloud Name وAPI Key فقط. الـ `sb_secret_...` الموجود هو مفتاح Supabase وليس Cloudinary API Secret. التوقيع لا يعمل بالـ API Key وحده.
+
 ## سجل مختصر
 
 | التاريخ | الحدث |
@@ -95,3 +115,6 @@
 | 2026-10-24 | اجتياز E2E للمصادقة: زائر، دخول، جلسة، تغيير كلمة مرور، خروج، استعادة كلمة مرور، 390px، بلا أخطاء Console |
 | 2026-10-24 | إصلاح BUG-004 وBUG-005 وBUG-006؛ Lighthouse: Accessibility 1.0 وBest Practices 1.0 للدخول والملف الشخصي (SEO 0.63 بسبب `noindex` المتعمد) |
 | 2026-10-24 | اجتياز `npm run check` و`npm run build` — commit `2b4fd20` + Push ناجح، وإغلاق M0.3 |
+| 2026-10-24 | بدء M0.4: نشر `cloudinary-sign` وضبط Cloud Name وAPI Key وAPP_ENV كأسرار Edge Function |
+| 2026-10-24 | اختبار Edge Function: OPTIONS 200، زائر 401، مستخدم مسجل 500 `cloudinary_not_configured` — الرفع الفعلي ينتظر `CLOUDINARY_API_SECRET` |
+| 2026-10-24 | إضافة عميل الرفع الموقّع ومسار `/upload-test` وCI و`vercel.json`؛ نجاح `npm run check` و`npm run build` |

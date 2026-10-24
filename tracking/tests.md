@@ -1,6 +1,6 @@
 # خطة الاختبارات ونتائج التشغيل
 
-> آخر تشغيل: 24 أكتوبر 2026 — إنجاز M0.3
+> آخر تشغيل: 24 أكتوبر 2026 — بدء M0.4
 >
 > البيئة: Windows / Node 24.11.1 / npm 11.6.2 / Vite 8.3.5 / Chrome + Lighthouse
 
@@ -8,7 +8,7 @@
 
 | الإجمالي | ناجح | فاشل | مؤجل |
 |---:|---:|---:|---:|
-| 62 | 62 | 0 | 0 |
+| 73 | 68 | 0 | 5 |
 
 ## M0.0 — القرارات والوصول
 
@@ -93,6 +93,24 @@
 | T-M0.3-28 | تعطيل تأكيد البريد في التطوير | مستخدم الاختبار مؤكد | ✅ | `mailer_autoconfirm=true` |
 
 > ملاحظة: SEO = 0.63 في Lighthouse مقصود بسبب `noindex` و`robots.txt`؛ التطبيق داخلي ولا يجب فهرسته. Accessibility وBest Practices = 1.0.
+
+## M0.4 — Cloudinary والنشر والمراقبة (قيد التنفيذ)
+
+| ID | السيناريو | المتوقع | النتيجة | ملاحظات |
+|---|---|---|---|---|
+| T-M0.4-01 | نشر Edge Function `cloudinary-sign` | نشر ناجح | ✅ | `--use-api`، JWT verification مفعّل |
+| T-M0.4-02 | CORS preflight | 200 + allow-origin | ✅ | `OPTIONS` = 200، `Access-Control-Allow-Origin=*` |
+| T-M0.4-03 | رفض الزائر | 401 | ✅ | `UNAUTHORIZED_NO_AUTH_HEADER` |
+| T-M0.4-04 | وصول المستخدم المسجل | يصل إلى الفنكشن | ✅ | 500 `cloudinary_not_configured` متوقع قبل ضبط السر |
+| T-M0.4-05 | `npm run check` | نجاح كامل | ✅ | typecheck + lint + format |
+| T-M0.4-06 | `npm run build` | بناء إنتاج ناجح | ✅ | 2199 module + split chunks |
+| T-M0.4-07 | رفع صورة فعلي من `/upload-test` | نجاح + Secure URL | ⏳ | ينتظر `CLOUDINARY_API_SECRET` |
+| T-M0.4-08 | رفع من الموبايل 390px | نجاح | ⏳ | ينتظر T-M0.4-07 |
+| T-M0.4-09 | GitHub Actions CI | نجاح | ⏳ | يبدأ بعد Push |
+| T-M0.4-10 | نشر Vercel | نجاح | ⏳ | ينتظر صلاحية Vercel |
+| T-M0.4-11 | المراقبة | استقبال الأخطاء | ⏳ | ينتظر Sentry DSN أو بديل |
+
+> ملاحظة: `CLOUDINARY_API_SECRET` غير موجود في سجل الشات أو `.env.local`. الـ API Key الموجود ليس بديلًا عنه. الـ `sb_secret_...` مفتاح Supabase وليس Cloudinary.
 
 ## قالب نتيجة
 

@@ -13,6 +13,7 @@ import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page'
 import { ProtectedRoute } from '@/features/auth/protected-route'
 import { PublicOnlyRoute } from '@/features/auth/public-only-route'
 import { DashboardPage } from '@/features/dashboard/pages/dashboard-page'
+import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 
 export function AppRouter() {
   return (
@@ -29,6 +30,7 @@ export function AppRouter() {
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="upload-test" element={<UploadTestPage />} />
 
             <Route
               path="customers"

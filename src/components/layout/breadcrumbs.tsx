@@ -10,6 +10,7 @@ export function Breadcrumbs() {
   const fallbackLabels: Record<string, string> = {
     '/403': 'غير مصرح',
     '/loading': 'جارٍ التحميل',
+    '/upload-test': 'اختبار الرفع',
   }
   const currentLabel = current?.label ?? fallbackLabels[pathname] ?? 'صفحة غير موجودة'
 

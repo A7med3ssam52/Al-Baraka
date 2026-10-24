@@ -2,9 +2,9 @@
 
 نظام ويب عربي RTL لإدارة وحسابات معرض التكاتك والموتوسيكلات والمركبات.
 
-> **الحالة الحالية:** M0.3 — Supabase وتسجيل الدخول ✅
+> **الحالة الحالية:** M0.4 — Cloudinary والنشر والمراقبة 🟨
 >
-> **المرحلة التالية:** M0.4 — Cloudinary والنشر والمراقبة
+> **المرحلة التالية:** اختبار الرفع بعد ضبط `CLOUDINARY_API_SECRET` ثم نشر Vercel والمراقبة
 
 ## نظرة سريعة
 
@@ -175,7 +175,10 @@ $dbUrl = $line.Substring('SUPABASE_DB_URL='.Length).Trim().Trim('"').Trim("'")
 
 ## النشر
 
-سيتم ربط Vercel في M0.4. حتى ذلك الحين، التشغيل المحلي هو المرجع.
+- أُضيف `vercel.json` لإعداد Vite وSPA rewrites؛ الربط الفعلي بـ Vercel ينتظر صلاحية الحساب.
+- Edge Function `cloudinary-sign` منشورة على مشروع التطوير مع `verify_jwt=true`.
+- أسرار Edge Function المطلوبة: `CLOUDINARY_CLOUD_NAME`، `CLOUDINARY_API_KEY`، `CLOUDINARY_API_SECRET`، `APP_ENV`.
+- بعد تسجيل الدخول، مسار `/upload-test` يختبر الرفع الموقّع. الرفع الفعلي ينتظر ضبط `CLOUDINARY_API_SECRET`.
 
 ---
 

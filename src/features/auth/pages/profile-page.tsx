@@ -1,7 +1,7 @@
-import { KeyRound, LoaderCircle, LogOut, ShieldCheck, UserRound } from 'lucide-react'
+import { KeyRound, LoaderCircle, LogOut, ShieldCheck, UploadCloud, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/layout/page-header'
@@ -248,6 +248,29 @@ export function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>اختبار الرفع الآمن</CardTitle>
+            <CardDescription>
+              أداة مؤقتة للتحقق من رفع الصور عبر Cloudinary في M0.4.
+            </CardDescription>
+          </div>
+          <Badge variant="warning">بيئة تجريبية</Badge>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+            يتحقق الاختبار من دورة الرفع الموقّعة عبر Edge Function دون تعريض API Secret في المتصفح.
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/upload-test">
+              <UploadCloud />
+              فتح اختبار الرفع
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
