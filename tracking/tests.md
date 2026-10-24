@@ -106,7 +106,7 @@
 | T-M0.4-06 | `npm run build` | بناء إنتاج ناجح | ✅ | 2199 module + split chunks |
 | T-M0.4-07 | رفع صورة فعلي من `/upload-test` | نجاح + Secure URL | ✅ | Desktop: Edge 200 + Cloudinary 200 + Public ID + Secure URL؛ 0 أخطاء Console |
 | T-M0.4-08 | رفع من الموبايل 390px | نجاح | ✅ | 390×844: نجاح + `scrollWidth=390` + 0 أخطاء Console |
-| T-M0.4-09 | GitHub Actions CI | نجاح | ✅ | نجح على commit `d83b4b1` (npm ci + check + build) |
+| T-M0.4-09 | GitHub Actions CI | نجاح | ✅ | نجح على `d83b4b1` و`1fe0bad` (npm ci + check + build) |
 | T-M0.4-10 | نشر Vercel | نجاح | ⏭️ | النشر مسؤولية المستخدم؛ تم تسليم `vercel.json` لمنع 404 (D-17) |
 | T-M0.4-11 | المراقبة | استقبال الأخطاء | ⏭️ | مؤجل إلى M9 (D-17)؛ Error Boundary وlogs مؤقتًا |
 

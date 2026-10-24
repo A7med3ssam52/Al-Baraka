@@ -123,3 +123,4 @@
 | 2026-10-24 | ضبط `CLOUDINARY_API_SECRET` في Edge secrets والتحقق من استجابة التوقيع 200 بدل `cloudinary_not_configured` |
 | 2026-10-24 | نجاح الرفع الموقّع end-to-end من `/upload-test` على سطح المكتب و390×844: Edge Function 200 + Cloudinary 200 + Secure URL، بلا أخطاء Console |
 | 2026-10-24 | إغلاق M0.4: تسليم `vercel.json` (النشر مسؤولية المستخدم) وتأجيل Sentry إلى M9 (D-17) |
+| 2026-10-24 | نجاح GitHub Actions CI على commit `1fe0bad` (npm ci + check + build) |
