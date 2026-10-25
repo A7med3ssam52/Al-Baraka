@@ -215,7 +215,7 @@
 
 ### M1.2 — تفعيل RLS ومصفوفة الصلاحيات
 
-**الحالة:** ⬜ لم يبدأ
+**الحالة:** ✅ مكتمل محليًا — 25 أكتوبر 2026 (CI قيد التحقق)
 
 **الهدف:** منع أي وصول غير مصرح به من أول مرحلة.
 
@@ -231,6 +231,18 @@
 **المخرجات:** سياسات RLS + مصفوفة صلاحيات + اختبارات ناجحة.
 
 **معيار الإنجاز:** كل دور يرى ما يخصه فقط، والفرع لا يرى بيانات فرع آخر، والاختبارات تمر.
+
+**ملاحظات التنفيذ (2026-10-25):**
+
+- Migration: `supabase/migrations/20261025040000_m1_2_rls_permissions.sql` — مطبقة ومسجلة في تاريخ Migrations.
+- 97 صلاحية و334 إسناد دور: owner 97، manager 96، accountant 55، sales 25، collection 18، inventory 27، viewer 16.
+- 8 دوال: `is_active_user` و`is_owner` و`current_branch` و`is_branch_member` و`has_permission` (نسختان) و`my_permissions` و`can_view_profile` و`can_view_journal_entry`.
+- سياسات RLS على 16 جدولًا مع عزل الفروع، ورؤية الملفات، وكتالوج الأدوار، وسجل المراجعة.
+- الجداول المالية للقراءة فقط، و`number_sequences` مغلقة للعملاء؛ الكتابة عبر RPCs لاحقًا (D-22).
+- 56/56 اختبار pgTAP في `supabase/tests/m1_2_rls.sql`، وتحقق E2E بمستخدم الاختبار الحقيقي.
+- كتابة المستخدمين والأدوار عبر RPCs في M1.3؛ لا سياسات كتابة مباشرة على `profiles` و`user_roles` و`user_branches`.
+- لم يتوفر Docker لتشغيل `supabase test db` محليًا؛ نُفذت الاختبارات عبر Management API داخل Transaction مع Rollback.
+- يلزم حل O-01 قبل M1.3.
 
 ### M1.3 — إدارة المستخدمين والدعوات
 
