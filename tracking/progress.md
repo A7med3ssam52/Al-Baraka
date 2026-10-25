@@ -159,3 +159,4 @@
 | 2026-10-24 | نجاح `npm run check` و`npm run build` وإعادة تطبيق Migration و`seed.sql`؛ اكتمال فحوصات M1.1 المحلية |
 | 2026-10-24 | نجاح GitHub Actions CI على commit `faded8f` (npm ci + check + build) وإغلاق M1.1 |
 | 2026-10-24 | تقليل صلاحيات `authenticated` إلى `SELECT` فقط على `branches` و`profiles` و`system_settings`، وإزالة صلاحيات الكتابة/TRUNCATE غير المستخدمة |
+| 2026-10-25 | نجاح GitHub Actions CI على commit `ec0db08` (npm ci + check + build) بعد تقليل الصلاحيات |
