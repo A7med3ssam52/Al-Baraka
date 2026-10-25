@@ -8,7 +8,7 @@
 
 | الإجمالي | ناجح | فاشل | مؤجل |
 |---:|---:|---:|---:|
-| 155 | 153 | 0 | 2 |
+| 156 | 154 | 0 | 2 |
 
 ## M0.0 — القرارات والوصول
 
@@ -205,8 +205,9 @@
 | T-M1.2-58 | `npm run check` | نجاح كامل | ✅ | typecheck + lint + format |
 | T-M1.2-59 | `npm run build` | بناء إنتاج ناجح | ✅ | 2199 module + split chunks |
 | T-M1.2-60 | إعادة تطبيق Migration `20261025040000` | نجاح دون أخطاء | ✅ | 201 — idempotent؛ ثم نجاح 56/56 اختبارًا وE2E مرة أخرى |
+| T-M1.2-61 | GitHub Actions CI | نجاح | ✅ | commit `64d3df4` — npm ci + check + build |
 
-> ملاحظات M1.2: اختبارات pgTAP الـ56 في `supabase/tests/m1_2_rls.sql` وتعمل داخل Transaction مع Rollback، وتغطي مديرًا ومشاهدًا ومالكًا ومستخدمًا معطلًا وزائرًا. لم يتوفر Docker لتشغيل `supabase test db` محليًا؛ نُفذت عبر Management API. اختبار CI يُسجل بعد Push.
+> ملاحظات M1.2: اختبارات pgTAP الـ56 في `supabase/tests/m1_2_rls.sql` وتعمل داخل Transaction مع Rollback، وتغطي مديرًا ومشاهدًا ومالكًا ومستخدمًا معطلًا وزائرًا. لم يتوفر Docker لتشغيل `supabase test db` محليًا؛ نُفذت عبر Management API. نجح CI على commit `64d3df4`.
 
 ## قالب نتيجة
 
