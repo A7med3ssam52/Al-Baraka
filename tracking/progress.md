@@ -112,6 +112,7 @@
 - [x] حماية كود `SNH-01` من التعديل أو الحذف عبر Trigger.
 - [x] تفعيل RLS على 16 جدولًا بنظام المنع الافتراضي، مع قراءة `system_settings` للمستخدم المسجل فقط.
 - [x] التحقق من منع الوصول إلى `roles` دون سياسة، ونجاح قراءة `system_settings` للمستخدم المسجل.
+- [x] تقليل صلاحيات `authenticated` إلى `SELECT` فقط على `branches` و`profiles` و`system_settings`، وإزالة الكتابة/TRUNCATE غير المستخدمة.
 - [x] التحقق من قيد القيد المحاسبي غير المتوازن، وقيد حركة الخزنة بدون حساب.
 - [x] نجاح إعادة تطبيق Migration و`seed.sql` دون أخطاء (idempotent).
 - [x] نجاح `npm run check` و`npm run build`.
@@ -157,3 +158,4 @@
 | 2026-10-24 | التحقق من 16 جدولًا و80 عمودًا قياسيًا و26 مفتاحًا أجنبيًا وRLS على 16/16، ونجاح Trigger المستخدم الجديد وحماية `SNH-01` وقيود القيود والخزنة |
 | 2026-10-24 | نجاح `npm run check` و`npm run build` وإعادة تطبيق Migration و`seed.sql`؛ اكتمال فحوصات M1.1 المحلية |
 | 2026-10-24 | نجاح GitHub Actions CI على commit `faded8f` (npm ci + check + build) وإغلاق M1.1 |
+| 2026-10-24 | تقليل صلاحيات `authenticated` إلى `SELECT` فقط على `branches` و`profiles` و`system_settings`، وإزالة صلاحيات الكتابة/TRUNCATE غير المستخدمة |

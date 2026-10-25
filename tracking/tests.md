@@ -8,7 +8,7 @@
 
 | الإجمالي | ناجح | فاشل | مؤجل |
 |---:|---:|---:|---:|
-| 94 | 92 | 0 | 2 |
+| 95 | 93 | 0 | 2 |
 
 ## M0.0 — القرارات والوصول
 
@@ -137,6 +137,7 @@
 | T-M1.1-19 | `npm run check` | نجاح كامل | ✅ | typecheck + lint + format |
 | T-M1.1-20 | `npm run build` | بناء إنتاج ناجح | ✅ | 2199 module + split chunks |
 | T-M1.1-21 | GitHub Actions CI | نجاح | ✅ | commit `faded8f` — npm ci + check + build |
+| T-M1.1-22 | تقليل صلاحيات الجداول الأساسية | `SELECT` فقط للمستخدم المسجل | ✅ | `branches`/`profiles`/`system_settings`؛ لا كتابة/TRUNCATE لـ`authenticated`، و`anon` بلا صلاحيات |
 
 > ملاحظات M1.1: `permissions` و`role_permissions` فارغتان عمدًا حتى M1.2. لم يتوفر Docker لاختبار قاعدة محلية معزولة؛ تم التحقق من التسلسل M0.3 → M1.1 على مشروع التطوير، ونجحت إعادة التطبيق.
 

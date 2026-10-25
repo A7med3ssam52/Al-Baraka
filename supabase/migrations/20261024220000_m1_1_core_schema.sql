@@ -514,8 +514,11 @@ for select
 to authenticated
 using (true);
 
-revoke all on public.system_settings from anon;
-grant select on public.system_settings to authenticated;
+-- Keep the M0.3 read surface, but remove unused write/TRUNCATE privileges.
+revoke all on public.branches, public.profiles, public.system_settings
+from anon, authenticated;
+grant select on public.branches, public.profiles, public.system_settings
+to authenticated;
 
 revoke all on
   public.roles,
