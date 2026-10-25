@@ -275,7 +275,7 @@
 | T-M1.3-10 | E2E واجهة الدعوات | نجاح كامل | ✅ | owner/manager، موبايل خاطئ، قفل، قبول، إعادة استخدام، إعادة توليد، إلغاء، viewer 403 |
 | T-M1.3-11 | `npm run check` | نجاح كامل | ✅ | typecheck + lint + format |
 | T-M1.3-12 | `npm run build` | بناء إنتاج ناجح | ✅ | Vite 8.3.5 — 2217 module |
-| T-M1.3-13 | GitHub Actions CI | نجاح | ⏳ | يُتحقق بعد Push |
+| T-M1.3-13 | GitHub Actions CI | نجاح | ✅ | commit `1b7c54b` — npm ci + check + build |
 
 > قاعدة التطوير نظيفة: لا مستخدمي اختبار ولا دعوات ولا claims ولا profiles يتيمة ولا جدول `_debug_auth_inserts`. أُبقي trigger `aaa_debug_capture` كـno-op فقط لأن دور Management API لا يملك `auth.users`، وهو غير موجود في Migrations.
 
