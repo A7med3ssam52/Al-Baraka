@@ -9,11 +9,31 @@ export interface Branch {
   isActive: boolean
 }
 
+export interface AppUserRole {
+  code: UserRole
+  name: string
+  branchId: string
+  isPrimary: boolean
+}
+
+export interface AppUserBranch {
+  id: string
+  code: string
+  name: string
+  isDefault: boolean
+}
+
 export interface AppUser {
   id: string
   name: string
   email: string
+  phone: string | null
   role: UserRole
-  branchIds: string[]
+  roles: AppUserRole[]
+  branches: AppUserBranch[]
+  permissions: string[]
+  isOwner: boolean
   isActive: boolean
+  hasProfile: boolean
+  hasRole: boolean
 }

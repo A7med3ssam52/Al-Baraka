@@ -9,6 +9,10 @@ export function translateAuthError(message: string) {
     return 'يجب تأكيد البريد الإلكتروني أولًا. راجع بريدك الوارد ثم حاول مرة أخرى.'
   }
 
+  if (normalized.includes('banned')) {
+    return 'تم تعطيل حسابك. تواصل مع مدير المعرض لإعادة تفعيله.'
+  }
+
   if (normalized.includes('too many requests') || normalized.includes('rate limit')) {
     return 'محاولات كثيرة خلال وقت قصير. انتظر قليلًا ثم حاول مرة أخرى.'
   }

@@ -109,6 +109,17 @@ Deno.serve(async (request) => {
     return json({ error: 'unauthorized' }, 401)
   }
 
+  // D-26: signing is a staff capability. A valid session without
+  // documents.upload (inactive account, missing role, or orphan profile) is
+  // rejected before any signature is produced.
+  const { data: canUpload, error: permissionError } = await supabase.rpc('has_permission', {
+    permission_code: 'documents.upload',
+  })
+
+  if (permissionError || canUpload !== true) {
+    return json({ error: 'forbidden' }, 403)
+  }
+
   let body: SignRequest
   try {
     const parsed = (await request.json()) as SignRequest | null

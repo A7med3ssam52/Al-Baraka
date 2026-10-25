@@ -9,6 +9,9 @@ export interface AuthContextValue {
   appUser: AppUser | null
   loading: boolean
   profileLoading: boolean
+  permissions: string[]
+  isOwner: boolean
+  hasPermission: (permissionCode: string) => boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>

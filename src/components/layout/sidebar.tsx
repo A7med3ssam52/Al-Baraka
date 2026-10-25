@@ -5,7 +5,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
 import { mainNavigation, secondaryNavigation } from '@/lib/navigation'
-import { APP_INFO } from '@/lib/constants'
+import { APP_INFO, STAGE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 interface SidebarLinkProps {
@@ -41,10 +41,18 @@ interface SidebarContentProps {
 }
 
 export function SidebarContent({ onNavigate }: SidebarContentProps) {
-  const { appUser } = useAuth()
+  const { appUser, hasPermission } = useAuth()
   const displayName = appUser?.name ?? 'مستخدم'
   const roleLabel = getRoleLabel(appUser?.role)
   const initial = displayName.trim().charAt(0) || 'م'
+
+  const visibleMainNavigation = mainNavigation.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  )
+  const visibleSecondaryNavigation = secondaryNavigation.filter(
+    (item) => !item.permission || hasPermission(item.permission),
+  )
+  const progress = Math.round((STAGE.completedInMain / STAGE.totalInMain) * 100)
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -76,7 +84,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           إدارة المعرض
         </p>
         <ul className="space-y-1">
-          {mainNavigation.map((item) => (
+          {visibleMainNavigation.map((item) => (
             <li key={item.href}>
               <SidebarLink {...item} onNavigate={onNavigate} />
             </li>
@@ -87,7 +95,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           النظام
         </p>
         <ul className="space-y-1">
-          {secondaryNavigation.map((item) => (
+          {visibleSecondaryNavigation.map((item) => (
             <li key={item.href}>
               <SidebarLink {...item} onNavigate={onNavigate} />
             </li>
@@ -101,11 +109,18 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
             <p className="text-[10px] font-bold text-sidebar-active">المرحلة الحالية</p>
             <Settings className="size-3.5 text-sidebar-muted" />
           </div>
-          <p className="mt-1 text-sm font-bold">M0.3 — Supabase وتسجيل الدخول</p>
+          <p className="mt-1 text-sm font-bold">
+            {STAGE.current} — {STAGE.currentTitle}
+          </p>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full w-3/5 rounded-full bg-sidebar-active" />
+            <div
+              className="h-full rounded-full bg-sidebar-active"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <p className="mt-2 text-[10px] text-sidebar-muted">3 من 5 مراحل في M0</p>
+          <p className="mt-2 text-[10px] text-sidebar-muted">
+            {STAGE.completedInMain} من {STAGE.totalInMain} مراحل في {STAGE.mainStage}
+          </p>
         </div>
 
         <Link

@@ -8,6 +8,7 @@ import {
   Palette,
   Settings,
   ShoppingCart,
+  UserCog,
   UserRound,
   Users,
   Wallet,
@@ -18,6 +19,7 @@ export interface NavItem {
   href: string
   icon: LucideIcon
   description?: string
+  permission?: string
 }
 
 export const mainNavigation: NavItem[] = [
@@ -72,6 +74,13 @@ export const mainNavigation: NavItem[] = [
 ]
 
 export const secondaryNavigation: NavItem[] = [
+  {
+    label: 'المستخدمون',
+    href: '/users',
+    icon: UserCog,
+    description: 'الحسابات والأدوار والدعوات',
+    permission: 'users.view',
+  },
   {
     label: 'النظام التصميمي',
     href: '/design-system',

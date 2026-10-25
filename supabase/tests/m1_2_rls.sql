@@ -25,6 +25,15 @@ set name = excluded.name,
     address = excluded.address,
     is_active = excluded.is_active;
 
+-- D-26: every auth.users insert must consume a one-time signup claim.
+insert into public.staff_signup_claims (email, expires_at)
+values
+  ('m1.2.manager.tst@example.com', now() + interval '15 minutes'),
+  ('m1.2.viewer.tst@example.com', now() + interval '15 minutes'),
+  ('m1.2.sales.tst@example.com', now() + interval '15 minutes'),
+  ('m1.2.owner.tst@example.com', now() + interval '15 minutes'),
+  ('m1.2.inactive.tst@example.com', now() + interval '15 minutes');
+
 insert into auth.users (
   id,
   aud,
@@ -43,7 +52,7 @@ values
     'authenticated',
     'm1.2.manager.tst@example.com',
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"provider":"email","providers":["email"],"account_type":"staff"}'::jsonb,
     '{"full_name":"مدير اختبار M1.2"}'::jsonb,
     now(),
     now()
@@ -54,7 +63,7 @@ values
     'authenticated',
     'm1.2.viewer.tst@example.com',
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"provider":"email","providers":["email"],"account_type":"staff"}'::jsonb,
     '{"full_name":"مشاهد اختبار M1.2"}'::jsonb,
     now(),
     now()
@@ -65,7 +74,7 @@ values
     'authenticated',
     'm1.2.sales.tst@example.com',
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"provider":"email","providers":["email"],"account_type":"staff"}'::jsonb,
     '{"full_name":"مبيعات اختبار M1.2"}'::jsonb,
     now(),
     now()
@@ -76,7 +85,7 @@ values
     'authenticated',
     'm1.2.owner.tst@example.com',
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"provider":"email","providers":["email"],"account_type":"staff"}'::jsonb,
     '{"full_name":"مالك اختبار M1.2"}'::jsonb,
     now(),
     now()
@@ -87,15 +96,15 @@ values
     'authenticated',
     'm1.2.inactive.tst@example.com',
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"provider":"email","providers":["email"],"account_type":"staff"}'::jsonb,
     '{"full_name":"مستخدم معطل M1.2"}'::jsonb,
     now(),
     now()
   )
 on conflict (id) do nothing;
 
--- The auth trigger creates a profile, branch membership, and viewer role in
--- SNH-01. Move the fixtures to their test branches and assign test roles.
+-- D-26: the auth trigger creates only a bare profile. The fixtures insert
+-- their branch memberships and roles explicitly.
 update public.profiles
 set branch_id = 'b0000000-0000-4000-8000-000000000001',
     role = case id
@@ -118,42 +127,32 @@ set branch_id = 'b0000000-0000-4000-8000-000000000002',
     is_active = true
 where id = '00000000-0000-4000-8000-000000000002';
 
-update public.user_branches
-set branch_id = case
-  when user_id = '00000000-0000-4000-8000-000000000002'
-    then 'b0000000-0000-4000-8000-000000000002'::uuid
-  else 'b0000000-0000-4000-8000-000000000001'::uuid
-end
-where user_id in (
-  '00000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000003',
-  '00000000-0000-4000-8000-000000000004',
-  '00000000-0000-4000-8000-000000000005'
-);
+insert into public.user_branches (user_id, branch_id, is_default)
+select fixture.user_id, fixture.branch_id, true
+from (
+  values
+    ('00000000-0000-4000-8000-000000000001'::uuid, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000002'::uuid, 'b0000000-0000-4000-8000-000000000002'::uuid),
+    ('00000000-0000-4000-8000-000000000003'::uuid, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000004'::uuid, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000005'::uuid, 'b0000000-0000-4000-8000-000000000001'::uuid)
+) as fixture(user_id, branch_id)
+on conflict (user_id, branch_id) do update
+set is_default = excluded.is_default;
 
-update public.user_roles
-set branch_id = case
-      when user_id = '00000000-0000-4000-8000-000000000002'
-        then 'b0000000-0000-4000-8000-000000000002'::uuid
-      else 'b0000000-0000-4000-8000-000000000001'::uuid
-    end,
-    role_id = case user_id
-      when '00000000-0000-4000-8000-000000000001'
-        then (select id from public.roles where code = 'manager')
-      when '00000000-0000-4000-8000-000000000003'
-        then (select id from public.roles where code = 'sales')
-      when '00000000-0000-4000-8000-000000000004'
-        then (select id from public.roles where code = 'owner')
-      else (select id from public.roles where code = 'viewer')
-    end
-where user_id in (
-  '00000000-0000-4000-8000-000000000001',
-  '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000003',
-  '00000000-0000-4000-8000-000000000004',
-  '00000000-0000-4000-8000-000000000005'
-);
+insert into public.user_roles (user_id, role_id, branch_id, is_primary)
+select fixture.user_id, role.id, fixture.branch_id, true
+from (
+  values
+    ('00000000-0000-4000-8000-000000000001'::uuid, 'manager'::text, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000002'::uuid, 'viewer'::text, 'b0000000-0000-4000-8000-000000000002'::uuid),
+    ('00000000-0000-4000-8000-000000000003'::uuid, 'sales'::text, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000004'::uuid, 'owner'::text, 'b0000000-0000-4000-8000-000000000001'::uuid),
+    ('00000000-0000-4000-8000-000000000005'::uuid, 'viewer'::text, 'b0000000-0000-4000-8000-000000000001'::uuid)
+) as fixture(user_id, role_code, branch_id)
+join public.roles as role on role.code = fixture.role_code
+on conflict (user_id, role_id, branch_id) do update
+set is_primary = excluded.is_primary;
 
 insert into public.cashboxes (id, branch_id, code, name_ar, account_id, is_default, is_active)
 values (

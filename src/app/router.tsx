@@ -10,10 +10,13 @@ import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { ProfilePage } from '@/features/auth/pages/profile-page'
 import { ResetPasswordPage } from '@/features/auth/pages/reset-password-page'
+import { PermissionGuard } from '@/features/auth/permission-guard'
 import { ProtectedRoute } from '@/features/auth/protected-route'
 import { PublicOnlyRoute } from '@/features/auth/public-only-route'
 import { DashboardPage } from '@/features/dashboard/pages/dashboard-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
+import { UsersPage } from '@/features/users/pages/users-page'
+import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
 
 export function AppRouter() {
   return (
@@ -25,6 +28,8 @@ export function AppRouter() {
         </Route>
 
         <Route path="reset-password" element={<ResetPasswordPage />} />
+
+        <Route path="invite/:token" element={<AcceptInvitationPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
@@ -100,6 +105,14 @@ export function AppRouter() {
                   phase="M8.1"
                   description="تقارير المبيعات والأرباح والتحصيل والمخزون مع التصدير والطباعة."
                 />
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <PermissionGuard permission="users.view">
+                  <UsersPage />
+                </PermissionGuard>
               }
             />
             <Route

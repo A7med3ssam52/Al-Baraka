@@ -22,8 +22,11 @@ export const APP_INFO = {
 } as const
 
 export const STAGE = {
-  current: 'M0.3',
-  currentTitle: 'Supabase وتسجيل الدخول',
-  next: 'M0.4',
-  nextTitle: 'Cloudinary والنشر والمراقبة',
+  current: 'M1.4',
+  currentTitle: 'الفروع والإعدادات والترقيم',
+  next: 'M1.5',
+  nextTitle: 'سجل المراجعة وحراسة الواجهة',
+  mainStage: 'M1',
+  completedInMain: 3,
+  totalInMain: 5,
 } as const

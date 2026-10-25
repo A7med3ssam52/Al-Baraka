@@ -22,7 +22,7 @@ import { translateAuthError } from '@/features/auth/auth-errors'
 import { useAuth } from '@/features/auth/use-auth'
 import { APP_INFO } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
-import { formatDate } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
 
 export function ProfilePage() {
   const { user, appUser, signOut } = useAuth()
@@ -143,7 +143,9 @@ export function ProfilePage() {
                   الفرع
                 </dt>
                 <dd className="mt-1.5 text-sm font-bold">
-                  {APP_INFO.branch.name} — {APP_INFO.branch.code}
+                  {appUser?.branches.length
+                    ? appUser.branches.map((branch) => `${branch.name} — ${branch.code}`).join('، ')
+                    : `${APP_INFO.branch.name} — ${APP_INFO.branch.code}`}
                 </dd>
               </div>
 
@@ -156,7 +158,14 @@ export function ProfilePage() {
 
               <div className="rounded-lg bg-muted/50 p-3">
                 <dt className="text-[11px] font-bold text-muted-foreground">حالة الحساب</dt>
-                <dd className="mt-1.5 text-sm font-bold text-success">نشط</dd>
+                <dd
+                  className={cn(
+                    'mt-1.5 text-sm font-bold',
+                    appUser?.isActive ? 'text-success' : 'text-destructive',
+                  )}
+                >
+                  {appUser?.isActive ? 'نشط' : 'معطل'}
+                </dd>
               </div>
             </dl>
           </CardContent>

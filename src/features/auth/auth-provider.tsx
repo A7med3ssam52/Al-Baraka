@@ -8,12 +8,36 @@ import type { AppUser, UserRole } from '@/types'
 
 import { translateAuthError } from './auth-errors'
 import { AuthContext } from './auth-context'
+import { isUserRole } from './roles'
 
-interface ProfileRow {
+interface MyAccessResponse {
+  user_id: string
   full_name: string | null
-  role: UserRole
-  branch_id: string | null
-  branches: { code: string; name: string } | null
+  phone: string | null
+  email: string | null
+  primary_role: string | null
+  default_branch_id: string | null
+  is_active: boolean
+  is_owner: boolean
+  has_profile: boolean
+  has_role: boolean
+  permissions: string[] | null
+  roles:
+    | {
+        code: string
+        name: string
+        branch_id: string
+        is_primary: boolean
+      }[]
+    | null
+  branches:
+    | {
+        id: string
+        code: string
+        name: string
+        is_default: boolean
+      }[]
+    | null
 }
 
 function getFallbackUser(user: User): AppUser {
@@ -24,22 +48,63 @@ function getFallbackUser(user: User): AppUser {
     id: user.id,
     name: metadataName || user.email?.split('@')[0] || 'مستخدم',
     email: user.email ?? '',
+    phone: null,
     role: 'viewer',
-    branchIds: [APP_INFO.branch.code],
+    roles: [],
+    branches: [
+      {
+        id: '',
+        code: APP_INFO.branch.code,
+        name: APP_INFO.branch.name,
+        isDefault: true,
+      },
+    ],
+    permissions: [],
+    isOwner: false,
     isActive: true,
+    hasProfile: true,
+    hasRole: true,
   }
 }
 
-function mapProfile(user: User, profile: ProfileRow | null): AppUser {
+function mapAccess(user: User, access: MyAccessResponse | null): AppUser {
   const fallback = getFallbackUser(user)
 
-  if (!profile) return fallback
+  if (!access) return fallback
+
+  const roles = (access.roles ?? [])
+    .filter((role) => isUserRole(role.code))
+    .map((role) => ({
+      code: role.code as UserRole,
+      name: role.name,
+      branchId: role.branch_id,
+      isPrimary: role.is_primary,
+    }))
+
+  const branches = (access.branches ?? []).map((branch) => ({
+    id: branch.id,
+    code: branch.code,
+    name: branch.name,
+    isDefault: branch.is_default,
+  }))
+
+  const primaryRole = isUserRole(access.primary_role)
+    ? access.primary_role
+    : (roles.find((role) => role.isPrimary)?.code ?? roles[0]?.code ?? 'viewer')
 
   return {
     ...fallback,
-    name: profile.full_name?.trim() || fallback.name,
-    role: profile.role,
-    branchIds: [profile.branches?.code ?? APP_INFO.branch.code],
+    name: access.full_name?.trim() || fallback.name,
+    email: access.email || fallback.email,
+    phone: access.phone,
+    role: primaryRole,
+    roles,
+    branches: branches.length > 0 ? branches : fallback.branches,
+    permissions: Array.isArray(access.permissions) ? access.permissions : [],
+    isOwner: Boolean(access.is_owner),
+    isActive: Boolean(access.is_active),
+    hasProfile: Boolean(access.has_profile),
+    hasRole: Boolean(access.has_role),
   }
 }
 
@@ -56,20 +121,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const profileRequestRef = useRef(0)
 
   const loadProfile = useCallback(async (currentUser: User): Promise<AppUser> => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('full_name, role, branch_id, branches(code, name)')
-      .eq('id', currentUser.id)
-      .maybeSingle()
+    const { data, error } = await supabase.rpc('my_access')
 
     if (error) {
       if (import.meta.env.DEV) {
-        console.warn('تعذر تحميل الملف الشخصي من Supabase:', error.message)
+        console.warn('تعذر تحميل صلاحيات المستخدم من Supabase:', error.message)
       }
       return getFallbackUser(currentUser)
     }
 
-    return mapProfile(currentUser, data as unknown as ProfileRow | null)
+    return mapAccess(currentUser, data as unknown as MyAccessResponse | null)
   }, [])
 
   useEffect(() => {
@@ -171,6 +232,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setProfileLoading(false)
   }, [loadProfile, user])
 
+  const permissions = useMemo(() => appUser?.permissions ?? [], [appUser])
+  const isOwner = appUser?.isOwner ?? false
+
+  const hasPermission = useCallback(
+    (permissionCode: string) => permissions.includes(permissionCode),
+    [permissions],
+  )
+
   const value = useMemo(
     () => ({
       session,
@@ -178,11 +247,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       appUser,
       loading,
       profileLoading,
+      permissions,
+      isOwner,
+      hasPermission,
       signIn,
       signOut,
       refreshProfile,
     }),
-    [appUser, loading, profileLoading, refreshProfile, session, signIn, signOut, user],
+    [
+      appUser,
+      hasPermission,
+      isOwner,
+      loading,
+      permissions,
+      profileLoading,
+      refreshProfile,
+      session,
+      signIn,
+      signOut,
+      user,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

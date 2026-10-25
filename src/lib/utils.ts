@@ -21,3 +21,14 @@ export function formatDate(value: Date | string) {
     timeZone: 'Africa/Cairo',
   }).format(new Date(value))
 }
+
+export function formatDateTime(value: Date | string) {
+  return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Africa/Cairo',
+  }).format(new Date(value))
+}
