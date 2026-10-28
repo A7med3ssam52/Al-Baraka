@@ -26,19 +26,22 @@ import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
-import { APP_INFO } from '@/lib/constants'
+import { useSettings } from '@/features/settings/use-settings'
 
 interface HeaderProps {
   onOpenSidebar: () => void
 }
 
 export function Header({ onOpenSidebar }: HeaderProps) {
-  const { appUser, signOut } = useAuth()
+  const { appUser, hasPermission, signOut } = useAuth()
+  const { settings } = useSettings()
   const navigate = useNavigate()
 
   const displayName = appUser?.name ?? 'مستخدم'
   const roleLabel = getRoleLabel(appUser?.role)
   const initial = displayName.trim().charAt(0) || 'م'
+  const defaultBranch = appUser?.branches.find((branch) => branch.isDefault) ?? appUser?.branches[0]
+  const branchCode = defaultBranch?.code ?? settings.branch_code
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -85,7 +88,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
         <div className="ms-auto flex items-center gap-1.5 md:ms-0">
           <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm sm:flex">
             <Building2 className="size-3.5 text-accent-foreground" />
-            <span className="font-mono tracking-wide">{APP_INFO.branch.code}</span>
+            <span className="font-mono tracking-wide">{branchCode}</span>
             <ChevronDown className="size-3 text-muted-foreground" />
           </div>
 
@@ -140,12 +143,14 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                   الملف الشخصي
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings">
-                  <Settings className="size-4" />
-                  الإعدادات
-                </Link>
-              </DropdownMenuItem>
+              {hasPermission('settings.view') ? (
+                <DropdownMenuItem asChild>
+                  <Link to="/settings">
+                    <Settings className="size-4" />
+                    الإعدادات
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={() => void handleSignOut()}>
                 <LogOut className="size-4" />

@@ -4,10 +4,17 @@ import { Outlet } from 'react-router-dom'
 import { Header } from '@/components/layout/header'
 import { Sidebar, SidebarContent } from '@/components/layout/sidebar'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
+import { useAuth } from '@/features/auth/use-auth'
+import { useSettings } from '@/features/settings/use-settings'
 import { APP_INFO } from '@/lib/constants'
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { appUser } = useAuth()
+  const { settings } = useSettings()
+  const defaultBranch = appUser?.branches.find((branch) => branch.isDefault) ?? appUser?.branches[0]
+  const branchName = defaultBranch?.name ?? APP_INFO.branch.name
+  const branchCode = defaultBranch?.code ?? settings.branch_code
 
   return (
     <div className="min-h-screen bg-background lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
@@ -25,12 +32,12 @@ export function AppShell() {
         <footer className="border-t border-border/70 px-4 py-4 text-xs text-muted-foreground sm:px-6 lg:px-8">
           <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2">
             <span>
-              {APP_INFO.name} — {APP_INFO.branch.name}
+              {settings.app_name} — {branchName}
             </span>
             <span className="text-accent" aria-hidden="true">
               •
             </span>
-            <span className="font-mono">{APP_INFO.branch.code}</span>
+            <span className="font-mono">{branchCode}</span>
             <span className="ms-auto">نسخة التأسيس 0.1.0</span>
           </div>
         </footer>

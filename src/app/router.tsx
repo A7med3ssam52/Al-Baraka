@@ -14,6 +14,8 @@ import { PermissionGuard } from '@/features/auth/permission-guard'
 import { ProtectedRoute } from '@/features/auth/protected-route'
 import { PublicOnlyRoute } from '@/features/auth/public-only-route'
 import { DashboardPage } from '@/features/dashboard/pages/dashboard-page'
+import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
+import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -35,7 +37,14 @@ export function AppRouter() {
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route path="upload-test" element={<UploadTestPage />} />
+            <Route
+              path="upload-test"
+              element={
+                <PermissionGuard permission="documents.upload">
+                  <UploadTestPage />
+                </PermissionGuard>
+              }
+            />
 
             <Route
               path="customers"
@@ -118,11 +127,17 @@ export function AppRouter() {
             <Route
               path="settings"
               element={
-                <ComingSoonPage
-                  title="الإعدادات"
-                  phase="M1.4"
-                  description="إعدادات المعرض والفروع والمستخدمين والصلاحيات والترقيم."
-                />
+                <PermissionGuard permission="settings.view">
+                  <SettingsPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="audit-logs"
+              element={
+                <PermissionGuard permission="audit_logs.view">
+                  <AuditLogsPage />
+                </PermissionGuard>
               }
             />
 

@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useAuth } from '@/features/auth/use-auth'
 import { cn, formatCurrency } from '@/lib/utils'
 
 interface Stat {
@@ -127,6 +128,8 @@ const inventorySummary = [
 ]
 
 export function DashboardPage() {
+  const { hasPermission } = useAuth()
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -142,13 +145,15 @@ export function DashboardPage() {
               <CalendarDays />
               آخر 30 يومًا
             </Button>
-            <Button
-              variant="accent"
-              onClick={() => toast.info('شاشة البيع ستتوفر في المرحلة M4.1.')}
-            >
-              <Plus />
-              بيع جديد
-            </Button>
+            {hasPermission('sales.create') ? (
+              <Button
+                variant="accent"
+                onClick={() => toast.info('شاشة البيع ستتوفر في المرحلة M4.1.')}
+              >
+                <Plus />
+                بيع جديد
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -250,13 +255,15 @@ export function DashboardPage() {
                 </div>
               </div>
             ))}
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => toast.info('شاشة الأقساط ستتوفر في المرحلة M5.1.')}
-            >
-              عرض كل الأقساط
-            </Button>
+            {hasPermission('installments.view') ? (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => toast.info('شاشة الأقساط ستتوفر في المرحلة M5.1.')}
+              >
+                عرض كل الأقساط
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
       </section>

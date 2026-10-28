@@ -4,6 +4,7 @@ import { Link, NavLink } from 'react-router-dom'
 
 import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
+import { useSettings } from '@/features/settings/use-settings'
 import { mainNavigation, secondaryNavigation } from '@/lib/navigation'
 import { APP_INFO, STAGE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -42,9 +43,13 @@ interface SidebarContentProps {
 
 export function SidebarContent({ onNavigate }: SidebarContentProps) {
   const { appUser, hasPermission } = useAuth()
+  const { settings } = useSettings()
   const displayName = appUser?.name ?? 'مستخدم'
   const roleLabel = getRoleLabel(appUser?.role)
   const initial = displayName.trim().charAt(0) || 'م'
+  const defaultBranch = appUser?.branches.find((branch) => branch.isDefault) ?? appUser?.branches[0]
+  const branchName = defaultBranch?.name ?? APP_INFO.branch.name
+  const branchCode = defaultBranch?.code ?? APP_INFO.branch.code
 
   const visibleMainNavigation = mainNavigation.filter(
     (item) => !item.permission || hasPermission(item.permission),
@@ -57,12 +62,20 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-3 px-5 py-6">
-        <div className="grid size-11 shrink-0 place-items-center rounded-xl border border-sidebar-active/40 bg-sidebar-accent text-lg font-extrabold text-sidebar-active">
-          ب
-        </div>
+        {settings.logo_url ? (
+          <img
+            src={settings.logo_url}
+            alt=""
+            className="size-11 shrink-0 rounded-xl border border-sidebar-active/40 object-cover"
+          />
+        ) : (
+          <div className="grid size-11 shrink-0 place-items-center rounded-xl border border-sidebar-active/40 bg-sidebar-accent text-lg font-extrabold text-sidebar-active">
+            ب
+          </div>
+        )}
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.22em] text-sidebar-muted">AL BARAKA</p>
-          <p className="truncate text-base font-extrabold">{APP_INFO.name}</p>
+          <p className="truncate text-base font-extrabold">{settings.app_name}</p>
         </div>
       </div>
 
@@ -72,9 +85,9 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
           الفرع الحالي
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-bold">{APP_INFO.branch.name}</span>
+          <span className="truncate text-sm font-bold">{branchName}</span>
           <span className="rounded bg-sidebar-active/15 px-2 py-0.5 text-[10px] font-bold text-sidebar-active">
-            {APP_INFO.branch.code}
+            {branchCode}
           </span>
         </div>
       </div>

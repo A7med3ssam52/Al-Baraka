@@ -4,6 +4,7 @@ import {
   Bike,
   CreditCard,
   FileText,
+  History,
   LayoutDashboard,
   Palette,
   Settings,
@@ -28,48 +29,56 @@ export const mainNavigation: NavItem[] = [
     href: '/',
     icon: LayoutDashboard,
     description: 'نظرة عامة على حركة المعرض',
+    permission: 'dashboard.view',
   },
   {
     label: 'العملاء',
     href: '/customers',
     icon: Users,
     description: 'ملفات العملاء وجهات الاتصال',
+    permission: 'customers.view',
   },
   {
     label: 'المخزون',
     href: '/inventory',
     icon: Bike,
     description: 'المركبات والمنتجات والقطع',
+    permission: 'products.view',
   },
   {
     label: 'المبيعات',
     href: '/sales',
     icon: ShoppingCart,
     description: 'البيع النقدي والتقسيط والعقود',
+    permission: 'sales.view',
   },
   {
     label: 'الأقساط والتحصيل',
     href: '/installments',
     icon: CreditCard,
     description: 'جداول الأقساط والتحصيلات',
+    permission: 'installments.view',
   },
   {
     label: 'الخزنة والمصروفات',
     href: '/treasury',
     icon: Wallet,
     description: 'الخزنة والبنوك والمصروفات',
+    permission: 'cashboxes.view',
   },
   {
     label: 'المستندات',
     href: '/documents',
     icon: FileText,
     description: 'الصور والعقود والمستندات',
+    permission: 'documents.view',
   },
   {
     label: 'التقارير',
     href: '/reports',
     icon: BarChart3,
     description: 'تقارير المبيعات والأرباح',
+    permission: 'reports.view',
   },
 ]
 
@@ -82,6 +91,13 @@ export const secondaryNavigation: NavItem[] = [
     permission: 'users.view',
   },
   {
+    label: 'سجل المراجعة',
+    href: '/audit-logs',
+    icon: History,
+    description: 'العمليات الحساسة على النظام',
+    permission: 'audit_logs.view',
+  },
+  {
     label: 'النظام التصميمي',
     href: '/design-system',
     icon: Palette,
@@ -91,7 +107,8 @@ export const secondaryNavigation: NavItem[] = [
     label: 'الإعدادات',
     href: '/settings',
     icon: Settings,
-    description: 'إعدادات المعرض والمستخدمين',
+    description: 'إعدادات المعرض والفروع والترقيم',
+    permission: 'settings.view',
   },
 ]
 
