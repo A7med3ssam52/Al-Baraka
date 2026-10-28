@@ -1,4 +1,4 @@
-import { Eye, FileText, Paperclip, Plus, RefreshCw, X } from 'lucide-react'
+import { Eye, FileText, Paperclip, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,7 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 
 import {
   createDocument,
+  deleteDocument,
   fetchDocumentAccessLogs,
   fetchDocumentFiles,
   fetchDocuments,
@@ -181,6 +182,8 @@ function DocumentCard({
   onChanged: () => void
   onOpenLogs: (record: DocumentRecord) => void
 }) {
+  const { hasPermission } = useAuth()
+  const canDelete = hasPermission('documents.delete')
   const [files, setFiles] = useState<DocumentFileRecord[] | undefined>(undefined)
   const [uploading, setUploading] = useState(false)
   const [busyFileId, setBusyFileId] = useState<string | null>(null)
@@ -239,6 +242,23 @@ function DocumentCard({
     }
   }
 
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        `كل ملفات ${documentRecord.doc_number} وسجل وصوله سيُحذفان نهائيًا. تأكيد الحذف؟`,
+      )
+    ) {
+      return
+    }
+    try {
+      await deleteDocument(documentRecord.id)
+      onChanged()
+      toast.success('تم حذف المستند.')
+    } catch (deleteError) {
+      toast.error(translateDocumentError(deleteError))
+    }
+  }
+
   const filesList = files ?? []
 
   return (
@@ -263,6 +283,16 @@ function DocumentCard({
           <Button variant="ghost" size="sm" onClick={() => onOpenLogs(documentRecord)}>
             <Eye className="size-4" /> سجل الوصول
           </Button>
+          {canDelete ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="حذف المستند"
+              onClick={() => void handleDelete()}
+            >
+              <Trash2 className="size-4 text-destructive" /> حذف
+            </Button>
+          ) : null}
           {canUpload ? (
             <label className="inline-flex">
               <input

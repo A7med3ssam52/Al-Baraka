@@ -10,6 +10,14 @@ import type {
   DocumentType,
 } from './types'
 
+export async function deleteDocument(documentId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_document', {
+    p_document_id: documentId,
+  })
+
+  if (error) throw new Error(translateDocumentError(error.message))
+}
+
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
   not_authenticated: 'انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.',
@@ -129,6 +137,9 @@ export async function getSecureFileUrl(
 
       if (body?.error === 'forbidden') {
         throw new Error('لا تملك الصلاحية لفتح هذا المستند.')
+      }
+      if (body?.error === 'sensitive_forbidden') {
+        throw new Error('هذا مستند حساس. يلزم صلاحية تنزيل المستندات الحساسة.')
       }
       if (body?.error === 'unauthorized') {
         throw new Error('انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.')

@@ -126,10 +126,10 @@ Deno.serve(async (request) => {
   // RLS applies: outside-branch files return no rows for this caller.
   const { data: fileRow, error: fileError } = await userClient
     .from('document_files')
-    .select('id, document_id, public_id, resource_type, format')
+    .select('id, document_id, public_id, resource_type, format, documents ( is_sensitive )')
     .eq('id', fileId)
     .eq('document_id', documentId)
-    .maybeSingle<DocumentFileRow>()
+    .maybeSingle<DocumentFileRow & { documents: { is_sensitive: boolean } | null }>()
 
   if (fileError) {
     console.error('document-url: file lookup failed', fileError.message)
@@ -142,6 +142,19 @@ Deno.serve(async (request) => {
 
   if (!DELIVERABLE_FORMATS.has(fileRow.format)) {
     return json({ error: 'undeliverable_format' }, 400)
+  }
+
+  // BR-26: sensitive documents additionally require the dedicated permission,
+  // independent of the general view permission or financial editing.
+  const isSensitive = fileRow.documents?.is_sensitive === true
+  if (isSensitive) {
+    const { data: canSensitive, error: sensitiveError } = await userClient.rpc('has_permission', {
+      permission_code: 'documents.download_sensitive',
+    })
+
+    if (sensitiveError || canSensitive !== true) {
+      return json({ error: 'sensitive_forbidden' }, 403)
+    }
   }
 
   // Log the access before handing the URL over (server-side audit trail).
