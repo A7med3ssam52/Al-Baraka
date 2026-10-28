@@ -181,3 +181,94 @@ export async function addCustomerNote(input: {
 
   return (Array.isArray(data) ? data[0] : data) as unknown as CustomerNote
 }
+
+const contactMessages: Record<string, string> = {
+  invalid_contact_label: 'عنوان جهة الاتصال مطلوب ولا يزيد عن 50 حرفًا.',
+  contact_missing: 'جهة الاتصال غير موجودة.',
+}
+
+function translateContactError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  const key = message.trim()
+  if (contactMessages[key]) return contactMessages[key]
+  return translateCustomerError(message)
+}
+
+export async function listCustomerContacts(customerId: string): Promise<unknown[]> {
+  const { data, error } = await supabase.rpc('list_customer_contacts', {
+    p_customer_id: customerId,
+  })
+
+  if (error) throw new Error(translateContactError(error.message))
+
+  return data ?? []
+}
+
+export async function addCustomerContact(input: {
+  customerId: string
+  label: string
+  mobile: string
+  note?: string
+}): Promise<unknown> {
+  const { data, error } = await supabase.rpc('add_customer_contact', {
+    p_customer_id: input.customerId,
+    p_label: input.label,
+    p_mobile: input.mobile,
+    p_note: input.note || null,
+  })
+
+  if (error) throw new Error(translateContactError(error.message))
+
+  return data
+}
+
+export async function deleteCustomerContact(contactId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_customer_contact', {
+    p_contact_id: contactId,
+  })
+
+  if (error) throw new Error(translateContactError(error.message))
+}
+
+const guarantorMessages: Record<string, string> = {
+  invalid_guarantor_name: 'اسم الضامن يجب أن يكون 3 أحرف على الأقل.',
+  duplicate_national_id: 'يوجد ضامن آخر بنفس الرقم القومي.',
+}
+
+function translateGuarantorError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  const key = message.trim()
+  if (guarantorMessages[key]) return guarantorMessages[key]
+  if (key.toLowerCase().includes('duplicate key') && key.includes('national_id')) {
+    return 'يوجد ضامن آخر بنفس الرقم القومي.'
+  }
+  return translateCustomerError(message)
+}
+
+export async function listGuarantors(search?: string): Promise<unknown[]> {
+  const { data, error } = await supabase.rpc('list_guarantors', {
+    p_search: search?.trim() || null,
+  })
+
+  if (error) throw new Error(translateGuarantorError(error.message))
+
+  return data ?? []
+}
+
+export async function addGuarantor(input: {
+  full_name: string
+  national_id: string
+  mobile: string
+  job?: string
+}): Promise<unknown> {
+  const { data, error } = await supabase.rpc('add_guarantor', {
+    p_full_name: input.full_name,
+    p_national_id: input.national_id,
+    p_mobile: input.mobile,
+    p_job: input.job || null,
+  })
+
+  if (error) throw new Error(translateGuarantorError(error.message))
+
+  return data
+}

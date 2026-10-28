@@ -9,6 +9,7 @@ import {
   Palette,
   Settings,
   ShoppingCart,
+  Truck,
   UserCog,
   UserRound,
   Users,
@@ -37,6 +38,13 @@ export const mainNavigation: NavItem[] = [
     icon: Users,
     description: 'ملفات العملاء وجهات الاتصال',
     permission: 'customers.view',
+  },
+  {
+    label: 'الموردون',
+    href: '/suppliers',
+    icon: Truck,
+    description: 'سجل الموردين والتواصل',
+    permission: 'suppliers.view',
   },
   {
     label: 'المخزون',

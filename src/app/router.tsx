@@ -18,6 +18,7 @@ import { CustomerProfilePage } from '@/features/customers/pages/customer-profile
 import { CustomersPage } from '@/features/customers/pages/customers-page'
 import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
 import { SettingsPage } from '@/features/settings/pages/settings-page'
+import { SuppliersPage } from '@/features/suppliers/pages/suppliers-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -61,6 +62,14 @@ export function AppRouter() {
               element={
                 <PermissionGuard permission="customers.view">
                   <CustomerProfilePage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="suppliers"
+              element={
+                <PermissionGuard permission="suppliers.view">
+                  <SuppliersPage />
                 </PermissionGuard>
               }
             />

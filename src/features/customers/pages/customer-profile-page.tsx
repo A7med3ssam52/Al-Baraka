@@ -13,6 +13,7 @@ import { fetchCustomer, fetchCustomerNotes, translateCustomerError } from '../ap
 import { customerStatusLabels, formatMobileDisplay } from '../types'
 import type { CustomerRecord } from '../types'
 import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
+import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import type { CustomerNote } from '../types'
 import {
   customerProfileTabs,
@@ -44,6 +45,7 @@ export function CustomerProfile({
 }: CustomerProfileProps) {
   function isAvailable(tabId: CustomerTabId) {
     if (tabId === 'personal' || tabId === 'notes') return true
+    if (tabId === 'contacts' || tabId === 'guarantors') return true
     return availability?.[tabId] === true
   }
 
@@ -98,7 +100,12 @@ export function CustomerProfile({
 
       {activeTab === 'personal' ? <PersonalDataPanel customer={customer} /> : null}
       {activeTab === 'notes' ? <NotesPanel customer={customer} /> : null}
-      {activeTab !== 'personal' && activeTab !== 'notes' ? (
+      {activeTab === 'contacts' ? <ContactsPanel customer={customer} /> : null}
+      {activeTab === 'guarantors' ? <GuarantorsPanel customer={customer} /> : null}
+      {activeTab !== 'personal' &&
+      activeTab !== 'notes' &&
+      activeTab !== 'contacts' &&
+      activeTab !== 'guarantors' ? (
         renderExtraTab ? (
           renderExtraTab(activeTab, customer)
         ) : (
