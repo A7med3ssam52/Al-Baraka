@@ -19,6 +19,7 @@ import { CustomersPage } from '@/features/customers/pages/customers-page'
 import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
 import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { SuppliersPage } from '@/features/suppliers/pages/suppliers-page'
+import { ProductsPage } from '@/features/products/pages/products-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -76,11 +77,9 @@ export function AppRouter() {
             <Route
               path="inventory"
               element={
-                <ComingSoonPage
-                  title="المخزون"
-                  phase="M3.1"
-                  description="إدارة المركبات والمنتجات والقطع، مع التكلفة والصور وحالة كل وحدة."
-                />
+                <PermissionGuard permission="products.view">
+                  <ProductsPage />
+                </PermissionGuard>
               }
             />
             <Route
