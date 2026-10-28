@@ -409,7 +409,6 @@ where role.code = 'owner'
        'customers.view',
        'customers.create',
        'customers.update',
-       'customers.archive',
        'customers.export',
        'products.view',
        'vehicles.view',

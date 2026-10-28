@@ -1,0 +1,183 @@
+import { supabase } from '@/lib/supabase'
+
+import type {
+  CustomerDuplicates,
+  CustomerInput,
+  CustomerNote,
+  CustomerRecord,
+  CustomerStatus,
+} from './types'
+
+const errorMessages: Record<string, string> = {
+  forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
+  not_authenticated: 'انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.',
+  branch_required: 'اختر فرعًا أولًا.',
+  invalid_branch: 'الفرع غير موجود أو غير نشط.',
+  invalid_customer_name: 'اسم العميل يجب أن يكون 3 أحرف على الأقل.',
+  invalid_national_id: 'الرقم القومي يجب أن يكون 14 رقمًا صحيحًا وفق الصيغة المصرية.',
+  invalid_mobile: 'رقم الموبايل يجب أن يكون رقمًا مصريًا صحيحًا (010/011/012/015).',
+  invalid_status: 'حالة العميل غير معروفة.',
+  duplicate_national_id: 'يوجد عميل آخر بنفس الرقم القومي.',
+  customer_missing: 'العميل غير موجود.',
+  customer_archived: 'العميل مؤرشف ولا يمكن تعديله. فعّله أولًا.',
+  customer_delete_forbidden: 'لا يمكن حذف العميل. استخدم الأرشفة بدلًا من الحذف.',
+  unknown_code_entity: 'وحدة ترميز غير معروفة.',
+}
+
+export function translateCustomerError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  const key = message.trim()
+
+  if (errorMessages[key]) return errorMessages[key]
+
+  if (key.toLowerCase().includes('duplicate key') && key.includes('national_id')) {
+    return 'يوجد عميل آخر بنفس الرقم القومي.'
+  }
+
+  if (key.toLowerCase().includes('permission denied')) {
+    return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
+  }
+
+  return 'تعذر إكمال العملية. تحقق من الاتصال وحاول مرة أخرى.'
+}
+
+export async function fetchCustomers(options?: {
+  status?: CustomerStatus | 'all'
+  search?: string
+}): Promise<CustomerRecord[]> {
+  let query = supabase
+    .from('customers')
+    .select(
+      'id, code, full_name, national_id, mobile, phone2, job, address, status, notes, branch_id, created_at',
+    )
+    .order('code')
+
+  const status = options?.status ?? 'all'
+  if (status !== 'all') query = query.eq('status', status)
+
+  const search = options?.search?.trim()
+  if (search) {
+    const pattern = `%${search}%`
+    query = query.or(
+      `full_name.ilike.${pattern},code.ilike.${pattern},national_id.ilike.${pattern},mobile.ilike.%${search.replace(/\D/g, '')}%`,
+    )
+  }
+
+  const { data, error } = await query
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return (data ?? []) as CustomerRecord[]
+}
+
+export async function fetchCustomer(customerId: string): Promise<CustomerRecord> {
+  const { data, error } = await supabase.from('customers').select('*').eq('id', customerId).single()
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return data as CustomerRecord
+}
+
+export async function checkCustomerDuplicates(
+  nationalId: string,
+  mobile: string,
+  excludeId?: string,
+): Promise<CustomerDuplicates> {
+  const { data, error } = await supabase.rpc('check_customer_duplicates', {
+    p_national_id: nationalId,
+    p_mobile: mobile,
+    p_exclude_id: excludeId ?? null,
+  })
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return (data ?? { national_id: null, mobiles: [] }) as unknown as CustomerDuplicates
+}
+
+export async function createCustomer(input: CustomerInput): Promise<CustomerRecord> {
+  const { data, error } = await supabase.rpc('create_customer', {
+    p_full_name: input.full_name,
+    p_national_id: input.national_id,
+    p_mobile: input.mobile,
+    p_phone2: input.phone2 ?? null,
+    p_job: input.job ?? null,
+    p_address: input.address ?? null,
+    p_notes: input.notes ?? null,
+    p_branch_id: input.branch_id ?? null,
+  })
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return data as unknown as CustomerRecord
+}
+
+export async function updateCustomer(
+  customerId: string,
+  input: Omit<CustomerInput, 'national_id' | 'branch_id'>,
+): Promise<CustomerRecord> {
+  const { data, error } = await supabase.rpc('update_customer', {
+    p_customer_id: customerId,
+    p_full_name: input.full_name,
+    p_mobile: input.mobile,
+    p_phone2: input.phone2 ?? null,
+    p_job: input.job ?? null,
+    p_address: input.address ?? null,
+    p_notes: input.notes ?? null,
+  })
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return data as unknown as CustomerRecord
+}
+
+export async function setCustomerStatus(
+  customerId: string,
+  status: CustomerStatus,
+): Promise<CustomerRecord> {
+  const { data, error } = await supabase.rpc('set_customer_status', {
+    p_customer_id: customerId,
+    p_status: status,
+  })
+
+  if (error) throw new Error(translateCustomerError(error.message))
+
+  return data as unknown as CustomerRecord
+}
+
+const noteTypeMessages: Record<string, string> = {
+  invalid_note: 'الملاحظة مطلوبة ولا تزيد عن 2000 حرف.',
+  invalid_note_type: 'نوع المتابعة غير معروف.',
+}
+
+export async function fetchCustomerNotes(customerId: string, limit = 50): Promise<CustomerNote[]> {
+  const { data, error } = await supabase.rpc('list_customer_notes', {
+    p_customer_id: customerId,
+    p_limit: limit,
+  })
+
+  if (error) {
+    throw new Error(noteTypeMessages[error.message.trim()] ?? translateCustomerError(error.message))
+  }
+
+  return (data ?? []) as unknown as CustomerNote[]
+}
+
+export async function addCustomerNote(input: {
+  customerId: string
+  note: string
+  noteType?: CustomerNote['note_type']
+  nextFollowupAt?: string | null
+}): Promise<CustomerNote> {
+  const { data, error } = await supabase.rpc('add_customer_note', {
+    p_customer_id: input.customerId,
+    p_note: input.note,
+    p_note_type: input.noteType ?? 'note',
+    p_next_followup_at: input.nextFollowupAt ?? null,
+  })
+
+  if (error) {
+    throw new Error(noteTypeMessages[error.message.trim()] ?? translateCustomerError(error.message))
+  }
+
+  return (Array.isArray(data) ? data[0] : data) as unknown as CustomerNote
+}

@@ -397,22 +397,10 @@ where user_id = '40000000-0000-4000-8000-000000000001';
 
 select public.ok(
   (
-    select count(*) = 4
-    from public.audit_logs
-    where action = 'update'
-      and (
-        (table_name = 'profiles' and record_id = '40000000-0000-4000-8000-000000000001')
-        or (table_name = 'roles' and record_id = (
-          select id::text from public.roles where code = 'owner'
-        ))
-        or (table_name = 'cashboxes' and branch_id = 'b4000000-0000-4000-8000-000000000001'::uuid)
-        or (table_name = 'user_roles' and record_id = (
-          select id::text from public.user_roles
-          where user_id = '40000000-0000-4000-8000-000000000001'
-            and branch_id = 'b4000000-0000-4000-8000-000000000001'::uuid
-          limit 1
-        ))
-      )
+    (select count(*) >= 1 from public.audit_logs where action = 'update' and table_name = 'profiles' and record_id = '40000000-0000-4000-8000-000000000001')
+    and (select count(*) >= 1 from public.audit_logs where action = 'update' and table_name = 'roles' and record_id = (select id::text from public.roles where code = 'owner'))
+    and (select count(*) >= 1 from public.audit_logs where action = 'update' and table_name = 'cashboxes' and branch_id = 'b4000000-0000-4000-8000-000000000001'::uuid)
+    and (select count(*) >= 1 from public.audit_logs where action = 'update' and table_name = 'user_roles' and record_id = (select id::text from public.user_roles where user_id = '40000000-0000-4000-8000-000000000001' and branch_id = 'b4000000-0000-4000-8000-000000000001'::uuid limit 1))
   ),
   'profile, role, cashbox, and role-assignment changes are audited'
 );

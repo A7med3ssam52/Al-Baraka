@@ -259,9 +259,9 @@ declare
   settings public.system_settings;
   cash_account_id uuid;
   bank_account_id uuid;
-  current_year integer := extract(year from (now() at time zone 'Africa/Cairo'))::integer;
-  document_type text;
-  document_prefix text;
+  new_year integer := extract(year from (now() at time zone 'Africa/Cairo'))::integer;
+  loop_document_type text;
+  loop_document_prefix text;
 begin
   select * into settings from public.system_settings where id;
 
@@ -321,7 +321,7 @@ begin
     on conflict (branch_id, code) do nothing;
   end if;
 
-  foreach document_type in array array[
+  foreach loop_document_type in array array[
     'sales_invoice',
     'purchase_invoice',
     'contract',
@@ -329,9 +329,9 @@ begin
     'payment',
     'journal_entry'
   ] loop
-    document_prefix := upper(btrim(coalesce(
-      settings.document_prefixes ->> document_type,
-      case document_type
+    loop_document_prefix := upper(btrim(coalesce(
+      settings.document_prefixes ->> loop_document_type,
+      case loop_document_type
         when 'sales_invoice' then 'SAL'
         when 'purchase_invoice' then 'PUR'
         when 'contract' then 'CON'
@@ -352,9 +352,9 @@ begin
     )
     values (
       new.id,
-      document_type,
-      current_year,
-      document_prefix,
+      loop_document_type,
+      new_year,
+      loop_document_prefix,
       1,
       5,
       auth.uid()

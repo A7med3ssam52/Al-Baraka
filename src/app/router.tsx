@@ -14,6 +14,8 @@ import { PermissionGuard } from '@/features/auth/permission-guard'
 import { ProtectedRoute } from '@/features/auth/protected-route'
 import { PublicOnlyRoute } from '@/features/auth/public-only-route'
 import { DashboardPage } from '@/features/dashboard/pages/dashboard-page'
+import { CustomerProfilePage } from '@/features/customers/pages/customer-profile-page'
+import { CustomersPage } from '@/features/customers/pages/customers-page'
 import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
 import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
@@ -49,11 +51,17 @@ export function AppRouter() {
             <Route
               path="customers"
               element={
-                <ComingSoonPage
-                  title="العملاء"
-                  phase="M2.1"
-                  description="ملف موحد لكل عميل يربط البيانات وجهات الاتصال والضامنين والمبيعات والأقساط والمستندات."
-                />
+                <PermissionGuard permission="customers.view">
+                  <CustomersPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="customers/:customerId"
+              element={
+                <PermissionGuard permission="customers.view">
+                  <CustomerProfilePage />
+                </PermissionGuard>
               }
             />
             <Route

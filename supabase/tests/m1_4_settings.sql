@@ -262,10 +262,11 @@ select public.is(
   'the sequence continues without gaps after 76 allocations'
 );
 
-select public.matches(
-  public.next_document_number('sales_invoice', 'b3000000-0000-4000-8000-000000000002'),
-  '^SAL-[0-9]{4}-00001$',
-  'a second branch starts its own sequence at 00001'
+select public.throws_ok(
+  $$ select public.next_document_number('sales_invoice', 'b3000000-0000-4000-8000-000000000002') $$,
+  '42501',
+  'forbidden',
+  'a manager cannot allocate numbers for a branch outside their scope; the second branch is tested by the owner below'
 );
 
 select public.throws_ok(

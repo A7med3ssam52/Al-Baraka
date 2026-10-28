@@ -154,17 +154,12 @@ join public.roles as role on role.code = fixture.role_code
 on conflict (user_id, role_id, branch_id) do update
 set is_primary = excluded.is_primary;
 
-insert into public.cashboxes (id, branch_id, code, name_ar, account_id, is_default, is_active)
-values (
-  'c0000000-0000-4000-8000-000000000001',
-  'b0000000-0000-4000-8000-000000000001',
-  'TST-CASH',
-  'خزنة اختبار M1.2',
-  (select id from public.accounts where code = '1101'),
-  true,
-  true
-)
-on conflict (branch_id, code) do nothing;
+-- M1.4's seed_branch_defaults already provides a default cashbox for a new
+-- branch; rename it for the tests instead of inserting a second default.
+update public.cashboxes
+set name_ar = 'خزنة اختبار M1.2'
+where branch_id = 'b0000000-0000-4000-8000-000000000001'
+  and code = 'CASH-01';
 
 insert into public.journal_entries (
   id,
@@ -414,7 +409,12 @@ select public.is(
   'viewer cannot see permissions'
 );
 select public.is((select count(*) from public.accounts), 0::bigint, 'viewer cannot see accounts');
-select public.is((select count(*) from public.cashboxes), 0::bigint, 'viewer sees no TST-02 cashboxes');
+select public.is(
+  (select count(*) from public.cashboxes where branch_id = 'b0000000-0000-4000-8000-000000000002'),
+  1::bigint,
+  'the viewer sees only its own branch default cashbox from M1.4 seeding'
+);
+select public.is((select count(*) from public.cashboxes), 1::bigint, 'the viewer sees no other branch cashboxes');
 select public.is(
   (select count(*) from public.journal_entries),
   0::bigint,
