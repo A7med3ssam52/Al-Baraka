@@ -14,6 +14,7 @@ import { customerStatusLabels, formatMobileDisplay } from '../types'
 import type { CustomerRecord } from '../types'
 import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
+import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import type { CustomerNote } from '../types'
 import {
   customerProfileTabs,
@@ -43,9 +44,12 @@ export function CustomerProfile({
   availability,
   renderExtraTab,
 }: CustomerProfileProps) {
+  const { hasPermission } = useAuth()
+
   function isAvailable(tabId: CustomerTabId) {
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
+    if (tabId === 'documents') return hasPermission('documents.view')
     return availability?.[tabId] === true
   }
 
@@ -102,10 +106,14 @@ export function CustomerProfile({
       {activeTab === 'notes' ? <NotesPanel customer={customer} /> : null}
       {activeTab === 'contacts' ? <ContactsPanel customer={customer} /> : null}
       {activeTab === 'guarantors' ? <GuarantorsPanel customer={customer} /> : null}
+      {activeTab === 'documents' ? (
+        <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
+      ) : null}
       {activeTab !== 'personal' &&
       activeTab !== 'notes' &&
       activeTab !== 'contacts' &&
-      activeTab !== 'guarantors' ? (
+      activeTab !== 'guarantors' &&
+      activeTab !== 'documents' ? (
         renderExtraTab ? (
           renderExtraTab(activeTab, customer)
         ) : (

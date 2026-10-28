@@ -193,14 +193,10 @@ export function UploadTestPage() {
                     </dd>
                   </div>
                 </dl>
-                <a
-                  href={result.secureUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex text-sm font-bold text-primary underline underline-offset-4"
-                >
-                  فتح الملف على Cloudinary
-                </a>
+                <p className="text-xs text-muted-foreground">
+                  الملف مرفوع من نوع authenticated: لا رابط عام له، وعرضه يتم حصريًا عبر رابط موقَّع
+                  صادر من دالة <span dir="ltr">document-url</span> مع تسجيل الوصول.
+                </p>
               </div>
             ) : null}
           </CardContent>

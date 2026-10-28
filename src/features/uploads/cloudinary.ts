@@ -32,6 +32,8 @@ interface CloudinarySignResponse {
   publicId: string | null
   allowedFormats: string | null
   resourceType: CloudinaryResourceType
+  /** BR-23: assets are always stored as authenticated, never publicly readable. */
+  type: 'authenticated'
   uploadUrl: string
 }
 
@@ -118,6 +120,7 @@ export async function uploadToCloudinary(
   formData.append('timestamp', String(signatureData.timestamp))
   formData.append('signature', signatureData.signature)
   formData.append('folder', signatureData.folder)
+  formData.append('type', signatureData.type ?? 'authenticated')
 
   if (signatureData.publicId) {
     formData.append('public_id', signatureData.publicId)

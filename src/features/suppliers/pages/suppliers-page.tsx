@@ -6,6 +6,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,6 +32,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
+import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import { formatDateTime } from '@/lib/utils'
 
 import {
@@ -64,6 +72,7 @@ export function SuppliersPage() {
     open: boolean
     supplier: SupplierRecord | null
   }>({ open: false, supplier: null })
+  const [documentsSupplier, setDocumentsSupplier] = useState<SupplierRecord | null>(null)
   const lastSearchSubmit = useRef('')
 
   const canCreate = hasPermission('suppliers.create')
@@ -242,6 +251,9 @@ export function SuppliersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setDocumentsSupplier(row)}>
+                          المستندات
+                        </DropdownMenuItem>
                         {canUpdate && row.status !== 'archived' ? (
                           <DropdownMenuItem
                             onClick={() => setFormDialog({ open: true, supplier: row })}
@@ -282,6 +294,31 @@ export function SuppliersPage() {
         onClosed={() => setFormDialog({ open: false, supplier: null })}
         onSubmit={handleFormSubmit}
       />
+
+      <Dialog
+        open={documentsSupplier !== null}
+        onOpenChange={(open) => !open && setDocumentsSupplier(null)}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              مستندات {documentsSupplier?.code} — {documentsSupplier?.full_name}
+            </DialogTitle>
+            <DialogDescription>
+              سجل تجاري ومستندات أخرى للمورد، بروابط عرض موقَّعة محمية.
+            </DialogDescription>
+          </DialogHeader>
+          {documentsSupplier ? (
+            <div className="max-h-[70vh] overflow-y-auto">
+              <DocumentsPanel
+                ownerType="supplier"
+                ownerId={documentsSupplier.id}
+                ownerLabel={documentsSupplier.code}
+              />
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
