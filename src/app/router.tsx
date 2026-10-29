@@ -20,6 +20,7 @@ import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
 import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { SuppliersPage } from '@/features/suppliers/pages/suppliers-page'
 import { ProductsPage } from '@/features/products/pages/products-page'
+import { VehiclesPage } from '@/features/vehicles/pages/vehicles-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -79,6 +80,14 @@ export function AppRouter() {
               element={
                 <PermissionGuard permission="products.view">
                   <ProductsPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/vehicles"
+              element={
+                <PermissionGuard permission="vehicles.view">
+                  <VehiclesPage />
                 </PermissionGuard>
               }
             />

@@ -1,5 +1,6 @@
-import { Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { Bike, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -165,6 +166,13 @@ export function ProductsPage() {
         description="المنتجات الكمية والتصنيفات والماركات."
         actions={
           <div className="flex gap-2">
+            {hasPermission('vehicles.view') ? (
+              <Button variant="outline" asChild>
+                <Link to="/inventory/vehicles">
+                  <Bike className="size-4" /> المركبات
+                </Link>
+              </Button>
+            ) : null}
             {canCreate || canUpdate ? (
               <Button variant="outline" onClick={() => setReferenceOpen(true)}>
                 <Plus className="size-4" /> تصنيف/ماركة
