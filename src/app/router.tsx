@@ -28,6 +28,7 @@ import { PurchaseInvoicePrintPage } from '@/features/purchases/pages/purchase-in
 import { TransfersPage } from '@/features/transfers/pages/transfers-page'
 import { CountsPage } from '@/features/counts/pages/counts-page'
 import { CountDetailPage } from '@/features/counts/pages/count-detail-page'
+import { ReportsPage } from '@/features/reports/pages/reports-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -197,11 +198,9 @@ export function AppRouter() {
             <Route
               path="reports"
               element={
-                <ComingSoonPage
-                  title="التقارير"
-                  phase="M8.1"
-                  description="تقارير المبيعات والأرباح والتحصيل والمخزون مع التصدير والطباعة."
-                />
+                <PermissionGuard permission="reports.view">
+                  <ReportsPage />
+                </PermissionGuard>
               }
             />
             <Route
