@@ -21,6 +21,7 @@ import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { SuppliersPage } from '@/features/suppliers/pages/suppliers-page'
 import { ProductsPage } from '@/features/products/pages/products-page'
 import { VehiclesPage } from '@/features/vehicles/pages/vehicles-page'
+import { MovementsPage } from '@/features/stock/pages/movements-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -88,6 +89,14 @@ export function AppRouter() {
               element={
                 <PermissionGuard permission="vehicles.view">
                   <VehiclesPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/movements"
+              element={
+                <PermissionGuard permission="products.view">
+                  <MovementsPage />
                 </PermissionGuard>
               }
             />

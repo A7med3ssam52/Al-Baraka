@@ -1,4 +1,4 @@
-import { Bike, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { Bike, History, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -173,6 +173,11 @@ export function ProductsPage() {
                 </Link>
               </Button>
             ) : null}
+            <Button variant="outline" asChild>
+              <Link to="/inventory/movements">
+                <History className="size-4" /> الحركات
+              </Link>
+            </Button>
             {canCreate || canUpdate ? (
               <Button variant="outline" onClick={() => setReferenceOpen(true)}>
                 <Plus className="size-4" /> تصنيف/ماركة
