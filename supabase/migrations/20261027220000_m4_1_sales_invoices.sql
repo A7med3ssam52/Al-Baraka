@@ -185,6 +185,7 @@ declare
   clean_discount numeric := coalesce(p_discount, 0);
   clean_paid numeric := coalesce(p_paid_amount, 0);
   allowed_discount numeric;
+  target_cashbox uuid;
   item_count integer;
   v_subtotal numeric := 0;
   v_total numeric := 0;
@@ -203,6 +204,14 @@ declare
   existing public.sales_invoices;
   new_row public.sales_invoices;
 begin
+  -- default cashbox for cash sales
+  if clean_type = 'cash' then
+    select id into target_cashbox
+    from public.cashboxes
+    where branch_id = target_branch and is_default and is_active
+    limit 1;
+  end if;
+
   if p_invoice_id is null then
     if not public.has_permission('sales.create') then
       raise exception 'forbidden' using errcode = '42501';
@@ -348,17 +357,26 @@ begin
     end if;
   end if;
 
+  -- default cashbox for cash sales
+  if clean_type = 'cash' then
+    select id into target_cashbox
+    from public.cashboxes
+    where branch_id = target_branch and is_default and is_active
+    limit 1;
+  end if;
+
   if p_invoice_id is null then
     insert into public.sales_invoices (
       number, customer_id, branch_id, invoice_date, sale_type,
       subtotal, discount, total, paid_amount, remaining_amount,
-      payment_method, discount_approved_by, status, notes, created_by, updated_by
+      payment_method, cashbox_id, discount_approved_by, status, notes, created_by, updated_by
     )
     values (
       public.next_entity_code('sales_invoice'), p_customer_id, target_branch,
       coalesce(p_invoice_date, current_date), clean_type,
       v_subtotal, clean_discount, v_total, clean_paid, v_total - clean_paid,
       case when clean_type = 'installment' then 'credit' else 'cash' end,
+      target_cashbox,
       case
         when clean_discount + v_line_discounts > 0
           and public.has_permission('sales.discount_approve')
@@ -379,6 +397,7 @@ begin
         paid_amount = clean_paid,
         remaining_amount = v_total - clean_paid,
         payment_method = case when clean_type = 'installment' then 'credit' else 'cash' end,
+        cashbox_id = target_cashbox,
         discount_approved_by = case
           when clean_discount + v_line_discounts > 0
             and public.has_permission('sales.discount_approve')
