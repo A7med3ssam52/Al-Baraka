@@ -32,6 +32,7 @@ import { fetchSuppliers } from '@/features/suppliers/api'
 import { fetchVehicles } from '@/features/vehicles/api'
 
 import {
+  approvePurchaseInvoice,
   cancelPurchaseInvoice,
   fetchPurchaseInvoices,
   savePurchaseInvoice,
@@ -71,6 +72,7 @@ export function PurchaseInvoicesPage() {
 
   const canCreate = hasPermission('purchases.create')
   const canUpdate = hasPermission('purchases.update')
+  const canApprove = hasPermission('purchases.approve')
   const canCancel = hasPermission('purchases.cancel')
 
   useEffect(() => {
@@ -124,6 +126,16 @@ export function PurchaseInvoicesPage() {
   async function handleSubmit(input: PurchaseInvoiceInput, invoiceId?: string) {
     await savePurchaseInvoice(input, invoiceId)
     reload()
+  }
+
+  async function handleApprove(row: PurchaseInvoiceRecord) {
+    try {
+      await approvePurchaseInvoice(row.id)
+      toast.success(`تم اعتماد الفاتورة ${row.number} وتحديث المخزون والموردين.`)
+      reload()
+    } catch (approveError) {
+      toast.error(translatePurchaseError(approveError))
+    }
   }
 
   async function handleCancel(row: PurchaseInvoiceRecord) {
@@ -271,6 +283,14 @@ export function PurchaseInvoicesPage() {
                           <DropdownMenuItem onClick={() => setDialog({ open: true, invoice: row })}>
                             تعديل المسودة
                           </DropdownMenuItem>
+                        ) : null}
+                        {canApprove && row.status === 'draft' ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleApprove(row)}>
+                              اعتماد الفاتورة
+                            </DropdownMenuItem>
+                          </>
                         ) : null}
                         {canCancel && row.status === 'draft' ? (
                           <>

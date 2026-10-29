@@ -26,6 +26,10 @@ const errorMessages: Record<string, string> = {
   vehicle_unavailable: 'المركبة غير متاحة للشراء (مباعة أو مؤرشفة).',
   document_mismatch: 'المستند المرفق لا يخص مورد هذه الفاتورة.',
   product_missing: 'المنتج غير موجود.',
+  supplier_inactive: 'المورد غير نشط. أعد تنشيطه قبل الاعتماد.',
+  journal_account_missing: 'الحسابات المحاسبية الأساسية غير مهيأة.',
+  payment_source_missing: 'لا يوجد مصدر سداد صالح لهذه الفاتورة.',
+  insufficient_cashbox_balance: 'رصيد الخزنة لا يكفي لسداد هذه الفاتورة.',
 }
 
 export function translatePurchaseError(error: unknown) {
@@ -79,6 +83,16 @@ export async function savePurchaseInvoice(
     p_paid_amount: input.paid_amount,
     p_notes: input.notes ?? null,
     p_supplier_reference: input.supplier_reference ?? null,
+  })
+
+  if (error) throw new Error(translatePurchaseError(error.message))
+
+  return (Array.isArray(data) ? data[0] : data) as unknown as PurchaseInvoiceRecord
+}
+
+export async function approvePurchaseInvoice(invoiceId: string) {
+  const { data, error } = await supabase.rpc('approve_purchase_invoice', {
+    p_invoice_id: invoiceId,
   })
 
   if (error) throw new Error(translatePurchaseError(error.message))
