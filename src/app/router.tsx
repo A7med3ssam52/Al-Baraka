@@ -19,10 +19,12 @@ import { CustomersPage } from '@/features/customers/pages/customers-page'
 import { AuditLogsPage } from '@/features/audit/pages/audit-logs-page'
 import { SettingsPage } from '@/features/settings/pages/settings-page'
 import { SuppliersPage } from '@/features/suppliers/pages/suppliers-page'
+import { SupplierProfilePage } from '@/features/suppliers/pages/supplier-profile-page'
 import { ProductsPage } from '@/features/products/pages/products-page'
 import { VehiclesPage } from '@/features/vehicles/pages/vehicles-page'
 import { MovementsPage } from '@/features/stock/pages/movements-page'
 import { PurchaseInvoicesPage } from '@/features/purchases/pages/purchase-invoices-page'
+import { PurchaseInvoicePrintPage } from '@/features/purchases/pages/purchase-invoice-print-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -78,6 +80,14 @@ export function AppRouter() {
               }
             />
             <Route
+              path="suppliers/:supplierId"
+              element={
+                <PermissionGuard permission="suppliers.view">
+                  <SupplierProfilePage />
+                </PermissionGuard>
+              }
+            />
+            <Route
               path="inventory"
               element={
                 <PermissionGuard permission="products.view">
@@ -106,6 +116,14 @@ export function AppRouter() {
               element={
                 <PermissionGuard permission="purchases.view">
                   <PurchaseInvoicesPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/purchases/:invoiceId/print"
+              element={
+                <PermissionGuard permission="purchases.view">
+                  <PurchaseInvoicePrintPage />
                 </PermissionGuard>
               }
             />

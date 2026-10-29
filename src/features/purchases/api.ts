@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type {
   PurchaseInvoiceDetail,
   PurchaseInvoiceInput,
+  PurchaseInvoicePrint,
   PurchaseInvoiceRecord,
   PurchasePaymentMethod,
   PurchaseStatus,
@@ -65,6 +66,16 @@ export async function fetchPurchaseInvoice(invoiceId: string): Promise<PurchaseI
   if (error) throw new Error(translatePurchaseError(error.message))
 
   return data as unknown as PurchaseInvoiceDetail
+}
+
+export async function fetchPurchaseInvoicePrint(invoiceId: string): Promise<PurchaseInvoicePrint> {
+  const { data, error } = await supabase.rpc('get_purchase_invoice_print', {
+    p_invoice_id: invoiceId,
+  })
+
+  if (error) throw new Error(translatePurchaseError(error.message))
+
+  return data as unknown as PurchaseInvoicePrint
 }
 
 export async function savePurchaseInvoice(

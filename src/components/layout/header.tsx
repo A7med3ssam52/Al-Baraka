@@ -54,7 +54,10 @@ export function Header({ onOpenSidebar }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur-xl">
+    <header
+      data-print-hidden
+      className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur-xl"
+    >
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Button
           type="button"

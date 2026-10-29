@@ -1,6 +1,12 @@
 import { supabase } from '@/lib/supabase'
 
-import type { SupplierInput, SupplierRecord, SupplierStatus } from './types'
+import type {
+  SupplierInput,
+  SupplierProfile,
+  SupplierRecord,
+  SupplierStatementRow,
+  SupplierStatus,
+} from './types'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -87,4 +93,29 @@ export async function setSupplierStatus(
   if (error) throw new Error(translateSupplierError(error.message))
 
   return data as unknown as SupplierRecord
+}
+
+export async function fetchSupplierProfile(supplierId: string): Promise<SupplierProfile> {
+  const { data, error } = await supabase.rpc('get_supplier_profile', {
+    p_supplier_id: supplierId,
+  })
+
+  if (error) throw new Error(translateSupplierError(error.message))
+
+  return data as unknown as SupplierProfile
+}
+
+export async function fetchSupplierStatement(
+  supplierId: string,
+  range?: { from?: string; to?: string },
+): Promise<SupplierStatementRow[]> {
+  const { data, error } = await supabase.rpc('list_supplier_statement', {
+    p_supplier_id: supplierId,
+    p_from: range?.from || null,
+    p_to: range?.to || null,
+  })
+
+  if (error) throw new Error(translateSupplierError(error.message))
+
+  return (data ?? []) as unknown as SupplierStatementRow[]
 }

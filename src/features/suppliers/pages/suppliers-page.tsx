@@ -1,5 +1,6 @@
 import { MoreHorizontal, RefreshCw, Search, Truck, UserPlus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
@@ -226,7 +227,9 @@ export function SuppliersPage() {
                 <TableRow key={row.id}>
                   <TableCell className="font-mono text-xs">{row.code}</TableCell>
                   <TableCell>
-                    <span className="font-semibold">{row.full_name}</span>
+                    <Link to={`/suppliers/${row.id}`} className="font-semibold hover:underline">
+                      {row.full_name}
+                    </Link>
                     {row.tax_number ? (
                       <p className="dir-ltr text-xs text-muted-foreground">{row.tax_number}</p>
                     ) : null}
@@ -251,6 +254,9 @@ export function SuppliersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/suppliers/${row.id}`}>ملف المورد</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setDocumentsSupplier(row)}>
                           المستندات
                         </DropdownMenuItem>

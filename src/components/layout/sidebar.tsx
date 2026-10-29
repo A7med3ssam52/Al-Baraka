@@ -157,7 +157,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
 
 export function Sidebar() {
   return (
-    <aside className="sticky top-0 hidden h-screen w-72 shrink-0 lg:block">
+    <aside data-print-hidden className="sticky top-0 hidden h-screen w-72 shrink-0 lg:block">
       <SidebarContent />
     </aside>
   )

@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { ArrowRight, FileText, Plus, Printer, RefreshCw, Search, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -279,6 +279,11 @@ export function PurchaseInvoicesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
+                        <DropdownMenuItem asChild>
+                          <Link to={`/inventory/purchases/${row.id}/print`}>
+                            <Printer className="size-4" /> طباعة الفاتورة
+                          </Link>
+                        </DropdownMenuItem>
                         {canUpdate && row.status === 'draft' ? (
                           <DropdownMenuItem onClick={() => setDialog({ open: true, invoice: row })}>
                             تعديل المسودة
