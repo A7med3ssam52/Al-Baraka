@@ -1,4 +1,14 @@
-import { Bike, FileText, History, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  Bike,
+  ClipboardCheck,
+  FileText,
+  History,
+  Plus,
+  RefreshCw,
+  Search,
+  TriangleAlert,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -182,6 +192,18 @@ export function ProductsPage() {
               <Button variant="outline" asChild>
                 <Link to="/inventory/purchases">
                   <FileText className="size-4" /> المشتريات
+                </Link>
+              </Button>
+            ) : null}
+            <Button variant="outline" asChild>
+              <Link to="/inventory/transfers">
+                <ArrowRightLeft className="size-4" /> التحويلات
+              </Link>
+            </Button>
+            {hasPermission('inventory_counts.view') ? (
+              <Button variant="outline" asChild>
+                <Link to="/inventory/counts">
+                  <ClipboardCheck className="size-4" /> الجرد
                 </Link>
               </Button>
             ) : null}

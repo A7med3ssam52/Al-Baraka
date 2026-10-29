@@ -1,4 +1,12 @@
-import { ArrowRight, History, Plus, RefreshCw, TriangleAlert } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowRightLeft,
+  ClipboardCheck,
+  History,
+  Plus,
+  RefreshCw,
+  TriangleAlert,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -131,6 +139,18 @@ export function MovementsPage() {
                 <ArrowRight className="size-4" /> المنتجات
               </Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link to="/inventory/transfers">
+                <ArrowRightLeft className="size-4" /> التحويلات
+              </Link>
+            </Button>
+            {hasPermission('inventory_counts.view') ? (
+              <Button variant="outline" asChild>
+                <Link to="/inventory/counts">
+                  <ClipboardCheck className="size-4" /> الجرد
+                </Link>
+              </Button>
+            ) : null}
             {canMove ? (
               <Button onClick={() => setDialogOpen(true)}>
                 <Plus className="size-4" /> حركة جديدة

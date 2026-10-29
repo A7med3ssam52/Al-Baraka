@@ -25,6 +25,9 @@ import { VehiclesPage } from '@/features/vehicles/pages/vehicles-page'
 import { MovementsPage } from '@/features/stock/pages/movements-page'
 import { PurchaseInvoicesPage } from '@/features/purchases/pages/purchase-invoices-page'
 import { PurchaseInvoicePrintPage } from '@/features/purchases/pages/purchase-invoice-print-page'
+import { TransfersPage } from '@/features/transfers/pages/transfers-page'
+import { CountsPage } from '@/features/counts/pages/counts-page'
+import { CountDetailPage } from '@/features/counts/pages/count-detail-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -124,6 +127,30 @@ export function AppRouter() {
               element={
                 <PermissionGuard permission="purchases.view">
                   <PurchaseInvoicePrintPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/transfers"
+              element={
+                <PermissionGuard permission="products.view">
+                  <TransfersPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/counts"
+              element={
+                <PermissionGuard permission="inventory_counts.view">
+                  <CountsPage />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="inventory/counts/:countId"
+              element={
+                <PermissionGuard permission="inventory_counts.view">
+                  <CountDetailPage />
                 </PermissionGuard>
               }
             />
