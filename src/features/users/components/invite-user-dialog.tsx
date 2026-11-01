@@ -174,7 +174,7 @@ export function InviteUserDialog({
                 <Input
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="مثال: محمد أحمد علي"
+                  placeholder="مثال: أحمد إبراهيم ياسر"
                   autoComplete="name"
                   disabled={submitting}
                 />
