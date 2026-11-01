@@ -10,8 +10,9 @@ const envSchema = z.object({
 })
 
 const result = envSchema.safeParse({
-  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-  VITE_SUPABASE_PUBLISHABLE_KEY: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'https://buiygpbhoukwxyuglzlo.supabase.co',
+  VITE_SUPABASE_PUBLISHABLE_KEY:
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_mNBmkN7lkcFMU07LZjP7Ng_7ybI_qiH',
   VITE_CLOUDINARY_CLOUD_NAME: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME,
 })
 
