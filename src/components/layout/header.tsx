@@ -103,7 +103,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                 size="icon"
                 className="relative"
                 aria-label="التنبيهات"
-                onClick={() => toast.info('مركز التنبيهات سيتوفر في M8.5.')}
+                onClick={() => toast.info('مركز التنبيهات قريباً.')}
               >
                 <Bell />
                 <span className="absolute top-2 end-2 size-2 rounded-full bg-accent ring-2 ring-background" />

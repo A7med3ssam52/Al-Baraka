@@ -24,7 +24,7 @@ const errorMessages: Record<string, string> = {
   invalid_document_type: 'نوع المستند غير معروف.',
   invalid_document_title: 'عنوان المستند مطلوب (حرفان على الأقل).',
   invalid_owner_type: 'مالك المستند (عميل أو مورد) غير معروف.',
-  invalid_public_id: 'معرّف الملف على Cloudinary غير صالح.',
+  invalid_public_id: 'معرّف الملف غير صالح.',
   invalid_file_format: 'صيغة الملف غير مدعومة (JPG أو PNG أو WebP أو PDF).',
   invalid_file_size: 'حجم الملف يجب أن يكون بين 1 بايت و10 ميجابايت.',
   invalid_action: 'نوع الوصول غير معروف.',
@@ -145,7 +145,7 @@ export async function getSecureFileUrl(
         throw new Error('انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.')
       }
       if (body?.error === 'cloudinary_not_configured') {
-        throw new Error('خدمة الروابط المؤقتة غير مهيأة. راجع إعدادات Cloudinary.')
+        throw new Error('خدمة الروابط المؤقتة غير مهيأة. راجع إعدادات النظام.')
       }
       if (body?.error === 'document_file_missing') {
         throw new Error('ملف المستند غير موجود.')

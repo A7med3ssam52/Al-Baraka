@@ -1,8 +1,10 @@
 import { supabase } from '@/lib/supabase'
 
 import type {
+  CollectionsReport,
   InventoryReport,
   PurchasesReport,
+  SalesReport,
   VehicleCostBreakdown,
   VehicleMovementRow,
   VehiclesReport,
@@ -86,6 +88,40 @@ export async function fetchPurchasesReport(options?: {
   if (error) throw new Error(translateReportError(error.message))
 
   return data as unknown as PurchasesReport
+}
+
+export async function fetchCollectionsReport(options?: {
+  from?: string
+  to?: string
+  branchId?: string | null
+}): Promise<CollectionsReport> {
+  const { data, error } = await supabase.rpc('get_collections_report', {
+    p_from: options?.from || null,
+    p_to: options?.to || null,
+    p_branch_id: options?.branchId ?? null,
+  })
+
+  if (error) throw new Error(translateReportError(error.message))
+
+  return data as unknown as CollectionsReport
+}
+
+export async function fetchSalesReport(options?: {
+  from?: string
+  to?: string
+  branchId?: string | null
+  status?: string
+}): Promise<SalesReport> {
+  const { data, error } = await supabase.rpc('get_sales_report', {
+    p_from: options?.from || null,
+    p_to: options?.to || null,
+    p_branch_id: options?.branchId ?? null,
+    p_status: options?.status ?? 'all',
+  })
+
+  if (error) throw new Error(translateReportError(error.message))
+
+  return data as unknown as SalesReport
 }
 
 export async function fetchVehicleCostBreakdown(vehicleId: string): Promise<VehicleCostBreakdown> {

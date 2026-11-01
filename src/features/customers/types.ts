@@ -21,6 +21,7 @@ export interface CustomerInput {
   full_name: string
   national_id: string
   mobile: string
+  code?: string | null
   phone2?: string | null
   job?: string | null
   address?: string | null

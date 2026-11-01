@@ -466,7 +466,7 @@ export function UsersPage() {
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
               aria-label="تصفية حسب الحالة"
-              className="w-40"
+              className="w-full sm:w-40"
             >
               {(Object.keys(statusFilterLabels) as StatusFilter[]).map((value) => (
                 <option key={value} value={value}>

@@ -172,7 +172,7 @@ export function MovementsPage() {
                 setLoading(true)
                 setTypeFilter(event.target.value as MovementType | 'all')
               }}
-              className="w-44"
+              className="w-full sm:w-44"
             >
               {filterTypes.map((type) => (
                 <option key={type} value={type}>

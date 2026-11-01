@@ -7,7 +7,7 @@ const supabaseKey = env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error(
-    'إعدادات Supabase غير مكتملة. أضف VITE_SUPABASE_URL وVITE_SUPABASE_PUBLISHABLE_KEY إلى .env.local ثم أعد تشغيل الخادم.',
+    'إعدادات الاتصال غير مكتملة. أضف متغيرات البيئة المطلوبة ثم أعد تشغيل الخادم.',
   )
 }
 

@@ -172,7 +172,7 @@ export function TransfersPage() {
                 setLoading(true)
                 setStatusFilter(event.target.value as StatusFilter)
               }}
-              className="w-40"
+              className="w-full sm:w-40"
             >
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>

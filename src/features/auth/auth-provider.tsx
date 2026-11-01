@@ -125,7 +125,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     if (error) {
       if (import.meta.env.DEV) {
-        console.warn('تعذر تحميل صلاحيات المستخدم من Supabase:', error.message)
+        console.warn('تعذر تحميل صلاحيات المستخدم:', error.message)
       }
       return getFallbackUser(currentUser)
     }

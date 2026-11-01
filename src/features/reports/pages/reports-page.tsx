@@ -6,11 +6,12 @@ import { Card } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/use-auth'
 import { cn } from '@/lib/utils'
 
+import { CollectionsReportPanel } from '../components/collections-report-panel'
 import { InventoryReportPanel } from '../components/inventory-report-panel'
 import { PurchasesReportPanel } from '../components/purchases-report-panel'
 import { VehiclesReportPanel } from '../components/vehicles-report-panel'
 
-type ReportTab = 'inventory' | 'vehicles' | 'purchases'
+type ReportTab = 'inventory' | 'vehicles' | 'purchases' | 'collections'
 
 const tabs: { id: ReportTab; label: string; description: string }[] = [
   {
@@ -27,6 +28,11 @@ const tabs: { id: ReportTab; label: string; description: string }[] = [
     id: 'purchases',
     label: 'المشتريات',
     description: 'إجماليات المشتريات والمدفوع والمتبقي حسب المورد والفترة.',
+  },
+  {
+    id: 'collections',
+    label: 'التحصيلات',
+    description: 'إجمالي المقبوضات من الأقساط والمقدمات حسب الفترة والطريقة والفرع.',
   },
 ]
 
@@ -71,6 +77,7 @@ export function ReportsPage() {
       {tab === 'inventory' ? <InventoryReportPanel branches={branches} /> : null}
       {tab === 'vehicles' ? <VehiclesReportPanel branches={branches} /> : null}
       {tab === 'purchases' ? <PurchasesReportPanel /> : null}
+      {tab === 'collections' ? <CollectionsReportPanel branches={branches} /> : null}
     </>
   )
 }

@@ -63,7 +63,7 @@ const errorMessages: Record<string, string> = {
   invalid_action: 'الإجراء المطلوب غير مدعوم.',
   invalid_user: 'بيانات المستخدم غير صحيحة.',
   method_not_allowed: 'طريقة الطلب غير مدعومة.',
-  supabase_not_configured: 'إعدادات Supabase غير مكتملة على الخادم.',
+  supabase_not_configured: 'إعدادات الخادم غير مكتملة.',
   service_role_required: 'هذه العملية متاحة للخادم فقط.',
 }
 

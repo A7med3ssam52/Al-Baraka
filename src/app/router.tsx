@@ -29,6 +29,7 @@ import { TransfersPage } from '@/features/transfers/pages/transfers-page'
 import { CountsPage } from '@/features/counts/pages/counts-page'
 import { CountDetailPage } from '@/features/counts/pages/count-detail-page'
 import { ReportsPage } from '@/features/reports/pages/reports-page'
+import { InstallmentsPage } from '@/features/installments/pages/installments-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
@@ -160,7 +161,7 @@ export function AppRouter() {
               element={
                 <ComingSoonPage
                   title="المبيعات"
-                  phase="M4.1"
+                  
                   description="البيع النقدي والتقسيط، العقود، الحجوزات، والمرتجعات في مسار واحد."
                 />
               }
@@ -168,11 +169,9 @@ export function AppRouter() {
             <Route
               path="installments"
               element={
-                <ComingSoonPage
-                  title="الأقساط والتحصيل"
-                  phase="M5.1"
-                  description="جداول الأقساط، التحصيلات الجزئية، الإعادة الجدولة، ومتابعة المتأخرات."
-                />
+                <PermissionGuard permission="installments.view">
+                  <InstallmentsPage />
+                </PermissionGuard>
               }
             />
             <Route
@@ -180,7 +179,7 @@ export function AppRouter() {
               element={
                 <ComingSoonPage
                   title="الخزنة والمصروفات"
-                  phase="M6.1"
+                  
                   description="الخزنة والبنوك والمصروفات والقيود اليومية ومطابقة الأرصدة."
                 />
               }
@@ -190,7 +189,7 @@ export function AppRouter() {
               element={
                 <ComingSoonPage
                   title="المستندات"
-                  phase="M7.1"
+                  
                   description="مركز مستندات آمن للصور والعقود وإيصالات الأمانة وكشوف الحساب."
                 />
               }

@@ -264,14 +264,14 @@ export function ProfilePage() {
             <div>
               <CardTitle>اختبار الرفع الآمن</CardTitle>
               <CardDescription>
-                أداة مؤقتة للتحقق من رفع الصور عبر Cloudinary في M0.4.
+                أداة للتحقق من رفع الصور.
               </CardDescription>
             </div>
             <Badge variant="warning">بيئة تجريبية</Badge>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-              يتحقق الاختبار من دورة الرفع الموقّعة عبر Edge Function دون تعريض API Secret في
+              يتحقق الاختبار من دورة الرفع الموقّعة دون تعريض المفاتيح في
               المتصفح.
             </p>
             <Button asChild variant="outline">

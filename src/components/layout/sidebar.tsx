@@ -1,4 +1,4 @@
-import { Building2, MoreHorizontal, Settings } from 'lucide-react'
+import { Building2, MoreHorizontal } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 
@@ -6,7 +6,7 @@ import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
 import { useSettings } from '@/features/settings/use-settings'
 import { mainNavigation, secondaryNavigation } from '@/lib/navigation'
-import { APP_INFO, STAGE } from '@/lib/constants'
+import { APP_INFO } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 interface SidebarLinkProps {
@@ -57,7 +57,7 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
   const visibleSecondaryNavigation = secondaryNavigation.filter(
     (item) => !item.permission || hasPermission(item.permission),
   )
-  const progress = Math.round((STAGE.completedInMain / STAGE.totalInMain) * 100)
+
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -117,25 +117,6 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
       </nav>
 
       <div className="border-t border-sidebar-border p-4">
-        <div className="rounded-xl bg-sidebar-accent/70 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-bold text-sidebar-active">المرحلة الحالية</p>
-            <Settings className="size-3.5 text-sidebar-muted" />
-          </div>
-          <p className="mt-1 text-sm font-bold">
-            {STAGE.current} — {STAGE.currentTitle}
-          </p>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-sidebar-active"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="mt-2 text-[10px] text-sidebar-muted">
-            {STAGE.completedInMain} من {STAGE.totalInMain} مراحل في {STAGE.mainStage}
-          </p>
-        </div>
-
         <Link
           to="/profile"
           onClick={onNavigate}

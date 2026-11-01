@@ -101,7 +101,7 @@ export function DocumentsPanel({ ownerType, ownerId, ownerLabel }: Props) {
         <div className="min-w-0">
           <h2 className="font-bold">المستندات</h2>
           <p className="text-xs text-muted-foreground">
-            رفع مباشر وموقَّع إلى Cloudinary، وعرض برابط مؤقت موقَّع فقط — لا روابط عامة.
+            رفع مباشر وموقَّع، وعرض برابط مؤقت موقَّع فقط — لا روابط عامة.
           </p>
         </div>
         <div className="flex gap-2">
@@ -431,7 +431,7 @@ function CreateDocumentDialog({
         <DialogHeader>
           <DialogTitle>مستند جديد</DialogTitle>
           <DialogDescription>
-            سيُرقّم المستند تلقائيًا، وترفع الملفات مباشرة إلى Cloudinary بتوقيع آمن.
+            سيُرقّم المستند تلقائيًا، وترفع الملفات مباشرة بتوقيع آمن.
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-3" onSubmit={(event) => void handleSubmit(event)}>

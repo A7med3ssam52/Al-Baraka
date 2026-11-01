@@ -135,7 +135,7 @@ export function NumberingPanel({ canEdit }: NumberingPanelProps) {
                 value={activeBranchId}
                 onChange={(event) => setSelectedBranchId(event.target.value)}
                 aria-label="اختيار الفرع"
-                className="w-56"
+                className="w-full sm:w-56"
                 disabled={branchOptions.length === 0}
               >
                 {branchOptions.map((branch) => (

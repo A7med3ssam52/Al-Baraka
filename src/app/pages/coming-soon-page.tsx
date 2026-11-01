@@ -8,15 +8,13 @@ import { EmptyState } from '@/components/ui/empty-state'
 
 interface ComingSoonPageProps {
   title: string
-  phase: string
   description: string
 }
 
-export function ComingSoonPage({ title, phase, description }: ComingSoonPageProps) {
+export function ComingSoonPage({ title, description }: ComingSoonPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={`${phase} — مرحلة لاحقة`}
         title={title}
         description={description}
         actions={<Badge variant="warning">قيد الانتظار</Badge>}

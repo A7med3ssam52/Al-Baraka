@@ -96,7 +96,7 @@ export function CustomerProfile({
               )}
             >
               {tab.label}
-              {!available ? <span className="ms-1 text-[10px]">({tab.availableAt})</span> : null}
+              {!available ? <span className="ms-1 text-[10px]">(قريباً)</span> : null}
             </button>
           )
         })}

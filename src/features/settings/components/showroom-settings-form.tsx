@@ -157,7 +157,7 @@ export function ShowroomSettingsForm({ canEdit }: ShowroomSettingsFormProps) {
                 disabled={formDisabled}
               />
               <p className="text-[11px] leading-5 text-muted-foreground">
-                يُفضّل رفع الشعار عبر Cloudinary ثم لصق الرابط هنا. اترك الحقل فارغًا لاستخدام
+                يُفضّل رفع الشعار ثم لصق الرابط هنا. اترك الحقل فارغًا لاستخدام
                 الشعار النصي المؤقت.
               </p>
             </div>

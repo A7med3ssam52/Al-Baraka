@@ -100,9 +100,9 @@ export function UploadTestPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="M0.4"
+        eyebrow="رفع آمن"
         title="اختبار الرفع الآمن"
-        description="اختبار دورة رفع صورة موقّعة من المتصفح إلى Cloudinary عبر Edge Function، دون تعريض API Secret."
+        description="اختبار دورة رفع صورة موقّعة من المتصفح، دون تعريض المفاتيح."
         actions={<Badge variant="warning">بيئة تجريبية</Badge>}
       />
 
@@ -203,7 +203,7 @@ export function UploadTestPage() {
 
           <CardFooter className="flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
             <p className="text-xs leading-5 text-muted-foreground">
-              الرفع يتم بتوقيع مؤقت من Edge Function. لا يصل API Secret إلى المتصفح.
+              الرفع يتم بتوقيع مؤقت. لا تصل المفاتيح إلى المتصفح.
             </p>
             <Button onClick={() => void handleUpload()} disabled={!file || uploading}>
               {uploading ? <LoaderCircle className="animate-spin" /> : <UploadCloud />}
@@ -216,7 +216,7 @@ export function UploadTestPage() {
           <CardHeader>
             <div>
               <CardTitle>كيف يعمل؟</CardTitle>
-              <CardDescription>خطوات الرفع الآمن في M0.4.</CardDescription>
+              <CardDescription>خطوات الرفع الآمن.</CardDescription>
             </div>
             <Badge variant="outline">Signed upload</Badge>
           </CardHeader>
@@ -233,13 +233,13 @@ export function UploadTestPage() {
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   2
                 </span>
-                <span>تطلب Edge Function توقيعًا مؤقتًا من Cloudinary.</span>
+                <span>تطلب الخدمة توقيعًا مؤقتًا للرفع.</span>
               </li>
               <li className="flex gap-3">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   3
                 </span>
-                <span>يرفع المتصفح الصورة مباشرة إلى Cloudinary بالتوقيع.</span>
+                <span>يرفع المتصفح الصورة مباشرة بالتوقيع.</span>
               </li>
               <li className="flex gap-3">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -256,7 +256,7 @@ export function UploadTestPage() {
               <p className="mt-1">
                 يجب ضبط <code dir="ltr">CLOUDINARY_CLOUD_NAME</code> و
                 <code dir="ltr">CLOUDINARY_API_KEY</code> و
-                <code dir="ltr">CLOUDINARY_API_SECRET</code> في أسرار Supabase Edge Functions.
+                المفاتيح السرية على الخادم.
               </p>
             </div>
           </CardContent>

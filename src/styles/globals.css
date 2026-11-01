@@ -167,6 +167,163 @@
   }
 }
 
+/* ===== Themes ===== */
+.theme-dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --card: #1e293b;
+  --card-foreground: #e2e8f0;
+  --popover: #1e293b;
+  --popover-foreground: #e2e8f0;
+  --primary: #f1f5f9;
+  --primary-foreground: #0f172a;
+  --secondary: #334155;
+  --secondary-foreground: #e2e8f0;
+  --muted: #334155;
+  --muted-foreground: #94a3b8;
+  --accent: #f59e0b;
+  --accent-strong: #fbbf24;
+  --accent-foreground: #0f172a;
+  --destructive: #f87171;
+  --destructive-foreground: #0f172a;
+  --success: #34d399;
+  --success-foreground: #0f172a;
+  --warning: #fbbf24;
+  --warning-foreground: #0f172a;
+  --border: #334155;
+  --input: #334155;
+  --ring: #f59e0b;
+  --sidebar: #020617;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-muted: #94a3b8;
+  --sidebar-accent: #1e293b;
+  --sidebar-border: rgba(226, 232, 240, 0.1);
+  --sidebar-active: #f59e0b;
+  --sidebar-active-foreground: #0f172a;
+  --chart-1: #f59e0b;
+  --chart-2: #38bdf8;
+  --chart-3: #34d399;
+  --chart-4: #fb7185;
+  --chart-5: #a78bfa;
+}
+
+.theme-emerald {
+  --background: #f0fdf4;
+  --foreground: #14532d;
+  --card: #ffffff;
+  --card-foreground: #14532d;
+  --popover: #ffffff;
+  --popover-foreground: #14532d;
+  --primary: #065f46;
+  --primary-foreground: #f0fdf4;
+  --secondary: #dcfce7;
+  --secondary-foreground: #14532d;
+  --muted: #dcfce7;
+  --muted-foreground: #3f6212;
+  --accent: #10b981;
+  --accent-strong: #047857;
+  --accent-foreground: #ffffff;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --border: #bbf7d0;
+  --input: #bbf7d0;
+  --ring: #10b981;
+  --sidebar: #065f46;
+  --sidebar-foreground: #f0fdf4;
+  --sidebar-muted: #a7f3d0;
+  --sidebar-accent: #047857;
+  --sidebar-border: rgba(240, 253, 244, 0.12);
+  --sidebar-active: #10b981;
+  --sidebar-active-foreground: #ffffff;
+  --chart-1: #10b981;
+  --chart-2: #0ea5e9;
+  --chart-3: #f59e0b;
+  --chart-4: #ef4444;
+  --chart-5: #8b5cf6;
+}
+
+.theme-rose {
+  --background: #fff1f2;
+  --foreground: #881337;
+  --card: #ffffff;
+  --card-foreground: #881337;
+  --popover: #ffffff;
+  --popover-foreground: #881337;
+  --primary: #9f1239;
+  --primary-foreground: #fff1f2;
+  --secondary: #ffe4e6;
+  --secondary-foreground: #881337;
+  --muted: #ffe4e6;
+  --muted-foreground: #9f1239;
+  --accent: #e11d48;
+  --accent-strong: #be123c;
+  --accent-foreground: #ffffff;
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #b45309;
+  --warning-foreground: #ffffff;
+  --border: #fecdd3;
+  --input: #fecdd3;
+  --ring: #e11d48;
+  --sidebar: #9f1239;
+  --sidebar-foreground: #fff1f2;
+  --sidebar-muted: #fecdd3;
+  --sidebar-accent: #be123c;
+  --sidebar-border: rgba(255, 241, 242, 0.12);
+  --sidebar-active: #e11d48;
+  --sidebar-active-foreground: #ffffff;
+  --chart-1: #e11d48;
+  --chart-2: #f59e0b;
+  --chart-3: #0ea5e9;
+  --chart-4: #10b981;
+  --chart-5: #8b5cf6;
+}
+
+.theme-slate {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #334155;
+  --primary-foreground: #f8fafc;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #1e293b;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --accent: #6366f1;
+  --accent-strong: #4f46e5;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #6366f1;
+  --sidebar: #1e293b;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-muted: #cbd5e1;
+  --sidebar-accent: #334155;
+  --sidebar-border: rgba(248, 250, 252, 0.1);
+  --sidebar-active: #6366f1;
+  --sidebar-active-foreground: #ffffff;
+  --chart-1: #6366f1;
+  --chart-2: #0ea5e9;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ec4899;
+}
+
 @media print {
   body {
     background: #fff;

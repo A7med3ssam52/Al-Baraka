@@ -21,12 +21,4 @@ export const APP_INFO = {
   timezone: 'Africa/Cairo',
 } as const
 
-export const STAGE = {
-  current: 'M1.4',
-  currentTitle: 'الفروع والإعدادات والترقيم',
-  next: 'M1.5',
-  nextTitle: 'سجل المراجعة وحراسة الواجهة',
-  mainStage: 'M1',
-  completedInMain: 3,
-  totalInMain: 5,
-} as const
+

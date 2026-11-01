@@ -133,6 +133,7 @@ export function CustomersPage() {
     full_name: string
     national_id: string
     mobile: string
+    code: string | null
     phone2: string
     job: string
     address: string

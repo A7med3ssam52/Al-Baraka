@@ -29,6 +29,7 @@ interface Props {
     full_name: string
     national_id: string
     mobile: string
+    code: string | null
     phone2: string
     job: string
     address: string
@@ -40,6 +41,7 @@ interface FormState {
   full_name: string
   national_id: string
   mobile: string
+  code: string
   phone2: string
   job: string
   address: string
@@ -50,6 +52,7 @@ const emptyForm: FormState = {
   full_name: '',
   national_id: '',
   mobile: '',
+  code: '',
   phone2: '',
   job: '',
   address: '',
@@ -75,6 +78,7 @@ export function CustomerFormDialog({ open, customer, onOpenChange, onClosed, onS
               full_name: customer.full_name,
               national_id: customer.national_id,
               mobile: customer.mobile,
+              code: customer.code ?? '',
               phone2: customer.phone2 ?? '',
               job: customer.job ?? '',
               address: customer.address ?? '',
@@ -130,6 +134,9 @@ export function CustomerFormDialog({ open, customer, onOpenChange, onClosed, onS
         full_name: form.full_name,
         national_id: form.national_id.replace(/\D/g, ''),
         mobile: form.mobile,
+        code: form.code.trim()
+          ? `CUS-${form.code.trim().padStart(4, '0')}`
+          : null,
         phone2: form.phone2,
         job: form.job,
         address: form.address,
@@ -170,6 +177,33 @@ export function CustomerFormDialog({ open, customer, onOpenChange, onClosed, onS
               onChange={(event) => patch({ full_name: event.target.value })}
               required
             />
+          </div>
+
+          <div className="grid gap-2">
+            <label className="text-sm font-bold" htmlFor="customer-code">
+              {isEdit ? 'كود العميل (لا يُعدل)' : 'رقم العميل (اختياري)'}
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 rounded-md border border-input bg-muted px-3 py-2 font-mono text-sm text-muted-foreground">
+                CUS-
+              </span>
+              <Input
+                id="customer-code"
+                className="dir-ltr font-mono"
+                value={form.code}
+                onChange={(event) =>
+                  patch({ code: event.target.value.replace(/\D/g, '').slice(0, 6) })
+                }
+                placeholder="0001"
+                disabled={isEdit}
+                inputMode="numeric"
+              />
+            </div>
+            {!isEdit ? (
+              <p className="text-[11px] text-muted-foreground">
+                اتركه فارغًا للتوليد التلقائي. أدخل 1-6 أرقام (سيُضاف CUS- تلقائياً).
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

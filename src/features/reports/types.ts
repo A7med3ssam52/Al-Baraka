@@ -125,6 +125,72 @@ export interface PurchasesReport {
   invoices: PurchaseReportInvoice[]
 }
 
+export interface CollectionsPaymentRow {
+  id: string
+  payment_date: string
+  amount: number
+  payment_method: string
+  payment_type: string
+  receipt_number: string | null
+  customer_id?: string
+  customer_name: string
+  customer_code: string
+  branch_name: string
+  contract_number: string | null
+}
+
+export interface CollectionsReport {
+  summary: {
+    total_collected: number
+    payment_count: number
+    cash_total: number
+    bank_total: number
+    down_payment_total: number
+    installment_total: number
+  }
+  payments: CollectionsPaymentRow[]
+}
+
+export interface SalesReportInvoice {
+  id: string
+  number: string
+  invoice_date: string
+  status: string
+  sale_type: string
+  total: number
+  paid_amount: number
+  remaining_amount: number
+  customer_id?: string
+  customer_name: string
+  customer_code: string
+  branch_name: string
+}
+
+export interface SalesReport {
+  summary: {
+    invoice_count: number
+    approved_count: number
+    draft_count: number
+    cancelled_count: number
+    total_amount: number
+    paid_amount: number
+    remaining_amount: number
+    cash_count: number
+    installment_count: number
+    vehicle_count: number
+    product_revenue: number
+  }
+  by_branch: Array<{
+    branch_id: string
+    branch_name: string
+    invoice_count: number
+    total: number
+    paid_amount: number
+    remaining_amount: number
+  }>
+  invoices: SalesReportInvoice[]
+}
+
 export interface VehicleCostBreakdown {
   vehicle: {
     id: string
