@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { APP_INFO } from '@/lib/constants'
 import { AuthLayout } from '@/features/auth/components/auth-layout'
 import { useAuth } from '@/features/auth/use-auth'
 
@@ -49,7 +48,7 @@ export function LoginPage() {
       footer={
         <>
           الحساب يُنشأ بواسطة مدير النظام. للاستفسار تواصل مع{' '}
-          <span className="font-bold text-foreground">{APP_INFO.contacts[0].name}</span>.
+          <span className="font-bold text-foreground">الإدارة</span>.
         </>
       }
     >
