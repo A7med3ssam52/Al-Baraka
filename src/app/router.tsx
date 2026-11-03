@@ -28,6 +28,8 @@ import { PurchaseInvoicePrintPage } from '@/features/purchases/pages/purchase-in
 import { TransfersPage } from '@/features/transfers/pages/transfers-page'
 import { CountsPage } from '@/features/counts/pages/counts-page'
 import { CountDetailPage } from '@/features/counts/pages/count-detail-page'
+import { DocumentsPage } from '@/features/documents/pages/documents-page'
+import { TreasuryPage } from '@/features/treasury/pages/treasury-page'
 import { ReportsPage } from '@/features/reports/pages/reports-page'
 import { InstallmentsPage } from '@/features/installments/pages/installments-page'
 import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
@@ -177,21 +179,17 @@ export function AppRouter() {
             <Route
               path="treasury"
               element={
-                <ComingSoonPage
-                  title="الخزنة والمصروفات"
-                  
-                  description="الخزنة والبنوك والمصروفات والقيود اليومية ومطابقة الأرصدة."
-                />
+                <PermissionGuard permission="cashboxes.view">
+                  <TreasuryPage />
+                </PermissionGuard>
               }
             />
             <Route
               path="documents"
               element={
-                <ComingSoonPage
-                  title="المستندات"
-                  
-                  description="مركز مستندات آمن للصور والعقود وإيصالات الأمانة وكشوف الحساب."
-                />
+                <PermissionGuard permission="documents.view">
+                  <DocumentsPage />
+                </PermissionGuard>
               }
             />
             <Route
