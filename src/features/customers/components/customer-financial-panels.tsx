@@ -203,10 +203,10 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd }: Props) {
 
   useEffect(() => {
     let active = true
-    fetchInstallments({})
-      .then((all) => {
+    fetchInstallments({ customerId })
+      .then((mine) => {
         if (!active) return
-        setRows(all.filter((r) => r.customer_id === customerId))
+        setRows(mine)
         setLoading(false)
       })
       .catch(() => { if (active) setLoading(false) })
@@ -338,12 +338,12 @@ export function StatementPanel({
         .eq('customer_id', customerId)
         .order('transaction_date', { ascending: true })
         .limit(200),
-      fetchInstallments({}).catch(() => [] as InstallmentRow[]),
-    ]).then(([txRes, allInstallments]) => {
+      fetchInstallments({ customerId }).catch(() => [] as InstallmentRow[]),
+    ]).then(([txRes, mine]) => {
       if (!active) return
       if (txRes.error) toast.error('تعذر تحميل كشف الحساب')
       setRows(((txRes.data ?? []) as unknown) as TransactionRow[])
-      setInstallments((allInstallments as InstallmentRow[]).filter((r) => r.customer_id === customerId))
+      setInstallments(mine as InstallmentRow[])
       setLoading(false)
     })
     return () => {

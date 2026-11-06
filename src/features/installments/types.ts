@@ -32,6 +32,7 @@ export interface InstallmentRow {
 
 export interface InstallmentFilters {
   branchId?: string | null
+  customerId?: string | null
   status?: InstallmentStatusFilter
   search?: string
   dueFrom?: string | null

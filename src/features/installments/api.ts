@@ -147,6 +147,10 @@ export async function fetchInstallments(filters?: InstallmentFilters): Promise<I
     query = query.eq('branch_id', filters.branchId)
   }
 
+  if (filters?.customerId) {
+    query = query.eq('customer_id', filters.customerId)
+  }
+
   if (filters?.dueFrom) {
     query = query.gte('due_date', filters.dueFrom)
   }
