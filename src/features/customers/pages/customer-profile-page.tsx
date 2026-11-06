@@ -15,6 +15,13 @@ import type { CustomerRecord } from '../types'
 import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
+import {
+  ContractsPanel,
+  InstallmentsPanel,
+  PaymentsPanel,
+  SalesPanel,
+  StatementPanel,
+} from '../components/customer-financial-panels'
 import type { CustomerNote } from '../types'
 import {
   customerProfileTabs,
@@ -50,6 +57,15 @@ export function CustomerProfile({
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
     if (tabId === 'documents') return hasPermission('documents.view')
+    if (
+      tabId === 'sales' ||
+      tabId === 'contracts' ||
+      tabId === 'installments' ||
+      tabId === 'payments' ||
+      tabId === 'statement'
+    ) {
+      return true
+    }
     return availability?.[tabId] === true
   }
 
@@ -108,11 +124,21 @@ export function CustomerProfile({
       {activeTab === 'documents' ? (
         <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
       ) : null}
+      {activeTab === 'sales' ? <SalesPanel customerId={customer.id} /> : null}
+      {activeTab === 'contracts' ? <ContractsPanel customerId={customer.id} /> : null}
+      {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} /> : null}
+      {activeTab === 'payments' ? <PaymentsPanel customerId={customer.id} /> : null}
+      {activeTab === 'statement' ? <StatementPanel customerId={customer.id} /> : null}
       {activeTab !== 'personal' &&
       activeTab !== 'notes' &&
       activeTab !== 'contacts' &&
       activeTab !== 'guarantors' &&
-      activeTab !== 'documents' ? (
+      activeTab !== 'documents' &&
+      activeTab !== 'sales' &&
+      activeTab !== 'contracts' &&
+      activeTab !== 'installments' &&
+      activeTab !== 'payments' &&
+      activeTab !== 'statement' ? (
         renderExtraTab ? (
           renderExtraTab(activeTab, customer)
         ) : (
