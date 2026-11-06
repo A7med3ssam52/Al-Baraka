@@ -38,6 +38,13 @@ export const mainNavigation: NavItem[] = [
     permission: 'customers.view',
   },
   {
+    label: 'الأقساط والتحصيل',
+    href: '/installments',
+    icon: CreditCard,
+    description: 'جداول الأقساط والتحصيلات',
+    permission: 'installments.view',
+  },
+  {
     label: 'الموردون',
     href: '/suppliers',
     icon: Truck,
@@ -50,13 +57,6 @@ export const mainNavigation: NavItem[] = [
     icon: Bike,
     description: 'المركبات والمنتجات والقطع',
     permission: 'products.view',
-  },
-  {
-    label: 'الأقساط والتحصيل',
-    href: '/installments',
-    icon: CreditCard,
-    description: 'جداول الأقساط والتحصيلات',
-    permission: 'installments.view',
   },
   {
     label: 'الخزنة والمصروفات',
