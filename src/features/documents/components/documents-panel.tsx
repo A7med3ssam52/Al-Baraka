@@ -97,14 +97,9 @@ export function DocumentsPanel({ ownerType, ownerId, ownerLabel }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <h2 className="font-bold">المستندات</h2>
-          <p className="text-xs text-muted-foreground">
-            رفع مباشر وموقَّع، وعرض برابط مؤقت موقَّع فقط — لا روابط عامة.
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <Card className="p-4">
+        <h2 className="text-center font-bold">المستندات</h2>
+        <div className="mt-3 flex items-center justify-center gap-2">
           <Button variant="ghost" size="icon" aria-label="تحديث" onClick={reload}>
             <RefreshCw className="size-4" />
           </Button>
