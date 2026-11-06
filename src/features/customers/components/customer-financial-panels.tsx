@@ -399,7 +399,7 @@ export function StatementPanel({
                 </p>
               </div>
             </div>
-            <p className="text-xs italic text-[#c8a24a]">اختيارك الأفضل ... طريقك أسهل</p>
+            <p className="text-center text-xs italic text-[#c8a24a] sm:text-start sm:pt-2">اختيارك الأفضل ... طريقك أسهل</p>
           </div>
         </header>
 

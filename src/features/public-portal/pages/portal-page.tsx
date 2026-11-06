@@ -1,4 +1,4 @@
-import { AlertTriangle, CreditCard, FileText, LogOut, Lock, PhoneCall, Printer, RefreshCw, UserRound } from 'lucide-react'
+import { AlertTriangle, CreditCard, FileText, LogOut, PhoneCall, Printer, RefreshCw, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
@@ -141,7 +141,6 @@ export function PortalPage() {
             </span>
           </Link>
           <div className="ms-auto flex flex-wrap items-center gap-2">
-            <Badge variant="accent"><Lock className="size-3" /> عرض للقراءة فقط</Badge>
             <Button variant="outline" size="sm" onClick={handleReload} disabled={loading} aria-label="تحديث البيانات">
               <RefreshCw className={cn('size-4', loading && 'animate-spin')} /> تحديث
             </Button>
@@ -221,7 +220,7 @@ export function PortalPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          مصدر البيانات: نظام معرض البركة — عرض للقراءة فقط • <Link to="/" className="font-bold underline">العودة لصفحة الاستعلام</Link>
+          مصدر البيانات: نظام معرض البركة • <Link to="/" className="font-bold underline">العودة لصفحة الاستعلام</Link>
         </p>
       </main>
     </div>
