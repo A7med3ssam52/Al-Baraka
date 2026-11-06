@@ -96,7 +96,6 @@ export function CustomerProfile({
               )}
             >
               {tab.label}
-              {!available ? <span className="ms-1 text-[10px]">(قريباً)</span> : null}
             </button>
           )
         })}
@@ -120,8 +119,8 @@ export function CustomerProfile({
           <Card className="p-6">
             <EmptyState
               icon={ArrowRight}
-              title="متاح في مرحلة تالية"
-              description="هذا التبويب يُفعّل مع وحدات الخطة التنفيذية القادمة."
+              title="لا توجد بيانات هنا بعد"
+              description="ستظهر البيانات هنا بعد تسجيل العمليات."
             />
           </Card>
         )

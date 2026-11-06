@@ -6,9 +6,7 @@ import {
   FileText,
   History,
   LayoutDashboard,
-  Palette,
   Settings,
-  ShoppingCart,
   Truck,
   UserCog,
   UserRound,
@@ -54,13 +52,6 @@ export const mainNavigation: NavItem[] = [
     permission: 'products.view',
   },
   {
-    label: 'المبيعات',
-    href: '/sales',
-    icon: ShoppingCart,
-    description: 'البيع النقدي والتقسيط والعقود',
-    permission: 'sales.view',
-  },
-  {
     label: 'الأقساط والتحصيل',
     href: '/installments',
     icon: CreditCard,
@@ -104,12 +95,6 @@ export const secondaryNavigation: NavItem[] = [
     icon: History,
     description: 'العمليات الحساسة على النظام',
     permission: 'audit_logs.view',
-  },
-  {
-    label: 'النظام التصميمي',
-    href: '/design-system',
-    icon: Palette,
-    description: 'مكونات الواجهة والألوان',
   },
   {
     label: 'الإعدادات',

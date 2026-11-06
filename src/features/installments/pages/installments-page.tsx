@@ -246,7 +246,6 @@ export function InstallmentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="المرحلة M5"
         title="الأقساط والتحصيل"
         description="جداول الأقساط، التحصيل الكامل والجزئي، الإعفاء وإعادة الجدولة، ومتابعة المتأخرات — كل حركة تُحدِّث الخزنة وسجل العميل."
         actions={

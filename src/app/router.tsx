@@ -1,8 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { AppShell } from '@/components/layout/app-shell'
-import { ComingSoonPage } from '@/app/pages/coming-soon-page'
-import { DesignSystemPage } from '@/app/pages/design-system-page'
 import { ForbiddenPage } from '@/app/pages/forbidden-page'
 import { LoadingPage } from '@/app/pages/loading-page'
 import { NotFoundPage } from '@/app/pages/not-found-page'
@@ -32,7 +30,6 @@ import { DocumentsPage } from '@/features/documents/pages/documents-page'
 import { TreasuryPage } from '@/features/treasury/pages/treasury-page'
 import { ReportsPage } from '@/features/reports/pages/reports-page'
 import { InstallmentsPage } from '@/features/installments/pages/installments-page'
-import { UploadTestPage } from '@/features/uploads/pages/upload-test-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
 
@@ -53,14 +50,6 @@ export function AppRouter() {
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route
-              path="upload-test"
-              element={
-                <PermissionGuard permission="documents.upload">
-                  <UploadTestPage />
-                </PermissionGuard>
-              }
-            />
 
             <Route
               path="customers"
@@ -159,16 +148,6 @@ export function AppRouter() {
               }
             />
             <Route
-              path="sales"
-              element={
-                <ComingSoonPage
-                  title="المبيعات"
-                  
-                  description="البيع النقدي والتقسيط، العقود، الحجوزات، والمرتجعات في مسار واحد."
-                />
-              }
-            />
-            <Route
               path="installments"
               element={
                 <PermissionGuard permission="installments.view">
@@ -225,7 +204,6 @@ export function AppRouter() {
               }
             />
 
-            <Route path="design-system" element={<DesignSystemPage />} />
             <Route path="403" element={<ForbiddenPage />} />
             <Route path="loading" element={<LoadingPage />} />
             <Route path="*" element={<NotFoundPage />} />

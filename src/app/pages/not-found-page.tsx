@@ -16,9 +16,6 @@ export function NotFoundPage() {
           <Button asChild>
             <Link to="/">العودة للوحة التحكم</Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link to="/design-system">عرض النظام التصميمي</Link>
-          </Button>
         </>
       }
     />

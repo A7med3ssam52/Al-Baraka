@@ -41,7 +41,6 @@ export function AppShell() {
               •
             </span>
             <span className="font-mono">{branchCode}</span>
-            <span className="ms-auto">نسخة التأسيس 0.1.0</span>
           </div>
         </footer>
       </div>
