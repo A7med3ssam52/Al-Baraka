@@ -75,7 +75,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
       data-print-hidden
       className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur-xl"
     >
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-14 sm:h-16 items-center gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8">
         <Button
           type="button"
           variant="ghost"

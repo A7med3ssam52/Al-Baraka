@@ -23,7 +23,7 @@ export function AppShell() {
       <div className="flex min-h-screen min-w-0 flex-col">
         <Header onOpenSidebar={() => setMobileOpen(true)} />
 
-        <main data-print-main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main data-print-main className="flex-1 px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-7xl">
             <Outlet />
           </div>

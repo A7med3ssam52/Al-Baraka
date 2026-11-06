@@ -97,12 +97,14 @@
   html {
     min-width: 320px;
     background: var(--background);
+    overflow-x: hidden;
   }
 
   body {
     min-width: 320px;
     min-height: 100vh;
     margin: 0;
+    overflow-x: hidden;
     color: var(--foreground);
     font-family: var(--font-sans);
     background:
@@ -132,6 +134,18 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /* Prevent iOS auto-zoom and tap delay on form fields */
+  @media (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
   }
 }
 
