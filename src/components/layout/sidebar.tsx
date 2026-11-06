@@ -62,17 +62,11 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-3 px-5 py-6">
-        {settings.logo_url ? (
-          <img
-            src={settings.logo_url}
-            alt=""
-            className="size-11 shrink-0 rounded-xl border border-sidebar-active/40 object-cover"
-          />
-        ) : (
-          <div className="grid size-11 shrink-0 place-items-center rounded-xl border border-sidebar-active/40 bg-sidebar-accent text-lg font-extrabold text-sidebar-active">
-            ب
-          </div>
-        )}
+        <img
+          src={settings.logo_url ?? '/logo.PNG'}
+          alt="معرض البركة للتجارة"
+          className="size-11 shrink-0 rounded-xl border border-sidebar-active/40 object-cover"
+        />
         <div className="min-w-0">
           <p className="text-[10px] font-bold tracking-[0.22em] text-sidebar-muted">AL BARAKA</p>
           <p className="truncate text-base font-extrabold">{settings.app_name}</p>
