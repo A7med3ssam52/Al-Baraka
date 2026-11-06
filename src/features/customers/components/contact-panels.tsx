@@ -234,7 +234,7 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
   const [guarantors, setGuarantors] = useState<GuarantorRecord[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState({ full_name: '', national_id: '', mobile: '', job: '' })
+  const [form, setForm] = useState({ full_name: '', national_id: '', mobile: '', job: '', address: '' })
   const [submitting, setSubmitting] = useState(false)
   const { hasPermission } = useAuth()
   const canWrite = hasPermission('customers.update')
@@ -261,10 +261,11 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
         national_id: form.national_id,
         mobile: form.mobile,
         job: form.job,
+        address: form.address,
       })
       setGuarantors((await listGuarantors()) as unknown as GuarantorRecord[])
       setDialogOpen(false)
-      setForm({ full_name: '', national_id: '', mobile: '', job: '' })
+      setForm({ full_name: '', national_id: '', mobile: '', job: '', address: '' })
       toast.success('تمت إضافة الضامن إلى السجل.')
     } catch (addError) {
       toast.error(translateCustomerError(addError))
@@ -379,11 +380,19 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
               />
             </label>
             <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">المهنة</span>
+              <span className="font-semibold">الصفة</span>
               <Input
                 value={form.job}
                 onChange={(event) => setForm((c) => ({ ...c, job: event.target.value }))}
-                placeholder="اختياري"
+                placeholder="مثال: زميل عمل"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">العنوان</span>
+              <Input
+                value={form.address}
+                onChange={(event) => setForm((c) => ({ ...c, address: event.target.value }))}
+                placeholder="العنوان"
               />
             </label>
             <DialogFooter>

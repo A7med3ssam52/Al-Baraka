@@ -263,12 +263,14 @@ export async function addGuarantor(input: {
   national_id: string
   mobile: string
   job?: string
+  address?: string
 }): Promise<unknown> {
   const { data, error } = await supabase.rpc('add_guarantor', {
     p_full_name: input.full_name,
     p_national_id: input.national_id,
     p_mobile: input.mobile,
     p_job: input.job || null,
+    p_address: input.address || null,
   })
 
   if (error) throw new Error(translateGuarantorError(error.message))
