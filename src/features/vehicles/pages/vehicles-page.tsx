@@ -29,7 +29,6 @@ import {
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
 import { fetchProductBrands, fetchProductModels } from '@/features/products/api'
-import { fetchSuppliers } from '@/features/suppliers/api'
 
 import {
   createVehicle,
@@ -69,7 +68,6 @@ export function VehiclesPage() {
   const [vehicles, setVehicles] = useState<VehicleRecord[]>([])
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
   const [models, setModels] = useState<{ id: string; brand_id: string; name: string }[]>([])
-  const [suppliers, setSuppliers] = useState<{ id: string; full_name: string }[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active')
   const [searchInput, setSearchInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -89,12 +87,11 @@ export function VehiclesPage() {
 
   useEffect(() => {
     let active = true
-    Promise.all([fetchProductBrands(), fetchProductModels(), fetchSuppliers({ status: 'active' })])
-      .then(([brandRows, modelRows, supplierRows]) => {
+    Promise.all([fetchProductBrands(), fetchProductModels()])
+      .then(([brandRows, modelRows]) => {
         if (!active) return
         setBrands(brandRows)
         setModels(modelRows)
-        setSuppliers(supplierRows.map((row) => ({ id: row.id, full_name: row.full_name })))
       })
       .catch((loadError) => {
         if (active) toast.error(translateVehicleError(loadError))
@@ -191,7 +188,7 @@ export function VehiclesPage() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="بحث بالكود أو الشاسيه أو الموتور أو المورد"
+              placeholder="بحث بالكود أو الشاسيه أو الموتور"
               className="pr-9"
             />
           </form>
@@ -248,8 +245,6 @@ export function VehiclesPage() {
                 <TableHead className="hidden md:table-cell">الشاسيه</TableHead>
                 <TableHead className="hidden md:table-cell">الموتور</TableHead>
                 <TableHead>التكلفة المعتمدة</TableHead>
-                <TableHead className="hidden lg:table-cell">المقترح</TableHead>
-                <TableHead className="hidden lg:table-cell">المورد</TableHead>
                 <TableHead>الحالة</TableHead>
                 <TableHead className="text-left">إجراءات</TableHead>
               </TableRow>
@@ -266,9 +261,7 @@ export function VehiclesPage() {
                           vehicleTypeLabels[row.vehicle_type]}
                       </span>
                       <p className="text-xs text-muted-foreground">
-                        {[row.vehicle_class, row.manufacture_year, row.color]
-                          .filter(Boolean)
-                          .join(' • ') || '—'}
+                        {[row.manufacture_year, row.color].filter(Boolean).join(' • ') || '—'}
                       </p>
                     </TableCell>
                     <TableCell className="dir-ltr hidden font-mono text-xs md:table-cell">
@@ -279,12 +272,6 @@ export function VehiclesPage() {
                     </TableCell>
                     <TableCell className="text-xs font-semibold">
                       {row.approved_cost.toLocaleString('ar-EG')}
-                    </TableCell>
-                    <TableCell className="hidden text-xs lg:table-cell">
-                      {row.suggested_price.toLocaleString('ar-EG')}
-                    </TableCell>
-                    <TableCell className="hidden text-xs lg:table-cell">
-                      {row.supplier_name || '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={vehicleStatusBadgeVariant[row.status]}>
@@ -336,7 +323,6 @@ export function VehiclesPage() {
         vehicle={vehicle}
         brands={brands}
         models={models}
-        suppliers={suppliers}
         onOpenChange={(open) => setFormDialog((current) => ({ ...current, open }))}
         onClosed={() => setFormDialog({ open: false, vehicle: null })}
         onSubmitCreate={handleCreate}

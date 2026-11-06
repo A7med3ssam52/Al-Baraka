@@ -1,4 +1,4 @@
-export type VehicleType = 'motorcycle' | 'vehicle' | 'spare_part'
+export type VehicleType = 'tuktuk' | 'motorcycle' | 'tricycle'
 
 export type VehicleStatus =
   'available' | 'reserved' | 'sold' | 'returned' | 'maintenance' | 'damaged' | 'archived'
@@ -69,9 +69,9 @@ export const vehicleStatusLabels: Record<VehicleStatus, string> = {
 }
 
 export const vehicleTypeLabels: Record<VehicleType, string> = {
-  motorcycle: 'دراجة',
-  vehicle: 'سيارة',
-  spare_part: 'قطعة',
+  tuktuk: 'توكتوك',
+  motorcycle: 'موتوسيكل',
+  tricycle: 'تروسيكل',
 }
 
 /** Allowed status transitions; mirrors set_vehicle_status in the database. */

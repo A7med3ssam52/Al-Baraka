@@ -9,6 +9,7 @@ import {
   UserRound,
 } from 'lucide-react'
 import type { FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -26,6 +27,8 @@ import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
+import { NotificationsCenter } from '@/features/notifications/components/notifications-center'
+import { fetchNotifications } from '@/features/notifications/api'
 import { useSettings } from '@/features/settings/use-settings'
 
 interface HeaderProps {
@@ -42,6 +45,20 @@ export function Header({ onOpenSidebar }: HeaderProps) {
   const initial = displayName.trim().charAt(0) || 'م'
   const defaultBranch = appUser?.branches.find((branch) => branch.isDefault) ?? appUser?.branches[0]
   const branchCode = defaultBranch?.code ?? settings.branch_code
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    let active = true
+    fetchNotifications(50)
+      .then((rows) => {
+        if (active) setUnreadCount(rows.filter((row) => !row.is_read).length)
+      })
+      .catch(() => undefined)
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -103,14 +120,25 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                 size="icon"
                 className="relative"
                 aria-label="التنبيهات"
-                onClick={() => toast.info('مركز التنبيهات قريباً.')}
+                onClick={() => setNotificationsOpen(true)}
               >
                 <Bell />
-                <span className="absolute top-2 end-2 size-2 rounded-full bg-accent ring-2 ring-background" />
+                {unreadCount > 0 ? (
+                  <span className="absolute -top-0.5 -end-0.5 grid min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                ) : (
+                  <span className="absolute top-2 end-2 size-2 rounded-full bg-accent ring-2 ring-background" />
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>التنبيهات</TooltipContent>
           </Tooltip>
+          <NotificationsCenter
+            open={notificationsOpen}
+            onOpenChange={setNotificationsOpen}
+            onUnreadChange={setUnreadCount}
+          />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

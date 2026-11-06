@@ -27,7 +27,6 @@ interface Props {
   vehicle: VehicleRecord | null
   brands: { id: string; name: string }[]
   models: { id: string; brand_id: string; name: string }[]
-  suppliers: { id: string; full_name: string }[]
   onOpenChange: (open: boolean) => void
   onClosed: () => void
   onSubmitCreate: (input: VehicleCreateInput) => Promise<void>
@@ -38,17 +37,12 @@ interface FormState {
   chassis_no: string
   engine_no: string
   vehicle_type: VehicleType
-  vehicle_class: string
   brand_id: string
   model_id: string
   manufacture_year: string
   color: string
-  supplier_id: string
   purchase_date: string
   purchase_price: string
-  transport_cost: string
-  prep_cost: string
-  suggested_price: string
   notes: string
 }
 
@@ -56,17 +50,12 @@ const emptyForm: FormState = {
   chassis_no: '',
   engine_no: '',
   vehicle_type: 'motorcycle',
-  vehicle_class: '',
   brand_id: '',
   model_id: '',
   manufacture_year: '',
   color: '',
-  supplier_id: '',
   purchase_date: '',
   purchase_price: '0',
-  transport_cost: '0',
-  prep_cost: '0',
-  suggested_price: '0',
   notes: '',
 }
 
@@ -75,7 +64,6 @@ export function VehicleFormDialog({
   vehicle,
   brands,
   models,
-  suppliers,
   onOpenChange,
   onClosed,
   onSubmitCreate,
@@ -98,17 +86,12 @@ export function VehicleFormDialog({
               chassis_no: vehicle.chassis_no,
               engine_no: vehicle.engine_no,
               vehicle_type: vehicle.vehicle_type,
-              vehicle_class: vehicle.vehicle_class ?? '',
               brand_id: '',
               model_id: '',
               manufacture_year: vehicle.manufacture_year ? String(vehicle.manufacture_year) : '',
               color: vehicle.color ?? '',
-              supplier_id: '',
               purchase_date: vehicle.purchase_date ?? '',
               purchase_price: String(vehicle.purchase_price),
-              transport_cost: String(vehicle.transport_cost),
-              prep_cost: String(vehicle.prep_cost),
-              suggested_price: String(vehicle.suggested_price),
               notes: '',
             }
           : emptyForm,
@@ -127,11 +110,9 @@ export function VehicleFormDialog({
       if (isEdit) {
         await onSubmitUpdate(vehicle.id, {
           vehicle_type: form.vehicle_type,
-          vehicle_class: form.vehicle_class || null,
           manufacture_year: form.manufacture_year ? Number(form.manufacture_year) : null,
           color: form.color || null,
           purchase_date: form.purchase_date || null,
-          suggested_price: Number(form.suggested_price || 0),
           notes: form.notes || null,
         })
         toast.success('تم حفظ بيانات المركبة.')
@@ -140,17 +121,12 @@ export function VehicleFormDialog({
           chassis_no: form.chassis_no,
           engine_no: form.engine_no,
           vehicle_type: form.vehicle_type,
-          vehicle_class: form.vehicle_class || null,
           brand_id: form.brand_id || null,
           model_id: form.model_id || null,
           manufacture_year: form.manufacture_year ? Number(form.manufacture_year) : null,
           color: form.color || null,
-          supplier_id: form.supplier_id || null,
           purchase_date: form.purchase_date || null,
           purchase_price: Number(form.purchase_price || 0),
-          transport_cost: Number(form.transport_cost || 0),
-          prep_cost: Number(form.prep_cost || 0),
-          suggested_price: Number(form.suggested_price || 0),
         })
         toast.success('تمت إضافة المركبة بنجاح.')
       }
@@ -200,7 +176,7 @@ export function VehicleFormDialog({
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">النوع</span>
               <Select
@@ -213,14 +189,6 @@ export function VehicleFormDialog({
                   </option>
                 ))}
               </Select>
-            </label>
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">الفئة</span>
-              <Input
-                value={form.vehicle_class}
-                onChange={(event) => patch({ vehicle_class: event.target.value })}
-                placeholder="مثال: 150cc"
-              />
             </label>
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">سنة الصنع</span>
@@ -269,28 +237,13 @@ export function VehicleFormDialog({
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">اللون</span>
               <Input
                 value={form.color}
                 onChange={(event) => patch({ color: event.target.value })}
               />
-            </label>
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">المورد</span>
-              <Select
-                value={form.supplier_id}
-                onChange={(event) => patch({ supplier_id: event.target.value })}
-                disabled={isEdit}
-              >
-                <option value="">—</option>
-                {suppliers.map((supplier) => (
-                  <option key={supplier.id} value={supplier.id}>
-                    {supplier.full_name}
-                  </option>
-                ))}
-              </Select>
             </label>
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">تاريخ الشراء</span>
@@ -302,50 +255,15 @@ export function VehicleFormDialog({
             </label>
           </div>
 
-          {!isEdit ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="grid gap-1.5 text-sm">
-                <span className="font-semibold">سعر الشراء</span>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.purchase_price}
-                  onChange={(event) => patch({ purchase_price: event.target.value })}
-                />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="font-semibold">نقل</span>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.transport_cost}
-                  onChange={(event) => patch({ transport_cost: event.target.value })}
-                />
-              </label>
-              <label className="grid gap-1.5 text-sm">
-                <span className="font-semibold">تجهيز</span>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.prep_cost}
-                  onChange={(event) => patch({ prep_cost: event.target.value })}
-                />
-              </label>
-            </div>
-          ) : null}
-
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">السعر المقترح</span>
+              <span className="font-semibold">سعر الشراء</span>
               <Input
                 type="number"
                 min="0"
                 step="0.01"
-                value={form.suggested_price}
-                onChange={(event) => patch({ suggested_price: event.target.value })}
+                value={form.purchase_price}
+                onChange={(event) => patch({ purchase_price: event.target.value })}
               />
             </label>
             {isEdit ? (
@@ -358,12 +276,6 @@ export function VehicleFormDialog({
               </label>
             ) : null}
           </div>
-
-          {!isEdit ? (
-            <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-              التكلفة المعتمدة تُحسب تلقائيًا = سعر الشراء + النقل + التجهيز.
-            </p>
-          ) : null}
 
           {error ? (
             <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
