@@ -628,7 +628,7 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
           <div className="grid gap-4 text-xs sm:grid-cols-3 sm:text-sm">
             <div>
               <p className="mb-1 font-extrabold text-[#c8a24a]">محافظة الشرقية - مركز صان الحجر</p>
-              <p>الحجر بجوار مركز الشرطة</p>
+              <p>بجوار مركز الشرطة</p>
             </div>
             <div dir="ltr" className="text-end sm:text-start">
               <p className="font-bold text-[#c8a24a]">أ/ أحمد عبدالهادي</p>
