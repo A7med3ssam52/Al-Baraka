@@ -28,7 +28,11 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
           <p className="mt-1.5 max-w-2xl text-xs leading-6 text-muted-foreground sm:mt-2 sm:text-sm sm:leading-7">{description}</p>
         ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-2 w-full sm:w-auto">{actions}</div> : null}
+      {actions ? (
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end [&_button]:w-full sm:[&_button]:w-auto sm:[&_button]:flex-none [&_a]:w-full sm:[&_a]:w-auto">
+          {actions}
+        </div>
+      ) : null}
     </div>
   )
 }

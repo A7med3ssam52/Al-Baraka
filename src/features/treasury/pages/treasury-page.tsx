@@ -150,7 +150,7 @@ export function TreasuryPage() {
       </div>
 
       <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-bold">المصروفات</h2>
           {canCreateExpense && (
             <Button size="sm" onClick={() => setShowExpenseForm((v) => !v)}>
@@ -265,12 +265,12 @@ export function TreasuryPage() {
       </Card>
 
       <Card className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-bold">حركات الخزنة</h2>
           <Select
             value={selectedCashbox}
             onChange={(e) => setSelectedCashbox(e.target.value)}
-            className="w-48"
+            className="w-full sm:w-48"
           >
             <option value="all">كل الخزائن</option>
             {cashboxes.map((c) => (
