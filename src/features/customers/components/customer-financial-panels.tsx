@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,9 +22,23 @@ import {
 } from '@/features/installments/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import { Receipt, FileText, CreditCard, Wallet, BookOpen } from 'lucide-react'
+import { Receipt, FileText, CreditCard, Wallet, BookOpen, Plus } from 'lucide-react'
 
-type Props = { customerId: string }
+type Props = { customerId: string; reloadKey?: number; onAdd?: () => void }
+
+function AddHeader({ title, onAdd }: { title: string; onAdd?: () => void }) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h3 className="text-sm font-bold">{title}</h3>
+      {onAdd ? (
+        <Button size="sm" onClick={onAdd}>
+          <Plus className="size-4" />
+          إضافة جديد
+        </Button>
+      ) : null}
+    </div>
+  )
+}
 
 type InvoiceRow = {
   id: string
@@ -66,7 +81,7 @@ type TransactionRow = {
   notes: string | null
 }
 
-export function SalesPanel({ customerId }: Props) {
+export function SalesPanel({ customerId, reloadKey, onAdd }: Props) {
   const [rows, setRows] = useState<InvoiceRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -85,10 +100,11 @@ export function SalesPanel({ customerId }: Props) {
         setLoading(false)
       })
     return () => { active = false }
-  }, [customerId])
+  }, [customerId, reloadKey])
 
   return (
     <Card className="p-4">
+      <AddHeader title="الفواتير" onAdd={onAdd} />
       {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
         <EmptyState icon={Receipt} title="لا توجد فواتير" description="لم يصدر لهذا العميل أي فواتير بيع بعد." />
       ) : (
@@ -123,7 +139,7 @@ export function SalesPanel({ customerId }: Props) {
   )
 }
 
-export function ContractsPanel({ customerId }: Props) {
+export function ContractsPanel({ customerId, reloadKey, onAdd }: Props) {
   const [rows, setRows] = useState<ContractRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -142,10 +158,11 @@ export function ContractsPanel({ customerId }: Props) {
         setLoading(false)
       })
     return () => { active = false }
-  }, [customerId])
+  }, [customerId, reloadKey])
 
   return (
     <Card className="p-4">
+      <AddHeader title="العقود" onAdd={onAdd} />
       {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
         <EmptyState icon={FileText} title="لا توجد عقود" description="لم يبرم هذا العميل عقود تقسيط بعد." />
       ) : (
@@ -180,7 +197,7 @@ export function ContractsPanel({ customerId }: Props) {
   )
 }
 
-export function InstallmentsPanel({ customerId }: Props) {
+export function InstallmentsPanel({ customerId, reloadKey, onAdd }: Props) {
   const [rows, setRows] = useState<InstallmentRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -194,10 +211,11 @@ export function InstallmentsPanel({ customerId }: Props) {
       })
       .catch(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [customerId])
+  }, [customerId, reloadKey])
 
   return (
     <Card className="p-4">
+      <AddHeader title="الأقساط" onAdd={onAdd} />
       {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
         <EmptyState icon={CreditCard} title="لا توجد أقساط" description="لا يوجد جدول أقساط لهذا العميل." />
       ) : (
@@ -232,7 +250,7 @@ export function InstallmentsPanel({ customerId }: Props) {
   )
 }
 
-export function PaymentsPanel({ customerId }: Props) {
+export function PaymentsPanel({ customerId, reloadKey, onAdd }: Props) {
   const [rows, setRows] = useState<PaymentRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -251,15 +269,13 @@ export function PaymentsPanel({ customerId }: Props) {
         setLoading(false)
       })
     return () => { active = false }
-  }, [customerId])
+  }, [customerId, reloadKey])
 
   const total = rows.reduce((s, r) => s + (r.amount ?? 0), 0)
 
   return (
     <Card className="p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold">إجمالي المدفوع: {formatCurrency(total)}</h3>
-      </div>
+      <AddHeader title={`المدفوعات (إجمالي: ${formatCurrency(total)})`} onAdd={onAdd} />
       {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
         <EmptyState icon={Wallet} title="لا توجد مدفوعات" description="لم يتم تسجيل أي مدفوعات لهذا العميل." />
       ) : (
@@ -290,7 +306,7 @@ export function PaymentsPanel({ customerId }: Props) {
   )
 }
 
-export function StatementPanel({ customerId }: Props) {
+export function StatementPanel({ customerId, reloadKey, onAdd }: Props) {
   const [rows, setRows] = useState<TransactionRow[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -309,7 +325,7 @@ export function StatementPanel({ customerId }: Props) {
         setLoading(false)
       })
     return () => { active = false }
-  }, [customerId])
+  }, [customerId, reloadKey])
 
   let balance = 0
   const withBalance = rows.map((r) => {
@@ -319,6 +335,7 @@ export function StatementPanel({ customerId }: Props) {
 
   return (
     <Card className="p-4">
+      <AddHeader title="كشف الحساب" onAdd={onAdd} />
       {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
         <EmptyState icon={BookOpen} title="لا توجد حركات" description="لا يوجد كشف حساب لهذا العميل بعد." />
       ) : (

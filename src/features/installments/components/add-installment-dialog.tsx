@@ -48,6 +48,7 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: () => void
+  initialCustomerId?: string
 }
 
 const FREQUENCIES = ['monthly', 'weekly', 'biweekly', 'custom'] as const
@@ -58,7 +59,7 @@ function newLine(vehicleId = '', unitPrice = ''): VehicleLine {
   return { key: `line-${lineCounter}`, vehicleId, unitPrice }
 }
 
-export function AddInstallmentDialog({ open, onOpenChange, onCreated }: Props) {
+export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCustomerId }: Props) {
   const { hasPermission } = useAuth()
   const canCreateVehicle = hasPermission('vehicles.create')
   const [customers, setCustomers] = useState<CustomerOption[]>([])
@@ -130,7 +131,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated }: Props) {
     const today = new Date()
     today.setDate(today.getDate() + 30)
     setFirstDueDate(today.toISOString().slice(0, 10))
-    setCustomerId('')
+    setCustomerId(initialCustomerId ?? '')
     setCustomerSearch('')
     setLines([newLine()])
     setDownPayment('0')
@@ -139,7 +140,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated }: Props) {
     setCustomDays('')
     setNotes('')
     setError(null)
-  }, [open])
+  }, [open, initialCustomerId])
 
   useEffect(() => {
     setLines((current) =>

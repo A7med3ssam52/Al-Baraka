@@ -22,9 +22,6 @@ export const customerProfileTabs: TabDefinition[] = [
   { id: 'guarantors', label: 'الضامنون' },
   { id: 'installments', label: 'الأقساط' },
   { id: 'documents', label: 'المستندات' },
-  { id: 'sales', label: 'الفواتير' },
-  { id: 'contracts', label: 'العقود' },
-  { id: 'payments', label: 'المدفوعات' },
   { id: 'statement', label: 'كشف الحساب' },
 ]
 

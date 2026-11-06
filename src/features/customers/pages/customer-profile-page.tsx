@@ -16,12 +16,10 @@ import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import {
-  ContractsPanel,
   InstallmentsPanel,
-  PaymentsPanel,
-  SalesPanel,
   StatementPanel,
 } from '../components/customer-financial-panels'
+import { AddInstallmentDialog } from '@/features/installments/components/add-installment-dialog'
 import type { CustomerNote } from '../types'
 import {
   customerProfileTabs,
@@ -52,18 +50,14 @@ export function CustomerProfile({
   renderExtraTab,
 }: CustomerProfileProps) {
   const { hasPermission } = useAuth()
+  const [addOpen, setAddOpen] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   function isAvailable(tabId: CustomerTabId) {
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
     if (tabId === 'documents') return hasPermission('documents.view')
-    if (
-      tabId === 'sales' ||
-      tabId === 'contracts' ||
-      tabId === 'installments' ||
-      tabId === 'payments' ||
-      tabId === 'statement'
-    ) {
+    if (tabId === 'installments' || tabId === 'statement') {
       return true
     }
     return availability?.[tabId] === true
@@ -71,6 +65,12 @@ export function CustomerProfile({
 
   return (
     <div className="flex flex-col gap-6">
+      <AddInstallmentDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        initialCustomerId={customer.id}
+        onCreated={() => setReloadKey((k) => k + 1)}
+      />
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <a
@@ -124,20 +124,14 @@ export function CustomerProfile({
       {activeTab === 'documents' ? (
         <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
       ) : null}
-      {activeTab === 'sales' ? <SalesPanel customerId={customer.id} /> : null}
-      {activeTab === 'contracts' ? <ContractsPanel customerId={customer.id} /> : null}
-      {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} /> : null}
-      {activeTab === 'payments' ? <PaymentsPanel customerId={customer.id} /> : null}
-      {activeTab === 'statement' ? <StatementPanel customerId={customer.id} /> : null}
+      {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
+      {activeTab === 'statement' ? <StatementPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
       {activeTab !== 'personal' &&
       activeTab !== 'notes' &&
       activeTab !== 'contacts' &&
       activeTab !== 'guarantors' &&
       activeTab !== 'documents' &&
-      activeTab !== 'sales' &&
-      activeTab !== 'contracts' &&
       activeTab !== 'installments' &&
-      activeTab !== 'payments' &&
       activeTab !== 'statement' ? (
         renderExtraTab ? (
           renderExtraTab(activeTab, customer)
