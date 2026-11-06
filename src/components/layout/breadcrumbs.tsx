@@ -14,16 +14,16 @@ export function Breadcrumbs() {
   const currentLabel = current?.label ?? fallbackLabels[pathname] ?? 'صفحة غير موجودة'
 
   return (
-    <nav aria-label="مسار التنقل" className="min-w-0">
-      <ol className="flex items-center gap-1.5 text-sm">
+    <nav aria-label="مسار التنقل" className="min-w-0 flex-1 overflow-hidden">
+      <ol className="flex min-w-0 items-center gap-1.5 text-sm whitespace-nowrap">
         {isHome ? (
-          <li className="flex items-center gap-1.5 font-semibold text-foreground">
-            <Home className="size-4 text-accent" />
+          <li className="flex min-w-0 items-center gap-1.5 font-semibold text-foreground">
+            <Home className="size-4 shrink-0 text-accent" />
             <span className="truncate">لوحة التحكم</span>
           </li>
         ) : (
           <>
-            <li>
+            <li className="shrink-0">
               <Link
                 to="/dashboard"
                 aria-label="الرئيسية"
@@ -33,10 +33,10 @@ export function Breadcrumbs() {
                 <span className="hidden sm:inline">الرئيسية</span>
               </Link>
             </li>
-            <li aria-hidden="true">
+            <li aria-hidden="true" className="shrink-0">
               <ChevronLeft className="size-3.5 text-muted-foreground/60" />
             </li>
-            <li className="truncate font-semibold text-foreground">{currentLabel}</li>
+            <li className="min-w-0 flex-1 truncate font-semibold text-foreground">{currentLabel}</li>
           </>
         )}
       </ol>

@@ -66,12 +66,12 @@ export function Header({ onOpenSidebar }: HeaderProps) {
       data-print-hidden
       className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur-xl"
     >
-      <div className="flex h-14 sm:h-16 items-center gap-2 sm:gap-3 px-3 sm:px-6 lg:px-8">
+      <div className="flex h-14 sm:h-16 items-center gap-1.5 sm:gap-3 px-3 sm:px-6 lg:px-8 flex-nowrap overflow-hidden">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="lg:hidden"
+          className="size-9 shrink-0 lg:hidden"
           onClick={onOpenSidebar}
           aria-label="فتح قائمة التنقل"
         >
@@ -80,7 +80,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
 
         <Breadcrumbs />
 
-        <div className="ms-auto flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <div className="hidden items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm sm:flex">
             <Building2 className="size-3.5 text-accent-foreground" />
             <span className="font-mono tracking-wide">{branchCode}</span>
@@ -93,7 +93,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="relative"
+                className="relative size-9 shrink-0"
                 aria-label="التنبيهات"
                 onClick={() => setNotificationsOpen(true)}
               >
@@ -120,10 +120,10 @@ export function Header({ onOpenSidebar }: HeaderProps) {
               <Button
                 type="button"
                 variant="ghost"
-                className="h-10 gap-2 px-1.5 sm:px-2"
+                className="h-9 shrink-0 gap-2 px-1.5 sm:h-10 sm:px-2"
                 aria-label="قائمة الحساب"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-extrabold text-primary-foreground">
+                <span className="grid size-7 sm:size-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-extrabold text-primary-foreground">
                   {initial}
                 </span>
                 <span className="hidden text-start sm:block">
