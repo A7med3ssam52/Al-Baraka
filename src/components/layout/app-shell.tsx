@@ -17,7 +17,7 @@ export function AppShell() {
   const branchCode = defaultBranch?.code ?? settings.branch_code
 
   return (
-    <div className="min-h-screen bg-background lg:grid lg:items-start lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="min-h-screen bg-background lg:ps-72">
       <Sidebar />
 
       <div className="flex min-h-screen min-w-0 flex-col">
