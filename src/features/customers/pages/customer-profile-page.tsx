@@ -125,7 +125,17 @@ export function CustomerProfile({
         <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
       ) : null}
       {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
-      {activeTab === 'statement' ? <StatementPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
+      {activeTab === 'statement' ? (
+        <StatementPanel
+          customerId={customer.id}
+          reloadKey={reloadKey}
+          onAdd={() => setAddOpen(true)}
+          customerName={customer.full_name}
+          customerCode={customer.code}
+          nationalId={customer.national_id}
+          mobile={customer.mobile}
+        />
+      ) : null}
       {activeTab !== 'personal' &&
       activeTab !== 'notes' &&
       activeTab !== 'contacts' &&

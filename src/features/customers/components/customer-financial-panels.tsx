@@ -22,7 +22,7 @@ import {
 } from '@/features/installments/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import { Receipt, FileText, CreditCard, Wallet, BookOpen, Plus } from 'lucide-react'
+import { Receipt, FileText, CreditCard, Wallet, Plus } from 'lucide-react'
 
 type Props = { customerId: string; reloadKey?: number; onAdd?: () => void }
 
@@ -306,25 +306,49 @@ export function PaymentsPanel({ customerId, reloadKey, onAdd }: Props) {
   )
 }
 
-export function StatementPanel({ customerId, reloadKey, onAdd }: Props) {
+type StatementProps = {
+  customerId: string
+  customerName: string
+  customerCode: string
+  nationalId?: string | null
+  mobile?: string | null
+  reloadKey?: number
+  onAdd?: () => void
+}
+
+export function StatementPanel({
+  customerId,
+  customerName,
+  customerCode,
+  nationalId,
+  mobile,
+  reloadKey,
+  onAdd,
+}: StatementProps) {
   const [rows, setRows] = useState<TransactionRow[]>([])
+  const [installments, setInstallments] = useState<InstallmentRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
-    supabase
-      .from('customer_transactions')
-      .select('id, transaction_date, transaction_type, amount, notes')
-      .eq('customer_id', customerId)
-      .order('transaction_date', { ascending: true })
-      .limit(200)
-      .then(({ data, error }) => {
-        if (!active) return
-        if (error) toast.error('تعذر تحميل كشف الحساب')
-        setRows((data ?? []) as unknown as TransactionRow[])
-        setLoading(false)
-      })
-    return () => { active = false }
+    Promise.all([
+      supabase
+        .from('customer_transactions')
+        .select('id, transaction_date, transaction_type, amount, notes')
+        .eq('customer_id', customerId)
+        .order('transaction_date', { ascending: true })
+        .limit(200),
+      fetchInstallments({}).catch(() => [] as InstallmentRow[]),
+    ]).then(([txRes, allInstallments]) => {
+      if (!active) return
+      if (txRes.error) toast.error('تعذر تحميل كشف الحساب')
+      setRows(((txRes.data ?? []) as unknown) as TransactionRow[])
+      setInstallments((allInstallments as InstallmentRow[]).filter((r) => r.customer_id === customerId))
+      setLoading(false)
+    })
+    return () => {
+      active = false
+    }
   }, [customerId, reloadKey])
 
   let balance = 0
@@ -333,35 +357,168 @@ export function StatementPanel({ customerId, reloadKey, onAdd }: Props) {
     return { ...r, balance }
   })
 
+  const totalAmount = installments.reduce((s, r) => s + (r.amount ?? 0), 0)
+  const totalPaid = installments.reduce((s, r) => s + (r.paid_amount ?? 0), 0)
+  const totalRemaining = installments.reduce((s, r) => s + (r.remaining_amount ?? 0), 0)
+
+  if (loading) {
+    return (
+      <Card className="p-4">
+        <Skeleton className="h-64 w-full" />
+      </Card>
+    )
+  }
+
   return (
-    <Card className="p-4">
+    <div className="space-y-4">
       <AddHeader title="كشف الحساب" onAdd={onAdd} />
-      {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
-        <EmptyState icon={BookOpen} title="لا توجد حركات" description="لا يوجد كشف حساب لهذا العميل بعد." />
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>التاريخ</TableHead>
-              <TableHead>النوع</TableHead>
-              <TableHead>المبلغ</TableHead>
-              <TableHead>الرصيد</TableHead>
-              <TableHead>ملاحظات</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {withBalance.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>{formatDate(r.transaction_date)}</TableCell>
-                <TableCell>{r.transaction_type}</TableCell>
-                <TableCell>{formatCurrency(r.amount)}</TableCell>
-                <TableCell>{formatCurrency(r.balance)}</TableCell>
-                <TableCell>{r.notes ?? '—'}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </Card>
+      <article
+        dir="rtl"
+        style={{ fontFamily: "'Cairo', sans-serif" }}
+        className="relative mx-auto w-full max-w-4xl overflow-hidden rounded-2xl border bg-white text-[#1f2937] shadow-sm print:shadow-none"
+      >
+        {/* Top header */}
+        <header className="relative overflow-hidden bg-[#0b1f33] px-4 pt-4 pb-3 text-white">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-[#c8a24a]/40 to-transparent" />
+          <div className="relative flex flex-col items-center gap-2 text-center sm:flex-row sm:items-start sm:justify-between sm:text-start">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.PNG"
+                alt="معرض البركة للتجارة"
+                className="h-20 w-20 shrink-0 rounded-full border-2 border-[#c8a24a] bg-black object-cover"
+              />
+              <div className="min-w-0">
+                <p className="text-sm text-[#c8a24a]">معرض</p>
+                <h1 className="text-3xl font-extrabold leading-none text-[#c8a24a]">البركة</h1>
+                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">للتجارة</p>
+                <p className="mt-2 inline-block rounded-full bg-[#c8a24a] px-3 py-1 text-[11px] font-bold text-[#0b1f33]">
+                  تكاتك - موتوسيكلات - تروسيكلات - اسكوتر
+                </p>
+              </div>
+            </div>
+            <p className="text-xs italic text-[#c8a24a]">اختيارك الأفضل ... طريقك أسهل</p>
+          </div>
+        </header>
+
+        {/* Title */}
+        <div className="flex items-center gap-3 px-4 pt-4 sm:px-8">
+          <span className="h-px flex-1 bg-[#c8a24a]" />
+          <h2 className="whitespace-nowrap text-2xl font-extrabold text-[#0b1f33] sm:text-4xl">كشف حساب</h2>
+          <span className="h-px flex-1 bg-[#c8a24a]" />
+        </div>
+
+        <div className="relative px-4 py-4 sm:px-8 sm:py-6">
+          <img
+            src="/logo.PNG"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 m-auto h-64 w-64 opacity-[0.04]"
+          />
+          <div className="relative grid gap-2 rounded-xl border border-[#e3dbc9] bg-[#fffdf8] p-4 text-sm sm:grid-cols-2">
+            <p><span className="font-bold text-[#0b1f33]">الاسم :</span> {customerName}</p>
+            <p><span className="font-bold text-[#0b1f33]">الكود :</span> <span className="font-mono">{customerCode}</span></p>
+            <p><span className="font-bold text-[#0b1f33]">الرقم القومي :</span> {nationalId ?? '—'}</p>
+            <p><span className="font-bold text-[#0b1f33]">الموبايل :</span> <span dir="ltr">{mobile ?? '—'}</span></p>
+            <p className="sm:col-span-2">
+              <span className="font-bold text-[#0b1f33]">التاريخ :</span> {formatDate(new Date().toISOString().slice(0, 10))}
+            </p>
+          </div>
+
+          <h3 className="mt-6 mb-2 font-extrabold text-[#0b1f33]">الأقساط</h3>
+          {installments.length === 0 ? (
+            <p className="rounded-lg border border-dashed bg-[#fffdf8] p-6 text-center text-sm text-muted-foreground">
+              لا توجد أقساط لهذا العميل.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-[#e3dbc9]">
+              <table className="w-full min-w-[640px] text-xs sm:text-sm">
+                <thead className="bg-[#0b1f33] text-white">
+                  <tr>
+                    <th className="px-3 py-2 text-start font-bold">العقد</th>
+                    <th className="px-3 py-2 text-start font-bold">القسط</th>
+                    <th className="px-3 py-2 text-start font-bold">الاستحقاق</th>
+                    <th className="px-3 py-2 text-start font-bold">المبلغ</th>
+                    <th className="px-3 py-2 text-start font-bold">المدفوع</th>
+                    <th className="px-3 py-2 text-start font-bold">المتبقي</th>
+                    <th className="px-3 py-2 text-start font-bold">الحالة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installments.map((r) => (
+                    <tr key={r.id} className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]">
+                      <td className="px-3 py-2 font-mono text-[11px]">{r.contract_number}</td>
+                      <td className="px-3 py-2">{r.installment_no}</td>
+                      <td className="px-3 py-2">{formatDate(r.due_date)}</td>
+                      <td className="px-3 py-2">{formatCurrency(r.amount)}</td>
+                      <td className="px-3 py-2">{formatCurrency(r.paid_amount)}</td>
+                      <td className="px-3 py-2">{formatCurrency(r.remaining_amount)}</td>
+                      <td className="px-3 py-2">{installmentStatusLabels[resolveInstallmentStatus(r)]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-[#efe9dc] font-bold">
+                  <tr>
+                    <td colSpan={3} className="px-3 py-2">الإجمالي</td>
+                    <td className="px-3 py-2">{formatCurrency(totalAmount)}</td>
+                    <td className="px-3 py-2">{formatCurrency(totalPaid)}</td>
+                    <td className="px-3 py-2">{formatCurrency(totalRemaining)}</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+
+          {withBalance.length > 0 ? (
+            <>
+              <h3 className="mt-6 mb-2 font-extrabold text-[#0b1f33]">حركات الحساب</h3>
+              <div className="overflow-x-auto rounded-lg border border-[#e3dbc9]">
+                <table className="w-full min-w-[520px] text-xs sm:text-sm">
+                  <thead className="bg-[#efe9dc]">
+                    <tr>
+                      <th className="px-3 py-2 text-start font-bold">التاريخ</th>
+                      <th className="px-3 py-2 text-start font-bold">النوع</th>
+                      <th className="px-3 py-2 text-start font-bold">المبلغ</th>
+                      <th className="px-3 py-2 text-start font-bold">الرصيد</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {withBalance.map((r) => (
+                      <tr key={r.id} className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]">
+                        <td className="px-3 py-2">{formatDate(r.transaction_date)}</td>
+                        <td className="px-3 py-2">{r.transaction_type}</td>
+                        <td className="px-3 py-2">{formatCurrency(r.amount)}</td>
+                        <td className="px-3 py-2">{formatCurrency(r.balance)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : null}
+
+          <p className="mt-8 text-end text-sm font-semibold italic text-[#0b1f33]">معرض البركة</p>
+        </div>
+
+        <footer className="relative bg-[#0b1f33] px-4 py-4 text-white sm:px-8">
+          <div className="grid gap-4 text-xs sm:grid-cols-3 sm:text-sm">
+            <div>
+              <p className="mb-1 font-extrabold text-[#c8a24a]">محافظة الشرقية - مركز صان الحجر</p>
+              <p>الحجر بجوار مركز الشرطة</p>
+            </div>
+            <div dir="ltr" className="text-end sm:text-start">
+              <p className="font-bold text-[#c8a24a]">أ/ أحمد عبدالهادي</p>
+              <p>01000172840</p>
+              <p>01010559737</p>
+            </div>
+            <div dir="ltr" className="text-end sm:text-start">
+              <p className="font-bold text-[#c8a24a]">أ/ حمدي أحمد</p>
+              <p>01029908833</p>
+              <p>01026532231</p>
+            </div>
+          </div>
+        </footer>
+      </article>
+    </div>
   )
 }
