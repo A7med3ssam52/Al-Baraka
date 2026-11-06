@@ -97,18 +97,18 @@ export async function saveProductCategory(name: string, parentId?: string) {
 }
 
 export async function saveProductBrand(name: string) {
-  const { error } = await supabase.rpc('save_product_brand', { p_name: name })
-
+  const { data, error } = await supabase.rpc('save_product_brand', { p_name: name })
   if (error) throw new Error(translateProductError(error.message))
+  return Array.isArray(data) ? data[0] : data
 }
 
 export async function saveProductModel(brandId: string, name: string) {
-  const { error } = await supabase.rpc('save_product_model', {
+  const { data, error } = await supabase.rpc('save_product_model', {
     p_brand_id: brandId,
     p_name: name,
   })
-
   if (error) throw new Error(translateProductError(error.message))
+  return Array.isArray(data) ? data[0] : data
 }
 
 export async function fetchProducts(options?: {
