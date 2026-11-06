@@ -11,7 +11,7 @@ export function PublicOnlyRoute() {
 
   if (user) {
     const rawFrom = (location.state as { from?: string } | null)?.from
-    const target = rawFrom?.startsWith('/') ? rawFrom : '/'
+    const target = rawFrom?.startsWith('/') ? rawFrom : '/dashboard'
     return <Navigate to={target} replace />
   }
 

@@ -25,7 +25,7 @@ export function ComingSoonPage({ title, description }: ComingSoonPageProps) {
         description="تم تجهيز الهيكل والتوجيه، وسيتم تنفيذ شاشة العمل الكاملة في مرحلتها المحددة وفق خطة المشروع."
         action={
           <Button asChild variant="outline">
-            <Link to="/">العودة للوحة التحكم</Link>
+            <Link to="/dashboard">العودة للوحة التحكم</Link>
           </Button>
         }
       />

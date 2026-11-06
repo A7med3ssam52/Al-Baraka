@@ -21,7 +21,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const rawFrom = (location.state as { from?: string } | null)?.from
-  const from = rawFrom?.startsWith('/') ? rawFrom : '/'
+  const from = rawFrom?.startsWith('/') ? rawFrom : '/dashboard'
   const resetSuccess = searchParams.get('reset') === 'success'
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

@@ -14,7 +14,7 @@ export function NotFoundPage() {
       actions={
         <>
           <Button asChild>
-            <Link to="/">العودة للوحة التحكم</Link>
+            <Link to="/dashboard">العودة للوحة التحكم</Link>
           </Button>
         </>
       }

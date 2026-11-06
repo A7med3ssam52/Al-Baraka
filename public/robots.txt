@@ -1,2 +1,23 @@
 User-agent: *
-Disallow: /
+Allow: /
+
+# Internal application (requires staff login) — never index.
+Disallow: /login
+Disallow: /portal
+Disallow: /dashboard
+Disallow: /customers
+Disallow: /suppliers
+Disallow: /inventory
+Disallow: /installments
+Disallow: /treasury
+Disallow: /documents
+Disallow: /reports
+Disallow: /users
+Disallow: /settings
+Disallow: /audit-logs
+Disallow: /profile
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /invite/
+Disallow: /403
+Disallow: /loading

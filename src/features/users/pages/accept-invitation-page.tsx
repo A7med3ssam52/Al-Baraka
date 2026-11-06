@@ -246,7 +246,7 @@ export function AcceptInvitationPage() {
         return
       }
 
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (acceptError) {
       setError(
         acceptError instanceof Error

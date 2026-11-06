@@ -351,11 +351,14 @@ export function StatementPanel({
     }
   }, [customerId, reloadKey])
 
-  let balance = 0
-  const withBalance = rows.map((r) => {
-    balance += r.amount ?? 0
-    return { ...r, balance }
-  })
+  const withBalance = rows.reduce<Array<TransactionRow & { balance: number }>>(
+    (accumulator, transactionRow) => {
+      const previous = accumulator.length > 0 ? accumulator[accumulator.length - 1].balance : 0
+      accumulator.push({ ...transactionRow, balance: previous + (transactionRow.amount ?? 0) })
+      return accumulator
+    },
+    [],
+  )
 
   const totalAmount = installments.reduce((s, r) => s + (r.amount ?? 0), 0)
   const totalPaid = installments.reduce((s, r) => s + (r.paid_amount ?? 0), 0)
@@ -504,7 +507,7 @@ export function StatementPanel({
           <div className="grid gap-4 text-xs sm:grid-cols-3 sm:text-sm">
             <div>
               <p className="mb-1 font-extrabold text-[#c8a24a]">محافظة الشرقية - مركز صان الحجر</p>
-              <p>الحجر بجوار مركز الشرطة</p>
+              <p>بجوار مركز الشرطة</p>
             </div>
             <div dir="ltr" className="text-end sm:text-start">
               <p className="font-bold text-[#c8a24a]">أ/ أحمد عبدالهادي</p>

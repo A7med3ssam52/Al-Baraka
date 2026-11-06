@@ -20,7 +20,7 @@ function SidebarLink({ href, label, icon: Icon, onNavigate }: SidebarLinkProps) 
   return (
     <NavLink
       to={href}
-      end={href === '/'}
+      end={href === '/dashboard'}
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(

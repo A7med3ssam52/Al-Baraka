@@ -14,7 +14,7 @@ export function ForbiddenPage() {
       actions={
         <>
           <Button asChild>
-            <Link to="/">العودة للوحة التحكم</Link>
+            <Link to="/dashboard">العودة للوحة التحكم</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link to="/settings">مراجعة الإعدادات</Link>

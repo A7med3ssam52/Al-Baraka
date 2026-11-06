@@ -30,6 +30,8 @@ import { DocumentsPage } from '@/features/documents/pages/documents-page'
 import { TreasuryPage } from '@/features/treasury/pages/treasury-page'
 import { ReportsPage } from '@/features/reports/pages/reports-page'
 import { InstallmentsPage } from '@/features/installments/pages/installments-page'
+import { LandingPage } from '@/features/public-portal/pages/landing-page'
+import { PortalPage } from '@/features/public-portal/pages/portal-page'
 import { UsersPage } from '@/features/users/pages/users-page'
 import { AcceptInvitationPage } from '@/features/users/pages/accept-invitation-page'
 
@@ -37,6 +39,10 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public landing on the main domain + customer self-service (read-only). */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/portal" element={<PortalPage />} />
+
         <Route element={<PublicOnlyRoute />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -48,7 +54,7 @@ export function AppRouter() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
-            <Route index element={<DashboardPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
             <Route path="profile" element={<ProfilePage />} />
 
             <Route

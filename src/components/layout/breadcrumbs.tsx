@@ -6,7 +6,7 @@ import { getNavItem } from '@/lib/navigation'
 export function Breadcrumbs() {
   const { pathname } = useLocation()
   const current = getNavItem(pathname)
-  const isHome = pathname === '/'
+  const isHome = pathname === '/dashboard'
   const fallbackLabels: Record<string, string> = {
     '/403': 'غير مصرح',
     '/loading': 'جارٍ التحميل',
@@ -25,7 +25,7 @@ export function Breadcrumbs() {
           <>
             <li>
               <Link
-                to="/"
+                to="/dashboard"
                 aria-label="الرئيسية"
                 className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
               >

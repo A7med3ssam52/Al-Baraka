@@ -25,7 +25,7 @@ export interface NavItem {
 export const mainNavigation: NavItem[] = [
   {
     label: 'لوحة التحكم',
-    href: '/',
+    href: '/dashboard',
     icon: LayoutDashboard,
     description: 'نظرة عامة على حركة المعرض',
     permission: 'dashboard.view',
@@ -117,7 +117,7 @@ export const accountNavigation: NavItem[] = [
 export const allNavigation = [...mainNavigation, ...secondaryNavigation, ...accountNavigation]
 
 export function getNavItem(pathname: string) {
-  if (pathname === '/') return mainNavigation[0]
+  if (pathname === '/dashboard') return mainNavigation[0]
   return allNavigation.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
   )
