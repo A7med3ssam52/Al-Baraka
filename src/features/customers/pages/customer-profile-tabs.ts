@@ -20,10 +20,10 @@ export const customerProfileTabs: TabDefinition[] = [
   { id: 'notes', label: 'الملاحظات والمتابعة' },
   { id: 'contacts', label: 'جهات التواصل' },
   { id: 'guarantors', label: 'الضامنون' },
+  { id: 'installments', label: 'الأقساط' },
   { id: 'documents', label: 'المستندات' },
   { id: 'sales', label: 'الفواتير' },
   { id: 'contracts', label: 'العقود' },
-  { id: 'installments', label: 'الأقساط' },
   { id: 'payments', label: 'المدفوعات' },
   { id: 'statement', label: 'كشف الحساب' },
 ]
