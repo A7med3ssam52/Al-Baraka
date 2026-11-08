@@ -32,13 +32,19 @@ const FREQUENCIES = ['monthly', 'weekly', 'biweekly', 'custom'] as const
 export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [total, setTotal] = useState('')
+  const [perPeriod, setPerPeriod] = useState('')
+  const [down, setDown] = useState('0')
   const [count, setCount] = useState('')
   const [frequency, setFrequency] = useState<(typeof FREQUENCIES)[number]>('monthly')
   const [customDays, setCustomDays] = useState('')
   const [firstDue, setFirstDue] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+
+  const parsedCount = Number(count)
+  const totalPreview = Number.isFinite(Number(perPeriod)) && Number.isInteger(parsedCount) && parsedCount > 0
+    ? Number(perPeriod) * parsedCount + (Number(down) || 0)
+    : 0
 
   useEffect(() => {
     if (!open || !contractId) return
@@ -47,7 +53,10 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
     fetchContract(contractId)
       .then((detail) => {
         const c = detail.contract
-        setTotal(String(c.total_amount ?? ''))
+        const cCount = Number(c.installment_count ?? 1)
+        const cFinanced = Number(c.financed_amount ?? 0)
+        setPerPeriod(cCount > 0 ? String(cFinanced / cCount) : '')
+        setDown(String(c.down_payment ?? '0'))
         setCount(String(c.installment_count ?? ''))
         setFrequency(((c.frequency as (typeof FREQUENCIES)[number]) ?? 'monthly') as (typeof FREQUENCIES)[number])
         setCustomDays(c.custom_days ? String(c.custom_days) : '')
@@ -61,12 +70,22 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!contractId) return
+    const cCount = Number(count)
+    if (!Number.isInteger(cCount) || cCount < 1) {
+      setError('أدخل عدد أقساط صحيحًا (1 أو أكثر).')
+      return
+    }
+    const installmentCost = Number(perPeriod)
+    if (!Number.isFinite(installmentCost) || installmentCost <= 0) {
+      setError('أدخل تكلفة القسط صحيحًا.')
+      return
+    }
     setSubmitting(true)
     try {
       await updateContractTerms({
         contract_id: contractId,
-        total_amount: total ? Number(total) : null,
-        installment_count: count ? Number(count) : null,
+        total_amount: installmentCost * cCount + (Number(down) || 0),
+        installment_count: cCount,
         frequency,
         custom_days: frequency === 'custom' ? Number(customDays) : null,
         first_due_date: firstDue || null,
@@ -98,8 +117,12 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
         ) : (
           <form className="grid gap-3" onSubmit={handleSubmit}>
             <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">إجمالي العقد (سعر البيع) *</span>
-              <Input type="number" min="0" step="0.01" value={total} onChange={(e) => setTotal(e.target.value)} required />
+              <span className="font-semibold">تكلفة القسط *</span>
+              <Input type="number" min="0" step="0.01" value={perPeriod} onChange={(e) => setPerPeriod(e.target.value)} required />
+              <span className="text-[11px] text-muted-foreground">
+                اللي النظام هيخصمها كل دورية — المقدم ثابت: {down}
+                {totalPreview > 0 ? ` — الإجمالي الجديد: ${totalPreview}` : ''}
+              </span>
             </label>
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">عدد الأقساط *</span>

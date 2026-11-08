@@ -150,7 +150,7 @@ export function VehiclesReportPanel({ branches }: Props) {
               </p>
             </Card>
             <Card className="gap-1 p-4">
-              <p className="text-xs font-bold text-muted-foreground">سعر البيع المقترح</p>
+              <p className="text-xs font-bold text-muted-foreground">تكلفة القسط المقترحة</p>
               <p className="text-lg font-extrabold">
                 {formatCurrency(report.summary.total_suggested_price)}
               </p>
@@ -181,7 +181,7 @@ export function VehiclesReportPanel({ branches }: Props) {
                     <TableHead>الفرع</TableHead>
                     <TableHead>الحالة</TableHead>
                     <TableHead className="hidden md:table-cell">التكلفة المعتمدة</TableHead>
-                    <TableHead className="hidden md:table-cell">سعر البيع</TableHead>
+                    <TableHead className="hidden md:table-cell">تكلفة القسط</TableHead>
                     <TableHead className="hidden lg:table-cell">الهامش</TableHead>
                     <TableHead className="text-left">تقارير</TableHead>
                   </TableRow>

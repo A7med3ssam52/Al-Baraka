@@ -146,8 +146,11 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const removeLine = (key: string) =>
     setLines((current) => (current.length <= 1 ? current : current.filter((l) => l.key !== key)))
 
-  const total = lines.reduce((sum, l) => sum + (Number(l.unitPrice) || 0), 0)
-  const financed = total - (Number(downPayment) || 0)
+  const perPeriod = lines.reduce((sum, l) => sum + (Number(l.unitPrice) || 0), 0)
+  const parsedCount = Number(installmentCount)
+  const safeCount = Number.isInteger(parsedCount) && parsedCount > 0 ? parsedCount : 0
+  const financed = perPeriod * safeCount
+  const total = financed + (Number(downPayment) || 0)
 
   const refreshVehicles = async () => {
     const rows = await fetchVehicles({ status: 'available' })
@@ -200,16 +203,9 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       return
     }
 
-    const prices = validLines.map((l) => Number(l.unitPrice))
-    if (prices.some((p) => !Number.isFinite(p) || p <= 0)) {
-      setError('أدخل سعر بيع صحيحًا لكل مركبة.')
-      return
-    }
-
-    const grandTotal = prices.reduce((a, b) => a + b, 0)
-    const down = Number(downPayment || 0)
-    if (!Number.isFinite(down) || down < 0 || down >= grandTotal) {
-      setError('المقدم يجب أن يكون 0 أو أكثر وأقل من إجمالي العقد.')
+    const costs = validLines.map((l) => Number(l.unitPrice))
+    if (costs.some((p) => !Number.isFinite(p) || p <= 0)) {
+      setError('أدخل تكلفة القسط صحيحًا لكل مركبة.')
       return
     }
 
@@ -218,6 +214,15 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       setError('أدخل عدد أقساط صحيحًا (1 أو أكثر).')
       return
     }
+
+    const perPeriod = costs.reduce((a, b) => a + b, 0)
+    const down = Number(downPayment || 0)
+    if (!Number.isFinite(down) || down < 0) {
+      setError('المقدم يجب أن يكون 0 أو أكثر.')
+      return
+    }
+    const financedTotal = perPeriod * count
+    const grandTotal = financedTotal + down
 
     if (frequency === 'custom') {
       const days = Number(customDays)
@@ -236,14 +241,26 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
     setError(null)
 
     try {
-      const invoice = await supabase.rpc('save_sales_invoice', {
-        p_customer_id: customerId,
-        p_items: validLines.map((l, idx) => ({
+      // تكلفة القسط = اللي النظام هيخصمه كل دورية. إجمالي الفاتورة =
+      // (مجموع تكلفة الدورية × عدد الأقساط) + المقدم.
+      let accumulated = 0
+      const invoiceItems = validLines.map((l, idx) => {
+        const lineTotal = Math.round((costs[idx] * count + down * (costs[idx] / perPeriod || 0)) * 100) / 100
+        accumulated += lineTotal
+        const isLast = idx === validLines.length - 1
+        const adjusted = isLast
+          ? Math.round((grandTotal - (accumulated - lineTotal)) * 100) / 100
+          : lineTotal
+        return {
           vehicle_id: l.vehicleId,
           quantity: 1,
-          unit_price: prices[idx],
+          unit_price: adjusted,
           discount: 0,
-        })),
+        }
+      })
+      const invoice = await supabase.rpc('save_sales_invoice', {
+        p_customer_id: customerId,
+        p_items: invoiceItems,
         p_invoice_date: new Date().toISOString().slice(0, 10),
         p_sale_type: 'installment',
         p_discount: 0,
@@ -384,16 +401,19 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                       </Select>
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="font-semibold">تكلفة القسط (سعر البيع) *</span>
+                      <span className="font-semibold">تكلفة القسط *</span>
                       <Input
                         type="number"
                         min="0"
                         step="0.01"
                         value={line.unitPrice}
                         onChange={(event) => patchLine(line.key, { unitPrice: event.target.value })}
-                        placeholder={line.vehicleId ? 'أدخل السعر يدويًا' : 'اختر مركبة أولاً'}
+                        placeholder={line.vehicleId ? 'تُدخّل يدوي كل مرة' : 'اختر مركبة أولاً'}
                         disabled={!line.vehicleId}
                       />
+                      <span className="text-[11px] text-muted-foreground">
+                        اللي النظام هيخصمها كل دورية
+                      </span>
                     </label>
                     <Button
                       type="button"
@@ -480,10 +500,11 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                 </label>
               </div>
 
-              {total > 0 ? (
+              {perPeriod > 0 && safeCount > 0 ? (
                 <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  الإجمالي: <strong>{formatCurrency(total)}</strong> — الممول:{' '}
-                  <strong>{formatCurrency(financed)}</strong> على {installmentCount} قسط.
+                  تكلفة القسط في الدورية: <strong>{formatCurrency(perPeriod)}</strong> — الممول:{' '}
+                  <strong>{formatCurrency(financed)}</strong> على {installmentCount} قسط — الإجمالي:{' '}
+                  <strong>{formatCurrency(total)}</strong>.
                 </div>
               ) : null}
 
