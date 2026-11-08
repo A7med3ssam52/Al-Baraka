@@ -50,8 +50,9 @@ const saleTypeLabels: Record<string, string> = {
 export function DashboardPage() {
   const { hasPermission } = useAuth()
   const [overview, setOverview] = useState<DashboardOverview | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const loading = overview === null
+  const loading = overview === null && refreshing
 
   const canViewReports = hasPermission('reports.view')
   const canViewVehicles = hasPermission('vehicles.view')
@@ -59,6 +60,7 @@ export function DashboardPage() {
   const canViewCollections = hasPermission('collections.view')
 
   const load = useCallback(() => {
+    setRefreshing(true)
     fetchDashboardOverview({
       includeReports: canViewReports,
       includeVehicles: canViewVehicles,
@@ -66,6 +68,7 @@ export function DashboardPage() {
     })
       .then((result) => setOverview(result))
       .catch(() => undefined)
+      .finally(() => setRefreshing(false))
   }, [canViewReports, canViewVehicles, canViewInstallments, canViewCollections])
 
   useEffect(load, [load])
@@ -139,9 +142,9 @@ export function DashboardPage() {
         description="أرقام حقيقية من العمليات المسجلة: الفواتير، المقبوضات، والتنبيهات المشتقة من جداول الأقساط."
         actions={
           <>
-            <Button variant="outline" onClick={load}>
-              <RefreshCw />
-              تحديث
+            <Button variant="outline" onClick={load} disabled={refreshing}>
+              <RefreshCw className={cn('size-4', refreshing && 'animate-spin')} aria-hidden />
+              {refreshing ? 'جارٍ التحديث…' : 'تحديث'}
             </Button>
             <Button variant="outline" onClick={() => (window.location.href = '/reports')}>
               <CalendarDays />

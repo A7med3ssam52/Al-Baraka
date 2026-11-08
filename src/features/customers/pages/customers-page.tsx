@@ -1,4 +1,4 @@
-import { Archive, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { Archive, Loader2, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
@@ -45,6 +45,23 @@ import {
 } from '../types'
 import { CustomerFormDialog } from '../components/customer-form-dialog'
 import { CustomerStatusDialog } from '../components/customer-status-dialog'
+import { splitHighlight } from '../smart-search'
+
+function Highlight({ text, search }: { text: string; search: string }) {
+  return (
+    <>
+      {splitHighlight(text, search).map((part, index) =>
+        part.hit ? (
+          <mark key={index} className="rounded bg-amber-200/70 px-0.5 text-inherit">
+            {part.text}
+          </mark>
+        ) : (
+          <span key={index}>{part.text}</span>
+        ),
+      )}
+    </>
+  )
+}
 
 type StatusFilter = CustomerStatus | 'all'
 
@@ -72,9 +89,11 @@ export function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRecord[]>([])
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [searchInput, setSearchInput] = useState('')
+  const [searching, setSearchSearching] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const requestIdRef = useRef(0)
   const [formDialog, setFormDialog] = useState<{
     open: boolean
     customer: CustomerRecord | null
@@ -87,7 +106,6 @@ export function CustomersPage() {
     open: boolean
     customer: CustomerRecord | null
   }>({ open: false, customer: null })
-  const lastSearchSubmit = useRef(searchInput)
 
   const canCreate = hasPermission('customers.create')
   const canUpdate = hasPermission('customers.update')
@@ -98,33 +116,51 @@ export function CustomersPage() {
     setReloadKey((key) => key + 1)
   }
 
+  // بحث ذكي حي — يشتغل على طول بعد توقف الكتابة ٢٥٠ مللي ثانية.
   useEffect(() => {
-    let active = true
-    fetchCustomers({
-      status: statusFilter,
-      search: lastSearchSubmit.current,
-    })
+    const requestId = (requestIdRef.current += 1)
+    setSearchSearching(true)
+    const timer = window.setTimeout(() => {
+      fetchCustomers({ status: statusFilter, search: searchInput })
+        .then((rows) => {
+          if (requestIdRef.current !== requestId) return
+          setCustomers(rows)
+          setError(null)
+        })
+        .catch((fetchError) => {
+          if (requestIdRef.current !== requestId) return
+          setError(translateCustomerError(fetchError))
+        })
+        .finally(() => {
+          if (requestIdRef.current === requestId) {
+            setLoading(false)
+            setSearchSearching(false)
+          }
+        })
+    }, 250)
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [searchInput, statusFilter, reloadKey])
+
+  function handleSearchSubmit() {
+    // Enter forces an immediate search without waiting for the debounce.
+    requestIdRef.current += 1
+    setLoading(true)
+    const requestId = requestIdRef.current
+    fetchCustomers({ status: statusFilter, search: searchInput })
       .then((rows) => {
-        if (!active) return
+        if (requestIdRef.current !== requestId) return
         setCustomers(rows)
         setError(null)
       })
       .catch((fetchError) => {
-        if (!active) return
+        if (requestIdRef.current !== requestId) return
         setError(translateCustomerError(fetchError))
       })
       .finally(() => {
-        if (active) setLoading(false)
+        if (requestIdRef.current === requestId) setLoading(false)
       })
-
-    return () => {
-      active = false
-    }
-  }, [statusFilter, reloadKey])
-
-  function handleSearchSubmit() {
-    lastSearchSubmit.current = searchInput
-    void load()
   }
 
   async function handleStatusConfirm(customer: CustomerRecord, status: CustomerStatus) {
@@ -192,9 +228,28 @@ export function CustomersPage() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="بحث بالاسم أو الكود أو الرقم القومي أو الموبايل"
-              className="pr-9"
+              onKeyDown={(event) => event.key === 'Escape' && setSearchInput('')}
+              placeholder="بحث ذكي: اسم / كود / رقم قومي / موبايل — جرّب كلمة واحدة أو أكثر"
+              className="pr-9 pl-9"
+              aria-label="بحث ذكي في العملاء"
             />
+            {searching ? (
+              <Loader2 className="absolute top-1/2 left-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            ) : searchInput ? (
+              <button
+                type="button"
+                aria-label="مسح البحث"
+                className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setSearchInput('')}
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+            {searchInput.trim() ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {customers.length} نتيجة مطابقة لـ «{searchInput.trim()}»
+              </p>
+            ) : null}
           </form>
           <Select
             value={statusFilter}
@@ -227,9 +282,20 @@ export function CustomersPage() {
         <Card className="p-6">
           <EmptyState
             icon={Users}
-            title="لا يوجد عملاء"
-            description="ابدأ بإضافة أول عميل وسجل بياناته."
+            title={searchInput.trim() ? 'لا توجد نتائج مطابقة' : 'لا يوجد عملاء'}
+            description={
+              searchInput.trim()
+                ? `مفيش حد مطابق لـ «${searchInput.trim()}» — جرّب كلمة واحدة، أو رقم قومي/موبايل من غير مسافات.`
+                : 'ابدأ بإضافة أول عميل وسجل بياناته.'
+            }
           />
+          {searchInput.trim() ? (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" size="sm" onClick={() => setSearchInput('')}>
+                مسح البحث
+              </Button>
+            </div>
+          ) : null}
         </Card>
       ) : (
         <Card className="m-0 p-0">
@@ -251,7 +317,7 @@ export function CustomersPage() {
                   <TableCell className="font-mono text-xs">{customer.code}</TableCell>
                   <TableCell>
                     <a href={`/customers/${customer.id}`} className="font-semibold hover:underline">
-                      {customer.full_name}
+                      <Highlight text={customer.full_name} search={searchInput} />
                     </a>
                     {customer.job ? (
                       <p className="text-xs text-muted-foreground">{customer.job}</p>

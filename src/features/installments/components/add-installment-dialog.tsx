@@ -14,7 +14,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { useAuth } from '@/features/auth/use-auth'
-import { fetchCustomers } from '@/features/customers/api'
+import { fetchCustomers, searchCustomers } from '@/features/customers/api'
+import { filterCustomersSmart } from '@/features/customers/smart-search'
 import { fetchProductBrands, fetchProductModels } from '@/features/products/api'
 import { createVehicle, fetchVehicles } from '@/features/vehicles/api'
 import { VehicleFormDialog } from '@/features/vehicles/components/vehicle-form-dialog'
@@ -66,6 +67,9 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const [models, setModels] = useState<{ id: string; brand_id: string; name: string }[]>([])
   const [loadingOptions, setLoadingOptions] = useState(false)
   const [customerSearch, setCustomerSearch] = useState('')
+  const [remoteCustomers, setRemoteCustomers] = useState<CustomerOption[] | null>(null)
+
+  const filteredCustomers = remoteCustomers ?? filterCustomersSmart(customers, customerSearch)
   const [customerId, setCustomerId] = useState('')
   const [lines, setLines] = useState<VehicleLine[]>([newLine()])
   const [downPayment, setDownPayment] = useState('0')
@@ -77,14 +81,6 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [vehicleDialogOpen, setVehicleDialogOpen] = useState(false)
-
-  const filteredCustomers = customerSearch.trim()
-    ? customers.filter(
-        (c) =>
-          c.code.toLowerCase().includes(customerSearch.trim().toLowerCase()) ||
-          c.full_name.includes(customerSearch.trim()),
-      )
-    : customers
 
   useEffect(() => {
     if (!open) return
@@ -121,6 +117,34 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       active = false
     }
   }, [open])
+
+  // بحث ذكي حي في قائمة العملاء.
+  useEffect(() => {
+    if (!open) return
+    const term = customerSearch.trim()
+    if (!term) {
+      setRemoteCustomers(null)
+      return
+    }
+    let active = true
+    const timer = window.setTimeout(() => {
+      searchCustomers(term, { status: 'active' })
+        .then((rows) => {
+          if (!active) return
+          setRemoteCustomers(rows.map((c) => ({ id: c.id, code: c.code, full_name: c.full_name })))
+        })
+        .catch(() => {
+          if (!active) return
+          setRemoteCustomers(
+            filterCustomersSmart(customers, term).map((c) => ({ id: c.id, code: c.code, full_name: c.full_name })),
+          )
+        })
+    }, 250)
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [customerSearch, open])
 
   useEffect(() => {
     if (!open) return

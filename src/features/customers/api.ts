@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
+import { filterCustomersSmart } from './smart-search'
 import type {
   CustomerBalanceTransaction,
   CustomerDuplicates,
@@ -66,6 +67,31 @@ export async function fetchCustomers(options?: {
   status?: CustomerStatus | 'all'
   search?: string
 }): Promise<CustomerRecord[]> {
+  const status = options?.status ?? 'all'
+  const search = options?.search?.trim() ?? ''
+
+  // Smart server-side search whenever the user typed something.
+  if (search) {
+    try {
+      const { data, error } = await supabase.rpc('search_customers', {
+        p_search: search,
+        p_status: status,
+        p_limit: 200,
+      })
+      if (!error) {
+        return (data ?? []) as unknown as CustomerRecord[]
+      }
+      // Fall through to the client-side fallback only when the RPC is missing.
+      if (!error.message.includes('PGRST202') && !error.message.includes('Could not find')) {
+        throw new Error(translateCustomerError(error.message))
+      }
+    } catch (rpcError) {
+      const message = rpcError instanceof Error ? rpcError.message : String(rpcError ?? '')
+      if (message && isFriendlyArabicMessage(message)) throw rpcError
+      // Fall through to fallback below.
+    }
+  }
+
   let query = supabase
     .from('customers')
     .select(
@@ -73,22 +99,21 @@ export async function fetchCustomers(options?: {
     )
     .order('code')
 
-  const status = options?.status ?? 'all'
   if (status !== 'all') query = query.eq('status', status)
-
-  const search = options?.search?.trim()
-  if (search) {
-    const pattern = `%${search}%`
-    query = query.or(
-      `full_name.ilike.${pattern},code.ilike.${pattern},national_id.ilike.${pattern},mobile.ilike.%${search.replace(/\D/g, '')}%`,
-    )
-  }
 
   const { data, error } = await query
 
   if (error) throw new Error(translateCustomerError(error.message))
 
-  return (data ?? []) as CustomerRecord[]
+  const rows = (data ?? []) as unknown as CustomerRecord[]
+  return search ? filterCustomersSmart(rows, search) : rows
+}
+
+export async function searchCustomers(
+  search: string,
+  options?: { status?: CustomerStatus | 'all' },
+): Promise<CustomerRecord[]> {
+  return fetchCustomers({ search, status: options?.status ?? 'all' })
 }
 
 export async function fetchCustomer(customerId: string): Promise<CustomerRecord> {
