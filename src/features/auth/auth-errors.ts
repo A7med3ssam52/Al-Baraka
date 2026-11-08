@@ -1,4 +1,6 @@
 export function translateAuthError(message: string) {
+  const trimmed = message.trim()
+  if (/[\u0600-\u06FF]/.test(trimmed)) return trimmed
   const normalized = message.toLowerCase()
 
   if (normalized.includes('invalid login credentials')) {

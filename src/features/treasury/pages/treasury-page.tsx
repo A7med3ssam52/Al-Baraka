@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Wallet } from 'lucide-react'
+import { Pencil, Plus, Trash2, Wallet } from 'lucide-react'
 
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,25 +20,19 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
-import { createExpense, fetchExpenses } from '@/features/expenses/api'
-import { expenseStatusLabels, type ExpenseStatus } from '@/features/expenses/types'
+import { createExpense, deleteExpense, fetchExpenses, translateExpenseError } from '@/features/expenses/api'
+import { expenseStatusLabels, type ExpenseRecord } from '@/features/expenses/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 import { fetchCashboxes, fetchCashTransactions } from '../api'
+import { ExpenseFormDialog } from '../components/expense-form-dialog'
 import {
   transactionTypeLabels,
   type CashTransactionRecord,
   type CashboxRecord,
 } from '../types'
 
-type ExpenseRow = {
-  id: string
-  category: string
-  title: string
-  amount: number
-  expense_date: string
-  status: ExpenseStatus
-}
+type ExpenseRow = ExpenseRecord
 
 export function TreasuryPage() {
   const { appUser, hasPermission } = useAuth()
@@ -51,6 +46,12 @@ export function TreasuryPage() {
   const [loading, setLoading] = useState(true)
 
   const canCreateExpense = hasPermission('expenses.create')
+  const canUpdateExpense = hasPermission('expenses.update')
+  const canCancelExpense = hasPermission('expenses.cancel')
+  const [editingExpense, setEditingExpense] = useState<ExpenseRecord | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deletingExpense, setDeletingExpense] = useState<ExpenseRecord | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [expenseForm, setExpenseForm] = useState({
     title: '',
@@ -94,6 +95,26 @@ export function TreasuryPage() {
 
   const totalBalance = cashboxes.reduce((sum, c) => sum + (c.current_balance ?? 0), 0)
   const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount ?? 0), 0)
+
+  function reloadExpenses() {
+    setLoading(true)
+    fetchExpenses({ branchId: defaultBranchId || undefined })
+      .then((rows) => setExpenses(rows))
+      .catch(() => undefined)
+      .finally(() => setLoading(false))
+  }
+
+  async function handleDeleteExpense(reason: string) {
+    if (!deletingExpense) return
+    try {
+      await deleteExpense(deletingExpense.id)
+      void reason
+      toast.success('تم حذف المصروف.')
+      reloadExpenses()
+    } catch (err) {
+      throw new Error(translateExpenseError(err))
+    }
+  }
 
   const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -223,6 +244,7 @@ export function TreasuryPage() {
                 <TableHead>التصنيف</TableHead>
                 <TableHead>المبلغ</TableHead>
                 <TableHead>الحالة</TableHead>
+                <TableHead className="text-left">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -234,6 +256,36 @@ export function TreasuryPage() {
                   <TableCell>{formatCurrency(e.amount)}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{expenseStatusLabels[e.status] ?? e.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-left">
+                    <div className="flex justify-end gap-1">
+                      {canUpdateExpense && e.status !== 'cancelled' ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="تعديل المصروف"
+                          onClick={() => {
+                            setEditingExpense(e)
+                            setEditOpen(true)
+                          }}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      ) : null}
+                      {canCancelExpense && e.status !== 'cancelled' ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="حذف المصروف"
+                          onClick={() => {
+                            setDeletingExpense(e)
+                            setDeleteOpen(true)
+                          }}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -307,6 +359,23 @@ export function TreasuryPage() {
           </Table>
         )}
       </Card>
+
+      <ExpenseFormDialog
+        open={editOpen}
+        expense={editingExpense}
+        cashboxes={cashboxes.map((c) => ({ id: c.id, name_ar: c.name_ar }))}
+        onOpenChange={setEditOpen}
+        onUpdated={reloadExpenses}
+      />
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف مصروف"
+        description={`المصروف «${deletingExpense?.title ?? ''}» — المسودة هتتمسح نهائي، والمعتمد هيتلغى. `}
+        confirmLabel="حذف"
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteExpense}
+      />
     </div>
   )
 }

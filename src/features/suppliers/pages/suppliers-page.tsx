@@ -1,4 +1,4 @@
-import { MoreHorizontal, RefreshCw, Search, Truck, UserPlus } from 'lucide-react'
+import { MoreHorizontal, RefreshCw, Search, Trash2, Truck, UserPlus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -33,11 +33,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import { formatDateTime } from '@/lib/utils'
 
 import {
   createSupplier,
+  deleteSupplier,
   fetchSuppliers,
   setSupplierStatus,
   translateSupplierError,
@@ -74,6 +76,8 @@ export function SuppliersPage() {
     supplier: SupplierRecord | null
   }>({ open: false, supplier: null })
   const [documentsSupplier, setDocumentsSupplier] = useState<SupplierRecord | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<SupplierRecord | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const lastSearchSubmit = useRef('')
 
   const canCreate = hasPermission('suppliers.create')
@@ -140,6 +144,17 @@ export function SuppliersPage() {
       await createSupplier(input)
     }
     await load()
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    try {
+      await deleteSupplier(deleteTarget.id)
+      toast.success('تم حذف المورد.')
+      await load()
+    } catch (deleteError) {
+      throw new Error(translateSupplierError(deleteError), { cause: deleteError })
+    }
   }
 
   return (
@@ -283,6 +298,16 @@ export function SuppliersPage() {
                             أرشفة
                           </DropdownMenuItem>
                         ) : null}
+                        {canArchive ? (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setDeleteTarget(row)
+                              setDeleteOpen(true)
+                            }}
+                          >
+                            <Trash2 className="size-4 text-destructive" /> حذف نهائي
+                          </DropdownMenuItem>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -325,6 +350,15 @@ export function SuppliersPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف نهائي للمورد"
+        description={`المورد «${deleteTarget?.full_name ?? ''}» — الحذف النهائي متاح فقط لو مفيش مشتريات أو مستندات مرتبطة.`}
+        confirmLabel="حذف نهائي"
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+      />
     </>
   )
 }

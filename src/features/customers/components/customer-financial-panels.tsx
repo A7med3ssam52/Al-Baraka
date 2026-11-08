@@ -312,6 +312,7 @@ type StatementProps = {
   customerCode: string
   nationalId?: string | null
   mobile?: string | null
+  creditBalance?: number
   reloadKey?: number
   onAdd?: () => void
 }
@@ -322,6 +323,7 @@ export function StatementPanel({
   customerCode,
   nationalId,
   mobile,
+  creditBalance,
   reloadKey,
   onAdd,
 }: StatementProps) {
@@ -399,7 +401,6 @@ export function StatementPanel({
                 </p>
               </div>
             </div>
-            <p className="text-center text-xs italic text-[#c8a24a] sm:text-start sm:pt-2">اختيارك الأفضل ... طريقك أسهل</p>
           </div>
         </header>
 
@@ -422,7 +423,8 @@ export function StatementPanel({
             <p><span className="font-bold text-[#0b1f33]">الكود :</span> <span className="font-mono">{customerCode}</span></p>
             <p><span className="font-bold text-[#0b1f33]">الرقم القومي :</span> {nationalId ?? '—'}</p>
             <p><span className="font-bold text-[#0b1f33]">الموبايل :</span> <span dir="ltr">{mobile ?? '—'}</span></p>
-            <p className="sm:col-span-2">
+            <p><span className="font-bold text-[#0b1f33]">الرصيد المتاح :</span> {formatCurrency(creditBalance ?? 0)}</p>
+            <p>
               <span className="font-bold text-[#0b1f33]">التاريخ :</span> {formatDate(new Date().toISOString().slice(0, 10))}
             </p>
           </div>

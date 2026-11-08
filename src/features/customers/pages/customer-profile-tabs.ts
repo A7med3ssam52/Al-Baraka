@@ -7,6 +7,7 @@ export type CustomerTabId =
   | 'contracts'
   | 'installments'
   | 'payments'
+  | 'balance'
   | 'documents'
   | 'statement'
 
@@ -21,6 +22,7 @@ export const customerProfileTabs: TabDefinition[] = [
   { id: 'contacts', label: 'جهات التواصل' },
   { id: 'guarantors', label: 'الضامنون' },
   { id: 'installments', label: 'الأقساط' },
+  { id: 'balance', label: 'الرصيد' },
   { id: 'documents', label: 'المستندات' },
   { id: 'statement', label: 'كشف الحساب' },
 ]

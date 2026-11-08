@@ -34,8 +34,6 @@ interface CustomerOption {
 interface VehicleOption {
   id: string
   code: string
-  suggested_price: number | null
-  approved_cost: number | null
 }
 
 interface VehicleLine {
@@ -107,8 +105,6 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
           vehicleRows.map((v) => ({
             id: v.id,
             code: v.code,
-            suggested_price: v.suggested_price,
-            approved_cost: v.approved_cost,
           })),
         )
         setBrands(brandRows)
@@ -142,18 +138,6 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
     setError(null)
   }, [open, initialCustomerId])
 
-  useEffect(() => {
-    setLines((current) =>
-      current.map((line) => {
-        if (!line.vehicleId || line.unitPrice) return line
-        const vehicle = vehicles.find((v) => v.id === line.vehicleId)
-        if (!vehicle) return line
-        const suggested = vehicle.suggested_price ?? vehicle.approved_cost
-        return suggested != null ? { ...line, unitPrice: String(suggested) } : line
-      }),
-    )
-  }, [vehicles])
-
   const patchLine = (key: string, patch: Partial<VehicleLine>) => {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
   }
@@ -171,8 +155,6 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       rows.map((v) => ({
         id: v.id,
         code: v.code,
-        suggested_price: v.suggested_price,
-        approved_cost: v.approved_cost,
       })),
     )
     return rows
@@ -180,16 +162,16 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
 
   const handleVehicleCreated = async (input: VehicleCreateInput) => {
     const created = await createVehicle(input)
-    const rows = await refreshVehicles()
-    const found = rows.find((r) => r.id === created.id)
+    await refreshVehicles()
     setLines((current) => {
       const emptyIdx = current.findIndex((l) => !l.vehicleId)
       const next = [...current]
       const targetIdx = emptyIdx >= 0 ? emptyIdx : next.length - 1
+      // Leave the price empty — it is entered manually each time.
       next[targetIdx] = {
         ...next[targetIdx],
         vehicleId: created.id,
-        unitPrice: found?.suggested_price ? String(found.suggested_price) : '',
+        unitPrice: '',
       }
       return next
     })
@@ -389,16 +371,8 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                       <Select
                         value={line.vehicleId}
                         onChange={(event) => {
-                          const vId = event.target.value
-                          const vehicle = vehicles.find((v) => v.id === vId)
-                          patchLine(line.key, {
-                            vehicleId: vId,
-                            unitPrice:
-                              line.unitPrice ||
-                              (vehicle?.suggested_price ?? vehicle?.approved_cost
-                                ? String(vehicle?.suggested_price ?? vehicle?.approved_cost)
-                                : ''),
-                          })
+                          // Keep the manual price as-is; never auto-fill it.
+                          patchLine(line.key, { vehicleId: event.target.value })
                         }}
                       >
                         <option value="">اختر مركبة</option>
@@ -410,14 +384,14 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                       </Select>
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="font-semibold">سعر البيع</span>
+                      <span className="font-semibold">تكلفة القسط (سعر البيع) *</span>
                       <Input
                         type="number"
                         min="0"
                         step="0.01"
                         value={line.unitPrice}
                         onChange={(event) => patchLine(line.key, { unitPrice: event.target.value })}
-                        placeholder={line.vehicleId ? 'السعر' : 'اختر مركبة أولاً'}
+                        placeholder={line.vehicleId ? 'أدخل السعر يدويًا' : 'اختر مركبة أولاً'}
                         disabled={!line.vehicleId}
                       />
                     </label>

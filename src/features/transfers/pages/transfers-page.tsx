@@ -38,6 +38,7 @@ import {
   receiveStockTransfer,
   sendStockTransfer,
   translateTransferError,
+  updateStockTransfer,
 } from '../api'
 import { TransferFormDialog } from '../components/transfer-form-dialog'
 import {
@@ -71,6 +72,15 @@ export function TransfersPage() {
   const [error, setError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [formOpen, setFormOpen] = useState(false)
+  const [formTitle, setFormTitle] = useState('')
+  const [editingTransferId, setEditingTransferId] = useState<string | null>(null)
+  const [formInitial, setFormInitial] = useState<{
+    fromBranchId: string
+    toBranchId: string
+    transferDate: string
+    notes?: string | null
+    items: { product_id: string | null; vehicle_id: string | null; quantity: number }[]
+  } | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
 
   const canManage = hasPermission('products.update')
@@ -125,8 +135,39 @@ export function TransfersPage() {
   }
 
   async function handleCreate(input: StockTransferInput) {
+    if (editingTransferId) {
+      await updateStockTransfer(editingTransferId, input)
+      toast.success('تم حفظ تعديل مسودة التحويل.')
+      setEditingTransferId(null)
+      setFormInitial(null)
+      setFormTitle('')
+      reload()
+      return
+    }
     await createStockTransfer(input)
     reload()
+  }
+
+  async function handleEdit(row: StockTransferRecord) {
+    try {
+      const detail = await fetchStockTransfer(row.id)
+      setEditingTransferId(row.id)
+      setFormTitle(row.number)
+      setFormInitial({
+        fromBranchId: detail.transfer.from_branch_id,
+        toBranchId: detail.transfer.to_branch_id,
+        transferDate: detail.transfer.transfer_date,
+        notes: detail.transfer.notes ?? null,
+        items: detail.items.map((item) => ({
+          product_id: item.product_id ?? null,
+          vehicle_id: item.vehicle_id ?? null,
+          quantity: item.quantity,
+        })),
+      })
+      setFormOpen(true)
+    } catch (editError) {
+      toast.error(translateTransferError(editError))
+    }
   }
 
   async function runAction(action: () => Promise<unknown>, message: string) {
@@ -259,6 +300,15 @@ export function TransfersPage() {
                       </Button>
                       {canManage && row.status === 'draft' ? (
                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleEdit(row)}
+                        >
+                          تعديل
+                        </Button>
+                      ) : null}
+                      {canManage && row.status === 'draft' ? (
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={() =>
@@ -312,10 +362,24 @@ export function TransfersPage() {
         products={products}
         vehicles={vehicles}
         defaultBranchId={defaultBranchId}
-        onOpenChange={setFormOpen}
-        onClosed={() => setFormOpen(false)}
+        initial={formInitial}
+        onOpenChange={(open) => {
+          setFormOpen(open)
+          if (!open) {
+            setEditingTransferId(null)
+            setFormInitial(null)
+            setFormTitle('')
+          }
+        }}
+        onClosed={() => {
+          setFormOpen(false)
+          setEditingTransferId(null)
+          setFormInitial(null)
+          setFormTitle('')
+        }}
         onSubmit={handleCreate}
       />
+      {formTitle ? <span className="sr-only">{formTitle}</span> : null}
 
       {detailId ? (
         <TransferDetailDialog

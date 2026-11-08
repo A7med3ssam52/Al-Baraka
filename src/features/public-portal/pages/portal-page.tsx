@@ -1,21 +1,18 @@
-import { AlertTriangle, CreditCard, FileText, LogOut, PhoneCall, Printer, RefreshCw, UserRound } from 'lucide-react'
+import { AlertTriangle, LogOut, Printer, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell, TableFooter } from '@/components/ui/table'
-import { customerStatusLabels, formatMobileDisplay } from '@/features/customers/types'
-import { documentStatusLabels, documentTypeLabels } from '@/features/documents/types'
-import { installmentStatusLabels, installmentStatusBadge } from '@/features/installments/types'
-import { cn, formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
+import { formatMobileDisplay } from '@/features/customers/types'
+import { installmentStatusLabels } from '@/features/installments/types'
+import { cn, formatCurrency, formatDate } from '@/lib/utils'
 
 import { lookupPortal } from '../api'
-import { clearPortalSession, loadPortalSession, portalTabs } from '../types'
-import type { PortalLookupKind, PortalSnapshot, PortalTabId } from '../types'
+import { clearPortalSession, loadPortalSession } from '../types'
+import type { PortalLookupKind, PortalSnapshot } from '../types'
 
 type SessionState = { kind: PortalLookupKind; value: string }
 
@@ -25,7 +22,6 @@ export function PortalPage() {
   const [snapshot, setSnapshot] = useState<PortalSnapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<PortalTabId>('personal')
 
   useEffect(() => {
     if (!session) {
@@ -96,7 +92,7 @@ export function PortalPage() {
 
   if (loading && !snapshot) {
     return (
-      <div dir="rtl" className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <div dir="rtl" className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
         <div className="flex items-center gap-3">
           <Skeleton className="size-14 rounded-full" />
           <div className="space-y-2">
@@ -104,8 +100,7 @@ export function PortalPage() {
             <Skeleton className="h-4 w-40" />
           </div>
         </div>
-        <Skeleton className="mt-6 h-10 w-full rounded-lg" />
-        <Skeleton className="mt-4 h-64 w-full rounded-xl" />
+        <Skeleton className="mt-6 h-64 w-full rounded-xl" />
       </div>
     )
   }
@@ -126,16 +121,15 @@ export function PortalPage() {
   }
 
   const customer = snapshot.customer
-  const summary = snapshot.summary
 
   return (
     <div dir="rtl" className="min-h-screen">
       <header className="border-b bg-[#0b1f33] text-white">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3" aria-label="العودة للاستعلام">
             <img src="/logo.PNG" alt="معرض البركة للتجارة" className="h-12 w-12 rounded-full border-2 border-[#c8a24a] bg-black object-cover" />
             <span className="leading-tight">
-              <span className="block text-xs text-[#c8a24a]">معرض البركة للتجارة — حساب العميل</span>
+              <span className="block text-xs text-[#c8a24a]">معرض البركة للتجارة — كشف الحساب</span>
               <span className="block text-lg font-extrabold">{customer.full_name}</span>
               <span className="block font-mono text-[11px] text-white/60">{customer.code}</span>
             </span>
@@ -144,334 +138,22 @@ export function PortalPage() {
             <Button variant="outline" size="sm" onClick={handleReload} disabled={loading} aria-label="تحديث البيانات">
               <RefreshCw className={cn('size-4', loading && 'animate-spin')} /> تحديث
             </Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()} aria-label="طباعة كشف الحساب">
+              <Printer className="size-4" /> طباعة
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExit}>
-              <LogOut className="size-4" /> استعلام جديد / خروج
+              <LogOut className="size-4" /> استعلام جديد
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        {/* Summary */}
-        {summary ? (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Card className="p-4">
-              <p className="text-xs font-bold text-muted-foreground">إجمالي المبلغ</p>
-              <p className="mt-1 text-xl font-extrabold">{formatCurrency(summary.total_amount)}</p>
-              <p className="text-[11px] text-muted-foreground">{summary.contract_count} عقد (النشط: {summary.active_contract_count})</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs font-bold text-muted-foreground">المدفوع</p>
-              <p className="mt-1 text-xl font-extrabold text-success">{formatCurrency(summary.total_paid)}</p>
-              <p className="text-[11px] text-muted-foreground">({summary.paid_count} قسط مدفوع)</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs font-bold text-muted-foreground">المتبقي</p>
-              <p className="mt-1 text-xl font-extrabold">{formatCurrency(summary.total_remaining)}</p>
-              <p className="text-[11px] text-muted-foreground">شامل المتأخر والمستحق</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs font-bold text-muted-foreground">متأخر الآن</p>
-              <p className="mt-1 text-xl font-extrabold text-destructive">{formatCurrency(summary.overdue_amount)}</p>
-              <p className="text-[11px] text-muted-foreground">{summary.overdue_count} قسط متأخر</p>
-            </Card>
-          </div>
-        ) : null}
-
-        <Card className="mt-4 p-4">
-          <p className="text-xs leading-6 text-muted-foreground">
-            هذه الصفحة معروضة للاطلاع فقط ولا يمكن تعديل أي بيان منها. عند وجود أي اختلاف
-            في الأقساط أو على المستندات تواصل مع فرع صان الحجر مباشرة.
-            {summary?.next_due_date ? (
-              <span> القسط القادم: <strong className="text-foreground">{formatDate(summary.next_due_date)}</strong>
-                {summary.next_due_amount != null ? ` بقيمة ${formatCurrency(summary.next_due_amount)}` : ''}.
-              </span>
-            ) : null}
-          </p>
-        </Card>
-
-        {/* Menu */}
-        <nav aria-label="أقسام حساب العميل" className="mt-4 flex gap-1 overflow-x-auto rounded-lg border bg-card p-1 text-sm">
-          {portalTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              aria-current={activeTab === tab.id ? 'page' : undefined}
-              className={cn(
-                'shrink-0 rounded-md px-3 py-2 font-bold transition-colors',
-                activeTab === tab.id ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Panels */}
-        <div className="mt-4">
-          {activeTab === 'personal' ? <PersonalPanel snapshot={snapshot} /> : null}
-          {activeTab === 'notes' ? <NotesPanel snapshot={snapshot} /> : null}
-          {activeTab === 'contacts' ? <ContactsPanel snapshot={snapshot} /> : null}
-          {activeTab === 'guarantors' ? <GuarantorsPanel snapshot={snapshot} /> : null}
-          {activeTab === 'installments' ? <InstallmentsPanel snapshot={snapshot} /> : null}
-          {activeTab === 'documents' ? <DocumentsPanel snapshot={snapshot} /> : null}
-          {activeTab === 'statement' ? <StatementPanel snapshot={snapshot} /> : null}
-        </div>
-
+      <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+        <StatementPanel snapshot={snapshot} />
         <p className="mt-6 text-center text-xs text-muted-foreground">
           مصدر البيانات: نظام معرض البركة • <Link to="/" className="font-bold underline">العودة لصفحة الاستعلام</Link>
         </p>
       </main>
-    </div>
-  )
-}
-
-function PersonalPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const customer = snapshot.customer!
-  const statusLabel =
-    customer.status === 'active' || customer.status === 'inactive' || customer.status === 'archived'
-      ? customerStatusLabels[customer.status]
-      : customer.status
-  const rows: { label: string; value: string }[] = [
-    { label: 'الاسم بالكامل', value: customer.full_name },
-    { label: 'الكود', value: customer.code },
-    { label: 'الرقم القومي', value: customer.national_id },
-    { label: 'الموبايل', value: formatMobileDisplay(customer.mobile) },
-    { label: 'هاتف إضافي', value: formatMobileDisplay(customer.phone2) },
-    { label: 'المهنة', value: customer.job || '—' },
-    { label: 'العنوان', value: customer.address || '—' },
-    { label: 'الفرع', value: customer.branch_name || '—' },
-    { label: 'الحالة', value: statusLabel },
-    { label: 'ملاحظات', value: customer.notes || '—' },
-    { label: 'أُضيف في', value: formatDateTime(customer.created_at) },
-  ]
-  return (
-    <Card className="p-4">
-      <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map((row) => (
-          <div key={row.label} className="min-w-0">
-            <dt className="text-xs font-bold text-muted-foreground">{row.label}</dt>
-            <dd className="mt-1 break-words font-semibold">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </Card>
-  )
-}
-
-const noteTypeLabels: Record<string, string> = {
-  note: 'ملاحظة',
-  call: 'اتصال',
-  visit: 'زيارة',
-  promise: 'وعد سداد',
-}
-
-function NotesPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const notes = snapshot.notes
-  return (
-    <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <h2 className="font-bold">سجل المتابعة</h2>
-        <p className="text-xs text-muted-foreground">يعرض سجل المتابعة المسجل بالفرع للاطلاع فقط (لا يمكن الإضافة أو التعديل من هنا).</p>
-      </Card>
-      {notes.length === 0 ? (
-        <Card className="p-6">
-          <EmptyState icon={PhoneCall} title="لا ملاحظات بعد" description="لم تُسجل أي متابعة لهذا الحساب بعد." />
-        </Card>
-      ) : (
-        <ol className="grid gap-2">
-          {notes.map((note) => (
-            <li key={note.id}>
-              <Card className="gap-2 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{noteTypeLabels[note.note_type] ?? note.note_type}</Badge>
-                  {note.next_followup_at ? (
-                    <Badge variant="warning">متابعة: {formatDateTime(note.next_followup_at)}</Badge>
-                  ) : null}
-                  <span className="text-xs text-muted-foreground">
-                    {note.created_by_name} • {formatDateTime(note.created_at)}
-                  </span>
-                </div>
-                <p className="whitespace-pre-wrap break-words text-sm leading-6">{note.note}</p>
-              </Card>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  )
-}
-
-function ContactsPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const contacts = snapshot.contacts
-  return (
-    <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <h2 className="font-bold">جهات التواصل الإضافية</h2>
-        <p className="text-xs text-muted-foreground">أرقام بديلة مسجلة للعميل (عمل / أسرة / إحالة) — للاطلاع فقط.</p>
-      </Card>
-      {contacts.length === 0 ? (
-        <Card className="p-6">
-          <EmptyState icon={PhoneCall} title="لا جهات اتصال إضافية" description="لم يتم تسجيل جهات تواصل إضافية لهذا العميل." />
-        </Card>
-      ) : (
-        <ol className="grid gap-2">
-          {contacts.map((contact) => (
-            <li key={contact.id}>
-              <Card className="p-4">
-                <Badge variant="outline">{contact.label}</Badge>
-                <p dir="ltr" className="mt-1 text-left font-mono text-sm">{formatMobileDisplay(contact.mobile)}</p>
-                {contact.note ? <p className="text-xs text-muted-foreground">{contact.note}</p> : null}
-                <p className="text-xs text-muted-foreground">{formatDateTime(contact.created_at)}</p>
-              </Card>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  )
-}
-
-function GuarantorsPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const guarantors = snapshot.guarantors
-  return (
-    <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <h2 className="font-bold">الضامنون المرتبطون بعقودك</h2>
-        <p className="text-xs text-muted-foreground">الضامنون المربوطون فعليًا بعقودك النشطة — للاطلاع فقط.</p>
-      </Card>
-      {guarantors.length === 0 ? (
-        <Card className="p-6">
-          <EmptyState icon={UserRound} title="لا ضامنين مرتبطين" description="لم يتم ربط ضامنين بعقودك الحالية." />
-        </Card>
-      ) : (
-        <ol className="grid gap-2">
-          {guarantors.map((g) => (
-            <li key={`${g.id}-${g.contract_number}`}>
-              <Card className="gap-2 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold">{g.full_name}</span>
-                  {g.job ? <Badge variant="outline">{g.job}</Badge> : null}
-                  <Badge variant="secondary">عقد {g.contract_number}</Badge>
-                </div>
-                <p className="font-mono text-xs text-muted-foreground" dir="ltr">
-                  {g.national_id} • {formatMobileDisplay(g.mobile)}
-                </p>
-                {g.address ? <p className="text-xs text-muted-foreground">{g.address}</p> : null}
-                {g.role ? <p className="text-xs text-muted-foreground">دور: {g.role === 'co_signer' ? 'موقّع مساعد' : 'ضامن'}</p> : null}
-              </Card>
-            </li>
-          ))}
-        </ol>
-      )}
-    </div>
-  )
-}
-
-function InstallmentsPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const rows = snapshot.installments
-  const summary = snapshot.summary
-  return (
-    <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <h2 className="font-bold">الأقساط</h2>
-        <p className="text-xs text-muted-foreground">
-          جدول الأقساط للعقود النشطة فقط. الحالة «متأخر / مدفوع جزئيًا» تُحسب تلقائيًا — لا يمكن التعديل من هنا.
-        </p>
-      </Card>
-      {rows.length === 0 ? (
-        <Card className="p-6">
-          <EmptyState icon={CreditCard} title="لا توجد أقساط" description="لا يوجد جدول أقساط نشط لهذا العميل." />
-        </Card>
-      ) : (
-        <Card className="p-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>العقد</TableHead>
-                <TableHead>القسط</TableHead>
-                <TableHead>الاستحقاق</TableHead>
-                <TableHead>المبلغ</TableHead>
-                <TableHead>المدفوع</TableHead>
-                <TableHead>المتبقي</TableHead>
-                <TableHead>الحالة</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-mono text-xs">{row.contract_number}</TableCell>
-                  <TableCell>{row.installment_no}</TableCell>
-                  <TableCell>{formatDate(row.due_date)}</TableCell>
-                  <TableCell>{formatCurrency(row.amount)}</TableCell>
-                  <TableCell>{formatCurrency(row.paid_amount)}</TableCell>
-                  <TableCell>{formatCurrency(row.remaining_amount)}</TableCell>
-                  <TableCell>
-                    <Badge variant={installmentStatusBadge[row.display_status] ?? 'outline'}>
-                      {installmentStatusLabels[row.display_status]}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            {summary ? (
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={3}>الإجمالي</TableCell>
-                  <TableCell>{formatCurrency(summary.total_amount)}</TableCell>
-                  <TableCell>{formatCurrency(summary.total_paid)}</TableCell>
-                  <TableCell>{formatCurrency(summary.total_remaining)}</TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableFooter>
-            ) : null}
-          </Table>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-function DocumentsPanel({ snapshot }: { snapshot: PortalSnapshot }) {
-  const docs = snapshot.documents
-  return (
-    <div className="flex flex-col gap-4">
-      <Card className="p-4">
-        <h2 className="font-bold">المستندات المسجلة</h2>
-        <p className="text-xs leading-6 text-muted-foreground">
-          تُعرض بيانات المستندات فقط (الرقم والعنوان والتاريخ وعدد المرفقات). صور المستندات
-          لا تُعرض هنا حمايةً لخصوصيتك — لطلب صورة مستند تواصل مع الفرع مباشرة.
-        </p>
-      </Card>
-      {docs.length === 0 ? (
-        <Card className="p-6">
-          <EmptyState icon={FileText} title="لا مستندات مسجلة" description="لم يتم إرفاق مستندات بهذا الحساب." />
-        </Card>
-      ) : (
-        <ol className="grid gap-3">
-          {docs.map((doc) => (
-            <li key={doc.id}>
-              <Card className="gap-2 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">{doc.doc_number}</span>
-                  <Badge variant={doc.status === 'complete' ? 'success' : 'warning'}>
-                    {documentStatusLabels[(doc.status as 'complete' | 'pending')] ?? doc.status}
-                  </Badge>
-                  <Badge variant="outline">
-                    {documentTypeLabels[(doc.doc_type as keyof typeof documentTypeLabels)] ?? doc.doc_type}
-                  </Badge>
-                </div>
-                <p className="font-bold">{doc.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateTime(doc.created_at)} • المرفقات: {doc.file_count} ملف
-                </p>
-                {doc.notes ? <p className="text-xs text-muted-foreground">{doc.notes}</p> : null}
-              </Card>
-            </li>
-          ))}
-        </ol>
-      )}
     </div>
   )
 }
@@ -495,16 +177,6 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="font-bold">كشف الحساب</h2>
-          <p className="text-xs text-muted-foreground">نسخة للاطلاع. اطبع هذه الصفحة للاحتفاظ بها.</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
-          <Printer className="size-4" /> طباعة كشف الحساب
-        </Button>
-      </div>
-
       <article
         dir="rtl"
         style={{ fontFamily: "'Cairo', sans-serif" }}
@@ -524,7 +196,6 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
                 </p>
               </div>
             </div>
-            <p className="text-xs italic text-[#c8a24a]">اختيارك الأفضل ... طريقك أسهل</p>
           </div>
         </header>
 
@@ -541,7 +212,8 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
             <p><span className="font-bold text-[#0b1f33]">الكود :</span> <span className="font-mono">{customer.code}</span></p>
             <p><span className="font-bold text-[#0b1f33]">الرقم القومي :</span> {customer.national_id}</p>
             <p><span className="font-bold text-[#0b1f33]">الموبايل :</span> <span dir="ltr">{formatMobileDisplay(customer.mobile)}</span></p>
-            <p className="sm:col-span-2">
+            <p><span className="font-bold text-[#0b1f33]">الرصيد المتاح :</span> {formatCurrency(Number(customer.credit_balance ?? 0))}</p>
+            <p>
               <span className="font-bold text-[#0b1f33]">التاريخ :</span> {formatDate(new Date().toISOString().slice(0, 10))}
               <span className="ms-3 text-xs text-muted-foreground">(عرض للاطلاع — لا يمكن التعديل من هنا)</span>
             </p>

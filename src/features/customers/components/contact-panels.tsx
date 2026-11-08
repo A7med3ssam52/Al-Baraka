@@ -1,4 +1,4 @@
-import { Loader2, PhoneCall, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { Loader2, Pencil, PhoneCall, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -18,13 +18,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/use-auth'
 import { formatDateTime } from '@/lib/utils'
 
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import {
   addCustomerContact,
   addGuarantor,
   deleteCustomerContact,
+  deleteGuarantor,
   listCustomerContacts,
-  listGuarantors,
+  listCustomerGuarantors,
   translateCustomerError,
+  updateCustomerContact,
+  updateGuarantor,
 } from '../api'
 import { formatMobileDisplay, type CustomerRecord } from '../types'
 
@@ -41,6 +45,8 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
   const [contacts, setContacts] = useState<ContactRecord[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<ContactRecord | null>(null)
+  const [deleting, setDeleting] = useState<ContactRecord | null>(null)
   const [form, setForm] = useState({ label: '', mobile: '', note: '' })
   const [submitting, setSubmitting] = useState(false)
   const { hasPermission } = useAuth()
@@ -67,16 +73,27 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
     }
     setSubmitting(true)
     try {
-      await addCustomerContact({
-        customerId: customer.id,
-        label: form.label,
-        mobile: form.mobile,
-        note: form.note,
-      })
+      if (editing) {
+        await updateCustomerContact({
+          contactId: editing.id,
+          label: form.label,
+          mobile: form.mobile,
+          note: form.note,
+        })
+        toast.success('تم حفظ تعديل جهة الاتصال.')
+      } else {
+        await addCustomerContact({
+          customerId: customer.id,
+          label: form.label,
+          mobile: form.mobile,
+          note: form.note,
+        })
+        toast.success('تمت إضافة جهة الاتصال.')
+      }
       setContacts((await listCustomerContacts(customer.id)) as unknown as ContactRecord[])
       setDialogOpen(false)
+      setEditing(null)
       setForm({ label: '', mobile: '', note: '' })
-      toast.success('تمت إضافة جهة الاتصال.')
     } catch (addError) {
       toast.error(translateCustomerError(addError))
     } finally {
@@ -84,13 +101,14 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
     }
   }
 
-  async function handleDelete(contact: ContactRecord) {
+  async function handleDeleteConfirm() {
+    if (!deleting) return
     try {
-      await deleteCustomerContact(contact.id)
+      await deleteCustomerContact(deleting.id)
       setContacts((await listCustomerContacts(customer.id)) as unknown as ContactRecord[])
       toast.success('تم حذف جهة الاتصال.')
     } catch (deleteError) {
-      toast.error(translateCustomerError(deleteError))
+      throw new Error(translateCustomerError(deleteError), { cause: deleteError })
     }
   }
 
@@ -148,14 +166,28 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
                   </p>
                 </div>
                 {canWrite ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`حذف ${contact.label}`}
-                    onClick={() => handleDelete(contact)}
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`تعديل ${contact.label}`}
+                      onClick={() => {
+                        setEditing(contact)
+                        setForm({ label: contact.label, mobile: contact.mobile, note: contact.note ?? '' })
+                        setDialogOpen(true)
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`حذف ${contact.label}`}
+                      onClick={() => setDeleting(contact)}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
                 ) : null}
               </Card>
             </li>
@@ -163,10 +195,10 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
         </ol>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditing(null) }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>جهة اتصال جديدة</DialogTitle>
+            <DialogTitle>{editing ? 'تعديل جهة اتصال' : 'جهة اتصال جديدة'}</DialogTitle>
             <DialogDescription>الاسم والموبايل مطلوبة.</DialogDescription>
           </DialogHeader>
           <form
@@ -209,12 +241,21 @@ export function ContactsPanel({ customer }: { customer: CustomerRecord }) {
                 إلغاء
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? <Loader2 className="size-4 animate-spin" /> : null} إضافة
+                {submitting ? <Loader2 className="size-4 animate-spin" /> : null} {editing ? 'حفظ التعديلات' : 'إضافة'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={deleting !== null}
+        title="حذف جهة اتصال"
+        description={`جهة «${deleting?.label ?? ''}» هتتمسح نهائي.`}
+        confirmLabel="حذف"
+        onOpenChange={(open) => !open && setDeleting(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }
@@ -234,6 +275,8 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
   const [guarantors, setGuarantors] = useState<GuarantorRecord[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<GuarantorRecord | null>(null)
+  const [deleting, setDeleting] = useState<GuarantorRecord | null>(null)
   const [form, setForm] = useState({ full_name: '', national_id: '', mobile: '', job: '', address: '' })
   const [submitting, setSubmitting] = useState(false)
   const { hasPermission } = useAuth()
@@ -241,7 +284,7 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
 
   useEffect(() => {
     let mounted = true
-    listGuarantors()
+    listCustomerGuarantors(customer.id)
       .then((rows) => {
         if (mounted) setGuarantors(rows as unknown as GuarantorRecord[])
       })
@@ -256,21 +299,50 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
   async function handleAdd() {
     setSubmitting(true)
     try {
-      await addGuarantor({
-        full_name: form.full_name,
-        national_id: form.national_id,
-        mobile: form.mobile,
-        job: form.job,
-        address: form.address,
-      })
-      setGuarantors((await listGuarantors()) as unknown as GuarantorRecord[])
+      if (editing) {
+        await updateGuarantor({
+          guarantorId: editing.id,
+          full_name: form.full_name,
+          national_id: form.national_id,
+          mobile: form.mobile,
+          job: form.job,
+          address: form.address,
+        })
+        toast.success('تم حفظ تعديل الضامن.')
+      } else {
+        await addGuarantor({
+          full_name: form.full_name,
+          national_id: form.national_id,
+          mobile: form.mobile,
+          job: form.job,
+          address: form.address,
+          customerId: customer.id,
+        })
+        toast.success('تمت إضافة الضامن لهذا العميل.')
+      }
+      setGuarantors(
+        (await listCustomerGuarantors(customer.id)) as unknown as GuarantorRecord[],
+      )
       setDialogOpen(false)
+      setEditing(null)
       setForm({ full_name: '', national_id: '', mobile: '', job: '', address: '' })
-      toast.success('تمت إضافة الضامن إلى السجل.')
     } catch (addError) {
       toast.error(translateCustomerError(addError))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleting) return
+    try {
+      await deleteGuarantor(deleting.id, customer.id)
+      setGuarantors(
+        (await listCustomerGuarantors(customer.id)) as unknown as GuarantorRecord[],
+      )
+      toast.success('تم حذف الضامن من هذا العميل.')
+    } catch (deleteError) {
+      throw new Error(translateCustomerError(deleteError), { cause: deleteError })
     }
   }
 
@@ -280,14 +352,14 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
     <div className="flex flex-col gap-4">
       <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="min-w-0">
-          <h2 className="font-bold">سجل الضامنين</h2>
+          <h2 className="font-bold">ضامنو هذا العميل</h2>
           <p className="text-xs text-muted-foreground">
-            الضامنون المتاحون؛ يُربط كل ضامن بالعقود لاحقًا.
+            هؤلاء الضامنون مرتبطون بهذا العميل فقط، ويُربطون بالعقود عند الحاجة.
           </p>
         </div>
         {canWrite ? (
           <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="size-4" /> إضافة ضامن
+            <Plus className="size-4" /> إضافة ضامن لهذا العميل
           </Button>
         ) : null}
       </Card>
@@ -311,8 +383,8 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
         <Card className="p-6">
           <EmptyState
             icon={PhoneCall}
-            title="لا ضامنين بعد"
-            description="أضف أول ضامن ليكون متاحًا عند إنشاء العقود."
+            title="لا ضامنين لهذا العميل"
+            description="أضف ضامنًا خاصًا بهذا العميل فقط."
           />
         </Card>
       ) : (
@@ -320,9 +392,41 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
           {guarantors.map((guarantor) => (
             <li key={guarantor.id}>
               <Card className="gap-2 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-bold">{guarantor.full_name}</span>
-                  {guarantor.job ? <Badge variant="outline">{guarantor.job}</Badge> : null}
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold">{guarantor.full_name}</span>
+                    {guarantor.job ? <Badge variant="outline">{guarantor.job}</Badge> : null}
+                  </div>
+                  {canWrite ? (
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`تعديل ${guarantor.full_name}`}
+                        onClick={() => {
+                          setEditing(guarantor)
+                          setForm({
+                            full_name: guarantor.full_name,
+                            national_id: guarantor.national_id,
+                            mobile: guarantor.mobile,
+                            job: guarantor.job ?? '',
+                            address: guarantor.address ?? '',
+                          })
+                          setDialogOpen(true)
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`حذف ${guarantor.full_name}`}
+                        onClick={() => setDeleting(guarantor)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
                 <p className="dir-ltr font-mono text-xs text-muted-foreground">
                   {guarantor.national_id} • {formatMobileDisplay(guarantor.mobile)}
@@ -336,11 +440,11 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
         </ol>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditing(null) }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>ضامن جديد</DialogTitle>
-            <DialogDescription>الاسم والرقم القومي والموبايل مطلوبة.</DialogDescription>
+            <DialogTitle>{editing ? 'تعديل الضامن' : 'إضافة ضامن لهذا العميل'}</DialogTitle>
+            <DialogDescription>سيظهر الضامن في ملف هذا العميل فقط. الاسم والرقم القومي والموبايل مطلوبة.</DialogDescription>
           </DialogHeader>
           <form
             className="grid gap-3"
@@ -400,12 +504,21 @@ export function GuarantorsPanel({ customer }: { customer: CustomerRecord }) {
                 إلغاء
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? <Loader2 className="size-4 animate-spin" /> : null} إضافة
+                {submitting ? <Loader2 className="size-4 animate-spin" /> : null} {editing ? 'حفظ التعديلات' : 'إضافة'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={deleting !== null}
+        title="حذف الضامن"
+        description={`الضامن «${deleting?.full_name ?? ''}» — لو مرتبط بعقد نشط هيتتعطل بدل الحذف النهائي.`}
+        confirmLabel="حذف"
+        onOpenChange={(open) => !open && setDeleting(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

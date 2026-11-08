@@ -1,6 +1,20 @@
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
 
 import type { CashTransactionRecord, CashTransactionType, CashboxRecord } from './types'
+
+export function translateTreasuryError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  const key = message.trim()
+  if (isFriendlyArabicMessage(key)) return key
+  if (key.toLowerCase().includes('permission denied')) {
+    return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
+  }
+  if (key.toLowerCase().includes('jwt') || key.toLowerCase().includes('session')) {
+    return 'انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.'
+  }
+  return 'تعذر إكمال العملية. حاول مرة أخرى.'
+}
 
 export async function fetchCashboxes(branchId?: string): Promise<CashboxRecord[]> {
   let query = supabase
@@ -12,7 +26,7 @@ export async function fetchCashboxes(branchId?: string): Promise<CashboxRecord[]
   if (branchId) query = query.eq('branch_id', branchId)
 
   const { data, error } = await query
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateTreasuryError(error.message))
   return (data ?? []) as unknown as CashboxRecord[]
 }
 
@@ -32,6 +46,6 @@ export async function fetchCashTransactions(options?: {
   if (options?.type && options.type !== 'all') query = query.eq('transaction_type', options.type)
 
   const { data, error } = await query
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateTreasuryError(error.message))
   return (data ?? []) as unknown as CashTransactionRecord[]
 }

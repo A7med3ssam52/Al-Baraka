@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -66,29 +66,31 @@ export function CustomerFormDialog({ open, customer, onOpenChange, onClosed, onS
   const [pendingConfirm, setPendingConfirm] = useState(false)
   const isEdit = customer !== null
 
+  useEffect(() => {
+    if (!open) return
+    setForm(
+      customer
+        ? {
+            full_name: customer.full_name,
+            national_id: customer.national_id,
+            mobile: customer.mobile,
+            code: customer.code?.replace(/^CUS-/i, '') ?? '',
+            phone2: customer.phone2 ?? '',
+            job: customer.job ?? '',
+            address: customer.address ?? '',
+            notes: customer.notes ?? '',
+          }
+        : emptyForm,
+    )
+    setDuplicates(null)
+    setPendingConfirm(false)
+  }, [open, customer])
+
   const dialogDescription = isEdit
     ? `تعديل بيانات العميل ${customer?.code}`
     : 'أدخل بيانات العميل مرة واحدة؛ الاسم والرقم القومي والموبايل مطلوبة.'
 
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setForm(
-        customer
-          ? {
-              full_name: customer.full_name,
-              national_id: customer.national_id,
-              mobile: customer.mobile,
-              code: customer.code ?? '',
-              phone2: customer.phone2 ?? '',
-              job: customer.job ?? '',
-              address: customer.address ?? '',
-              notes: customer.notes ?? '',
-            }
-          : emptyForm,
-      )
-      setDuplicates(null)
-      setPendingConfirm(false)
-    }
     onOpenChange(next)
   }
 

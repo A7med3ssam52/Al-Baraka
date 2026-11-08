@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import { uploadToCloudinary } from '@/features/uploads/cloudinary'
 
@@ -13,6 +14,32 @@ import type {
 export async function deleteDocument(documentId: string): Promise<void> {
   const { error } = await supabase.rpc('delete_document', {
     p_document_id: documentId,
+  })
+
+  if (error) throw new Error(translateDocumentError(error.message))
+}
+
+export async function updateDocument(input: {
+  documentId: string
+  title: string
+  docType: DocumentType
+  notes?: string
+}): Promise<DocumentRecord> {
+  const { data, error } = await supabase.rpc('update_document', {
+    p_document_id: input.documentId,
+    p_title: input.title,
+    p_doc_type: input.docType,
+    p_notes: input.notes || null,
+  })
+
+  if (error) throw new Error(translateDocumentError(error.message))
+
+  return data as DocumentRecord
+}
+
+export async function deleteDocumentFile(fileId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_document_file', {
+    p_file_id: fileId,
   })
 
   if (error) throw new Error(translateDocumentError(error.message))
@@ -38,6 +65,8 @@ const errorMessages: Record<string, string> = {
 export function translateDocumentError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 

@@ -1,3 +1,4 @@
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
 
 import type { PortalLookupInput, PortalSnapshot } from './types'
@@ -9,9 +10,11 @@ export function translatePortalError(error: unknown): string {
   const details = typeof raw.details === 'string' ? raw.details : ''
   const message = error instanceof Error ? error.message : String(error ?? '')
 
-  // Supabase PostgREST: function not deployed yet (new migration not applied).
+  if (isFriendlyArabicMessage(message.trim())) return message.trim()
+
+  // No technical details in the user-facing message.
   if (code === 'PGRST202' || message.includes('Could not find the function')) {
-    return 'خدمة الاستعلام غير جاهزة بعد: دالة public_portal_lookup غير موجودة في قاعدة البيانات. طبّق التحديث (Migration) ثم أعد المحاولة.'
+    return 'خدمة الاستعلام غير جاهزة حاليًا. حاول مرة أخرى بعد قليل.'
   }
 
   const key = message.trim()
@@ -97,6 +100,9 @@ export async function lookupPortal(input: PortalLookupInput): Promise<PortalSnap
     ...row,
     file_count: num(row.file_count),
   }))
+  if (snapshot.customer && snapshot.customer.credit_balance != null) {
+    snapshot.customer.credit_balance = num(snapshot.customer.credit_balance)
+  }
 
   return snapshot
 }

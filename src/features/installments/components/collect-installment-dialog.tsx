@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert, Wallet } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -42,16 +42,16 @@ export function CollectInstallmentDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function reset() {
+  useEffect(() => {
+    if (!open) return
     setAmount(installment ? String(installment.remaining_amount) : '')
     setPaymentMethod('cash')
     setPaymentDate(todayIsoDate())
     setNotes('')
     setError(null)
-  }
+  }, [open, installment])
 
   function handleOpenChange(next: boolean) {
-    if (next) reset()
     onOpenChange(next)
   }
 

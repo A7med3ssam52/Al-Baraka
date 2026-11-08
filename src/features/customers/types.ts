@@ -12,9 +12,24 @@ export interface CustomerRecord {
   status: CustomerStatus
   notes: string | null
   branch_id: string
+  credit_balance?: number | null
   created_at: string
   updated_at?: string
   updated_by?: string | null
+}
+
+export interface CustomerBalanceTransaction {
+  id: string
+  customer_id: string
+  branch_id: string
+  transaction_type: 'top_up' | 'deduction'
+  transaction_date: string
+  amount: number
+  reference_type: string | null
+  reference_id: string | null
+  notes: string | null
+  created_at: string
+  created_by: string | null
 }
 
 export interface CustomerInput {

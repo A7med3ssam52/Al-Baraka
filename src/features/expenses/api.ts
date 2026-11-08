@@ -1,6 +1,27 @@
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
 
 import type { ExpenseRecord, ExpenseStatus } from './types'
+
+export function translateExpenseError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  const key = message.trim()
+  if (isFriendlyArabicMessage(key)) return key
+  const map: Record<string, string> = {
+    expense_missing: 'المصروف غير موجود.',
+    expense_archived: 'المصروف ملغى ولا يمكن تعديله.',
+    invalid_title: 'العنوان مطلوب (حرفان على الأقل).',
+    invalid_amount: 'أدخل مبلغًا صحيحًا أكبر من صفر.',
+  }
+  if (map[key]) return map[key]
+  if (key.toLowerCase().includes('permission denied') || key === 'forbidden') {
+    return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
+  }
+  if (key.toLowerCase().includes('jwt') || key.toLowerCase().includes('session')) {
+    return 'انتهت الجلسة. أعد تسجيل الدخول ثم حاول مرة أخرى.'
+  }
+  return 'تعذر إكمال العملية. حاول مرة أخرى.'
+}
 
 export async function fetchExpenses(options?: {
   status?: ExpenseStatus | 'all'
@@ -16,7 +37,7 @@ export async function fetchExpenses(options?: {
   if (options?.status && options.status !== 'all') query = query.eq('status', options.status)
 
   const { data, error } = await query
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateExpenseError(error.message))
   return (data ?? []) as unknown as ExpenseRecord[]
 }
 
@@ -43,6 +64,38 @@ export async function createExpense(input: {
     })
     .select()
     .single()
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateExpenseError(error.message))
+  return data as unknown as ExpenseRecord
+}
+
+export async function updateExpense(input: {
+  expenseId: string
+  title: string
+  category?: string
+  amount: number
+  expenseDate?: string
+  cashboxId?: string | null
+  notes?: string
+}): Promise<ExpenseRecord> {
+  const { data, error } = await supabase.rpc('update_expense', {
+    p_expense_id: input.expenseId,
+    p_title: input.title,
+    p_category: input.category ?? null,
+    p_amount: input.amount,
+    p_expense_date: input.expenseDate ?? null,
+    p_cashbox_id: input.cashboxId ?? null,
+    p_notes: input.notes ?? null,
+  })
+
+  if (error) throw new Error(translateExpenseError(error.message))
+  return data as unknown as ExpenseRecord
+}
+
+export async function deleteExpense(expenseId: string): Promise<ExpenseRecord> {
+  const { data, error } = await supabase.rpc('delete_expense', {
+    p_expense_id: expenseId,
+  })
+
+  if (error) throw new Error(translateExpenseError(error.message))
   return data as unknown as ExpenseRecord
 }

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type { VehicleCreateInput, VehicleRecord, VehicleStatus, VehicleUpdateInput } from './types'
 
@@ -15,11 +16,14 @@ const errorMessages: Record<string, string> = {
   vehicle_locked: 'لا يمكن تعديل مركبة مباعة أو مؤرشفة.',
   invalid_status: 'حالة المركبة غير معروفة.',
   invalid_transition: 'هذا الانتقال بين حالات المركبة غير مسموح.',
+  has_history: 'لا يمكن الحذف — لهذا السجل تاريخ مرتبط. استخدم الأرشفة بدلًا منه.',
 }
 
 export function translateVehicleError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -107,4 +111,12 @@ export async function setVehicleStatus(
   if (error) throw new Error(translateVehicleError(error.message))
 
   return (Array.isArray(data) ? data[0] : data) as unknown as VehicleRecord
+}
+
+export async function deleteVehicle(vehicleId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_vehicle', {
+    p_vehicle_id: vehicleId,
+  })
+
+  if (error) throw new Error(translateVehicleError(error.message))
 }

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
   SupplierInput,
@@ -16,12 +17,15 @@ const errorMessages: Record<string, string> = {
   invalid_mobile: 'رقم الموبايل يجب أن يكون رقمًا مصريًا صحيحًا (010/011/012/015).',
   invalid_status: 'حالة المورد غير معروفة.',
   supplier_missing: 'المورد غير موجود.',
+  has_history: 'لا يمكن الحذف — لهذا السجل تاريخ مرتبط (فواتير أو مدفوعات). استخدم الأرشفة بدلًا منه.',
   unknown_code_entity: 'وحدة ترميز غير معروفة.',
 }
 
 export function translateSupplierError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -118,4 +122,12 @@ export async function fetchSupplierStatement(
   if (error) throw new Error(translateSupplierError(error.message))
 
   return (data ?? []) as unknown as SupplierStatementRow[]
+}
+
+export async function deleteSupplier(supplierId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_supplier', {
+    p_supplier_id: supplierId,
+  })
+
+  if (error) throw new Error(translateSupplierError(error.message))
 }

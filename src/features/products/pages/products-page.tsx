@@ -7,6 +7,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Trash2,
   TriangleAlert,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -36,9 +37,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 
 import {
   createProduct,
+  deleteProduct,
   fetchProductBrands,
   fetchProductCategories,
   fetchProductModels,
@@ -93,6 +96,8 @@ export function ProductsPage() {
     product: ProductRecord | null
   }>({ open: false, product: null })
   const [referenceOpen, setReferenceOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<ProductRecord | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const lastSearchSubmit = useRef('')
 
   const canCreate = hasPermission('products.create')
@@ -167,6 +172,17 @@ export function ProductsPage() {
       await createProduct(input)
     }
     reload()
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    try {
+      await deleteProduct(deleteTarget.id)
+      toast.success('تم حذف المنتج.')
+      reload()
+    } catch (deleteError) {
+      throw new Error(translateProductError(deleteError), { cause: deleteError })
+    }
   }
 
   return (
@@ -371,6 +387,16 @@ export function ProductsPage() {
                             أرشفة
                           </DropdownMenuItem>
                         ) : null}
+                        {canArchive ? (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setDeleteTarget(row)
+                              setDeleteOpen(true)
+                            }}
+                          >
+                            <Trash2 className="size-4 text-destructive" /> حذف نهائي
+                          </DropdownMenuItem>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -398,6 +424,15 @@ export function ProductsPage() {
         onOpenChange={setReferenceOpen}
         brands={brands}
         onChanged={reload}
+      />
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف نهائي للمنتج"
+        description={`المنتج «${deleteTarget?.name ?? ''}» — الحذف النهائي متاح فقط لو مفيش فواتير أو حركات مخزون مرتبطة.`}
+        confirmLabel="حذف نهائي"
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
       />
     </>
   )

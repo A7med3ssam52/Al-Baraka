@@ -1,5 +1,5 @@
 import { LoaderCircle, Save, UserRound } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -29,6 +29,13 @@ export function EditProfileDialog({ user, open, onOpenChange, onSaved }: EditPro
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setFullName(user?.full_name ?? '')
+    setPhone(user?.phone ?? '')
+    setError(null)
+  }, [open, user])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

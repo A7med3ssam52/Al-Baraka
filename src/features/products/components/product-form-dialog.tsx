@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -88,30 +88,32 @@ export function ProductFormDialog({
   const [error, setError] = useState<string | null>(null)
   const isEdit = product !== null
 
+  useEffect(() => {
+    if (!open) return
+    setForm(
+      product
+        ? {
+            name: product.name,
+            category_id: product.category_id ?? '',
+            brand_id: product.brand_id ?? '',
+            model_id: product.model_id ?? '',
+            unit_name: product.unit_name ?? '',
+            barcode: product.barcode ?? '',
+            description: product.description ?? '',
+            unit_cost: String(product.unit_cost),
+            valuation_method: product.valuation_method,
+            reorder_level: String(product.reorder_level),
+          }
+        : emptyForm,
+    )
+    setError(null)
+  }, [open, product])
+
   function patch(next: Partial<FormState>) {
     setForm((current) => ({ ...current, ...next }))
   }
 
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setForm(
-        product
-          ? {
-              name: product.name,
-              category_id: product.category_id ?? '',
-              brand_id: product.brand_id ?? '',
-              model_id: product.model_id ?? '',
-              unit_name: product.unit_name ?? '',
-              barcode: product.barcode ?? '',
-              description: product.description ?? '',
-              unit_cost: String(product.unit_cost),
-              valuation_method: product.valuation_method,
-              reorder_level: String(product.reorder_level),
-            }
-          : emptyForm,
-      )
-      setError(null)
-    }
     onOpenChange(next)
   }
 

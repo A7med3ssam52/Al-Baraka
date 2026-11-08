@@ -1,5 +1,5 @@
 import { Link2, LoaderCircle, Smartphone, UserPlus } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -71,6 +71,11 @@ export function InviteUserDialog({
     setError(null)
     setResult(null)
   }
+
+  useEffect(() => {
+    if (open) resetForm()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (submitting) return

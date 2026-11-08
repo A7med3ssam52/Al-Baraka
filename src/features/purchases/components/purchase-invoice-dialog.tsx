@@ -1,5 +1,5 @@
 import { Loader2, Plus, Trash2, TriangleAlert } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -81,41 +81,52 @@ export function PurchaseInvoiceDialog({
 
   const isEdit = invoice !== null
 
-  function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setError(null)
-      setSupplierId(invoice?.supplier_id ?? '')
-      setInvoiceDate(invoice?.invoice_date ?? new Date().toISOString().slice(0, 10))
-      setSupplierReference('')
-      setDiscount(invoice ? String(invoice.discount) : '0')
-      setTransport(invoice ? String(invoice.transport_cost) : '0')
-      setPrep(invoice ? String(invoice.prep_cost) : '0')
-      setPaymentMethod(invoice?.payment_method ?? 'cash')
-      setPaid(invoice ? String(invoice.paid_amount) : '0')
-      setNotes('')
-      setLines([newLine()])
+  useEffect(() => {
+    if (!open) return
+    setError(null)
+    setSupplierId(invoice?.supplier_id ?? '')
+    setInvoiceDate(invoice?.invoice_date ?? new Date().toISOString().slice(0, 10))
+    setSupplierReference('')
+    setDiscount(invoice ? String(invoice.discount) : '0')
+    setTransport(invoice ? String(invoice.transport_cost) : '0')
+    setPrep(invoice ? String(invoice.prep_cost) : '0')
+    setPaymentMethod(invoice?.payment_method ?? 'cash')
+    setPaid(invoice ? String(invoice.paid_amount) : '0')
+    setNotes('')
+    setLines([newLine()])
 
-      if (invoice) {
-        setLoading(true)
-        fetchPurchaseInvoice(invoice.id)
-          .then((detail) => {
-            setSupplierReference(detail.invoice.supplier_reference ?? '')
-            setNotes(detail.invoice.notes ?? '')
-            setLines(
-              detail.items.map((item, index) => ({
-                key: `loaded-${index}`,
-                kind: item.product_id ? 'product' : 'vehicle',
-                targetId: item.product_id ?? item.vehicle_id ?? '',
-                quantity: String(item.quantity),
-                unitPrice: String(item.unit_price),
-                discount: String(item.discount),
-              })),
-            )
-          })
-          .catch((loadError) => setError(translatePurchaseError(loadError)))
-          .finally(() => setLoading(false))
+    if (invoice) {
+      let active = true
+      setLoading(true)
+      fetchPurchaseInvoice(invoice.id)
+        .then((detail) => {
+          if (!active) return
+          setSupplierReference(detail.invoice.supplier_reference ?? '')
+          setNotes(detail.invoice.notes ?? '')
+          setLines(
+            detail.items.map((item, index) => ({
+              key: `loaded-${index}`,
+              kind: item.product_id ? 'product' : 'vehicle',
+              targetId: item.product_id ?? item.vehicle_id ?? '',
+              quantity: String(item.quantity),
+              unitPrice: String(item.unit_price),
+              discount: String(item.discount),
+            })),
+          )
+        })
+        .catch((loadError) => {
+          if (active) setError(translatePurchaseError(loadError))
+        })
+        .finally(() => {
+          if (active) setLoading(false)
+        })
+      return () => {
+        active = false
       }
     }
+  }, [open, invoice])
+
+  function handleDialogOpenChange(next: boolean) {
     onOpenChange(next)
   }
 

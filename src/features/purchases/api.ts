@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
   PurchaseInvoiceDetail,
@@ -23,6 +24,7 @@ const errorMessages: Record<string, string> = {
   cashbox_missing: 'لا توجد خزنة نشطة لهذا الفرع.',
   bank_account_missing: 'لا يوجد حساب بنكي نشط لهذا الفرع.',
   invoice_missing: 'الفاتورة غير موجودة أو خارج نطاق فرعك.',
+  invoice_locked: 'الفاتورة ملغاة بالفعل ولا يمكن إلغاؤها مرة أخرى.',
   invoice_not_draft: 'لا يمكن تعديل الفاتورة بعد اعتمادها أو إلغائها.',
   vehicle_unavailable: 'المركبة غير متاحة للشراء (مباعة أو مؤرشفة).',
   document_mismatch: 'المستند المرفق لا يخص مورد هذه الفاتورة.',
@@ -36,6 +38,8 @@ const errorMessages: Record<string, string> = {
 export function translatePurchaseError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -113,6 +117,17 @@ export async function approvePurchaseInvoice(invoiceId: string) {
 
 export async function cancelPurchaseInvoice(invoiceId: string, reason?: string) {
   const { data, error } = await supabase.rpc('cancel_purchase_invoice', {
+    p_invoice_id: invoiceId,
+    p_reason: reason ?? null,
+  })
+
+  if (error) throw new Error(translatePurchaseError(error.message))
+
+  return (Array.isArray(data) ? data[0] : data) as unknown as PurchaseInvoiceRecord
+}
+
+export async function cancelApprovedPurchaseInvoice(invoiceId: string, reason?: string) {
+  const { data, error } = await supabase.rpc('cancel_approved_purchase_invoice', {
     p_invoice_id: invoiceId,
     p_reason: reason ?? null,
   })

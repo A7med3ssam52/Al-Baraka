@@ -1,4 +1,4 @@
-import { ArrowRight, Bike, Plus, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { ArrowRight, Bike, Plus, RefreshCw, Search, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -28,10 +28,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { fetchProductBrands, fetchProductModels } from '@/features/products/api'
 
 import {
   createVehicle,
+  deleteVehicle,
   fetchVehicles,
   setVehicleStatus,
   translateVehicleError,
@@ -77,6 +79,8 @@ export function VehiclesPage() {
     open: false,
     vehicle: null,
   })
+  const [deleteTarget, setDeleteTarget] = useState<VehicleRecord | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const lastSearchSubmit = useRef('')
 
   const canCreate = hasPermission('vehicles.create')
@@ -144,6 +148,17 @@ export function VehiclesPage() {
   async function handleUpdate(vehicleId: string, input: VehicleUpdateInput) {
     await updateVehicle(vehicleId, input)
     reload()
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    try {
+      await deleteVehicle(deleteTarget.id)
+      toast.success('تم حذف المركبة.')
+      reload()
+    } catch (deleteError) {
+      throw new Error(translateVehicleError(deleteError), { cause: deleteError })
+    }
   }
 
   function allowedTransitions(row: VehicleRecord) {
@@ -307,6 +322,16 @@ export function VehiclesPage() {
                               ))}
                             </>
                           ) : null}
+                          {canArchive ? (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setDeleteTarget(row)
+                                setDeleteOpen(true)
+                              }}
+                            >
+                              <Trash2 className="size-4 text-destructive" /> حذف نهائي
+                            </DropdownMenuItem>
+                          ) : null}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -327,6 +352,15 @@ export function VehiclesPage() {
         onClosed={() => setFormDialog({ open: false, vehicle: null })}
         onSubmitCreate={handleCreate}
         onSubmitUpdate={handleUpdate}
+      />
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف نهائي للمركبة"
+        description={`المركبة «${deleteTarget?.code ?? ''}» — الحذف النهائي متاح فقط لو مفيش بيع أو شراء أو حركة مخزون مرتبطة.`}
+        confirmLabel="حذف نهائي"
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
       />
     </>
   )

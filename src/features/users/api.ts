@@ -1,4 +1,5 @@
 import { isUserRole, roleDescriptions, roleLabels, userRoles } from '@/features/auth/roles'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/types'
 
@@ -69,6 +70,7 @@ const errorMessages: Record<string, string> = {
 
 export function translateUserError(codeOrMessage: string) {
   const key = codeOrMessage.trim()
+  if (isFriendlyArabicMessage(key)) return key
   if (errorMessages[key]) return errorMessages[key]
 
   if (key.toLowerCase().includes('permission denied')) {
@@ -114,7 +116,7 @@ export async function fetchRoleOptions(): Promise<RoleOption[]> {
     .select('code, name_ar, description, is_system')
     .eq('is_active', true)
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateUserError(error.message))
 
   return (
     (data ?? []) as {
@@ -141,7 +143,7 @@ export async function fetchBranchOptions(): Promise<BranchOption[]> {
     .eq('is_active', true)
     .order('code')
 
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(translateUserError(error.message))
 
   return (data ?? []) as BranchOption[]
 }

@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -63,17 +63,19 @@ export function RecordMovementDialog({
 
   const fixedSign = movementTypeSign[movementType]
 
+  useEffect(() => {
+    if (!open) return
+    setTargetKind('product')
+    setTargetId('')
+    setMovementType('purchase')
+    setQuantity('1')
+    setDirection('in')
+    setUnitCost('0')
+    setNotes('')
+    setError(null)
+  }, [open])
+
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setTargetKind('product')
-      setTargetId('')
-      setMovementType('purchase')
-      setQuantity('1')
-      setDirection('in')
-      setUnitCost('0')
-      setNotes('')
-      setError(null)
-    }
     onOpenChange(next)
   }
 

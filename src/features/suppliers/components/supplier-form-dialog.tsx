@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -54,22 +54,24 @@ export function SupplierFormDialog({ open, supplier, onOpenChange, onClosed, onS
   const [error, setError] = useState<string | null>(null)
   const isEdit = supplier !== null
 
+  useEffect(() => {
+    if (!open) return
+    setForm(
+      supplier
+        ? {
+            full_name: supplier.full_name,
+            phone: supplier.phone,
+            contact_name: supplier.contact_name ?? '',
+            tax_number: supplier.tax_number ?? '',
+            address: supplier.address ?? '',
+            notes: supplier.notes ?? '',
+          }
+        : emptyForm,
+    )
+    setError(null)
+  }, [open, supplier])
+
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setForm(
-        supplier
-          ? {
-              full_name: supplier.full_name,
-              phone: supplier.phone,
-              contact_name: supplier.contact_name ?? '',
-              tax_number: supplier.tax_number ?? '',
-              address: supplier.address ?? '',
-              notes: supplier.notes ?? '',
-            }
-          : emptyForm,
-      )
-      setError(null)
-    }
     onOpenChange(next)
   }
 

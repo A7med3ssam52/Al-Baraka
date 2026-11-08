@@ -1,6 +1,8 @@
-import { ArrowRight, PhoneCall, Plus } from 'lucide-react'
+import { ArrowRight, Pencil, PhoneCall, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { toast } from 'sonner'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -9,10 +11,17 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/use-auth'
 import { cn, formatDateTime } from '@/lib/utils'
 
-import { fetchCustomer, fetchCustomerNotes, translateCustomerError } from '../api'
+import {
+  deleteCustomerNote,
+  fetchCustomer,
+  fetchCustomerNotes,
+  translateCustomerError,
+  updateCustomerNote,
+} from '../api'
 import { customerStatusLabels, formatMobileDisplay } from '../types'
 import type { CustomerRecord } from '../types'
 import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
+import { CustomerBalancePanel } from '../components/balance-panel'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import {
@@ -57,7 +66,11 @@ export function CustomerProfile({
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
     if (tabId === 'documents') return hasPermission('documents.view')
-    if (tabId === 'installments' || tabId === 'statement') {
+    if (
+      tabId === 'installments' ||
+      tabId === 'statement' ||
+      tabId === 'balance'
+    ) {
       return true
     }
     return availability?.[tabId] === true
@@ -89,6 +102,11 @@ export function CustomerProfile({
         <p className="text-sm text-muted-foreground">
           {customer.address || 'الملف الموحد للتعاملات والمتابعة.'}
         </p>
+        {Number(customer.credit_balance ?? 0) > 0 ? (
+          <p className="text-sm font-bold text-success">
+            الرصيد المتاح: {new Intl.NumberFormat('ar-EG').format(Number(customer.credit_balance))} جنيه
+          </p>
+        ) : null}
       </div>
 
       <nav
@@ -125,6 +143,14 @@ export function CustomerProfile({
         <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
       ) : null}
       {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
+      {activeTab === 'balance' ? (
+        <CustomerBalancePanel
+          customerId={customer.id}
+          customerCode={customer.code}
+          reloadKey={reloadKey}
+          onBalanceChanged={() => setReloadKey((k) => k + 1)}
+        />
+      ) : null}
       {activeTab === 'statement' ? (
         <StatementPanel
           customerId={customer.id}
@@ -134,6 +160,7 @@ export function CustomerProfile({
           customerCode={customer.code}
           nationalId={customer.national_id}
           mobile={customer.mobile}
+          creditBalance={Number(customer.credit_balance ?? 0)}
         />
       ) : null}
       {activeTab !== 'personal' &&
@@ -142,6 +169,7 @@ export function CustomerProfile({
       activeTab !== 'guarantors' &&
       activeTab !== 'documents' &&
       activeTab !== 'installments' &&
+      activeTab !== 'balance' &&
       activeTab !== 'statement' ? (
         renderExtraTab ? (
           renderExtraTab(activeTab, customer)
@@ -160,6 +188,7 @@ export function CustomerProfile({
 }
 
 function PersonalDataPanel({ customer }: { customer: CustomerRecord }) {
+  const balance = Number(customer.credit_balance ?? 0)
   const rows: { label: string; value: string | null }[] = [
     { label: 'الاسم بالكامل', value: customer.full_name },
     { label: 'الكود', value: customer.code },
@@ -169,6 +198,10 @@ function PersonalDataPanel({ customer }: { customer: CustomerRecord }) {
     { label: 'المهنة', value: customer.job },
     { label: 'العنوان', value: customer.address },
     { label: 'الحالة', value: customerStatusLabels[customer.status] },
+    {
+      label: 'الرصيد المتاح',
+      value: balance > 0 ? `${new Intl.NumberFormat('ar-EG').format(balance)} جنيه` : 'لا يوجد',
+    },
     { label: 'ملاحظات مختصرة', value: customer.notes },
     { label: 'أُضيف في', value: formatDateTime(customer.created_at) },
   ]
@@ -199,7 +232,9 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
   const [notes, setNotes] = useState<CustomerNote[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState<CustomerNote | null>(null)
   const { hasPermission } = useAuth()
+  const canWrite = hasPermission('customers.create') || hasPermission('customers.update')
 
   async function load() {
     setError(null)
@@ -207,6 +242,29 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
       setNotes(await fetchCustomerNotes(customer.id))
     } catch (loadError) {
       setError(translateCustomerError(loadError))
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleting) return
+    try {
+      await deleteCustomerNote(deleting.id)
+      toast.success('تم حذف الملاحظة.')
+      await load()
+    } catch (deleteError) {
+      throw new Error(translateCustomerError(deleteError), { cause: deleteError })
+    }
+  }
+
+  async function handleEdit(note: CustomerNote) {
+    const next = window.prompt('تعديل الملاحظة:', note.note)
+    if (next === null) return
+    try {
+      await updateCustomerNote({ noteId: note.id, note: next })
+      toast.success('تم حفظ تعديل الملاحظة.')
+      await load()
+    } catch (editError) {
+      toast.error(translateCustomerError(editError))
     }
   }
 
@@ -232,12 +290,14 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
         <div className="min-w-0">
           <h2 className="font-bold">سجل المتابعة</h2>
           <p className="text-xs text-muted-foreground">
-            ملاحظات متراكمة محفوظة دائمًا؛ لا تعديل ولا حذف.
+            ملاحظات المتابعة — قابلة للتعديل والحذف لمن له صلاحية.
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="size-4" /> إضافة ملاحظة
-        </Button>
+        {canWrite ? (
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="size-4" /> إضافة ملاحظة
+          </Button>
+        ) : null}
       </Card>
 
       {error ? (
@@ -263,14 +323,26 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
           {notes.map((note) => (
             <li key={note.id}>
               <Card className="gap-2 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{noteTypeLabels[note.note_type]}</Badge>
-                  {note.next_followup_at ? (
-                    <Badge variant="warning">متابعة: {formatDateTime(note.next_followup_at)}</Badge>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{noteTypeLabels[note.note_type]}</Badge>
+                    {note.next_followup_at ? (
+                      <Badge variant="warning">متابعة: {formatDateTime(note.next_followup_at)}</Badge>
+                    ) : null}
+                    <span className="text-xs text-muted-foreground">
+                      {note.created_by_name} • {formatDateTime(note.created_at)}
+                    </span>
+                  </div>
+                  {canWrite ? (
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" aria-label="تعديل الملاحظة" onClick={() => void handleEdit(note)}>
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" aria-label="حذف الملاحظة" onClick={() => setDeleting(note)}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
                   ) : null}
-                  <span className="text-xs text-muted-foreground">
-                    {note.created_by_name} • {formatDateTime(note.created_at)}
-                  </span>
                 </div>
                 <p className="text-sm leading-6 break-words whitespace-pre-wrap">{note.note}</p>
               </Card>
@@ -284,7 +356,16 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
         customer={customer}
         onOpenChange={setDialogOpen}
         onSaved={() => void load()}
-        canWrite={hasPermission('customers.create')}
+        canWrite={canWrite}
+      />
+
+      <ConfirmActionDialog
+        open={deleting !== null}
+        title="حذف ملاحظة"
+        description="الملاحظة هتتمسح نهائي."
+        confirmLabel="حذف"
+        onOpenChange={(open) => !open && setDeleting(null)}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   )

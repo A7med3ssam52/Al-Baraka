@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
   StockTransferDetail,
@@ -28,6 +29,8 @@ const errorMessages: Record<string, string> = {
 export function translateTransferError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -103,6 +106,24 @@ export async function cancelStockTransfer(
   const { data, error } = await supabase.rpc('cancel_stock_transfer', {
     p_transfer_id: transferId,
     p_reason: reason?.trim() || null,
+  })
+
+  if (error) throw new Error(translateTransferError(error.message))
+
+  return (Array.isArray(data) ? data[0] : data) as unknown as StockTransferRecord
+}
+
+export async function updateStockTransfer(
+  transferId: string,
+  input: StockTransferInput,
+): Promise<StockTransferRecord> {
+  const { data, error } = await supabase.rpc('update_stock_transfer', {
+    p_transfer_id: transferId,
+    p_from_branch_id: input.from_branch_id,
+    p_to_branch_id: input.to_branch_id,
+    p_items: input.items,
+    p_transfer_date: input.transfer_date,
+    p_notes: input.notes?.trim() || null,
   })
 
   if (error) throw new Error(translateTransferError(error.message))

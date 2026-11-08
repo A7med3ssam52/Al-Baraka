@@ -1,19 +1,6 @@
-export type PortalTabId =
-  | 'personal'
-  | 'notes'
-  | 'contacts'
-  | 'guarantors'
-  | 'installments'
-  | 'documents'
-  | 'statement'
+export type PortalTabId = 'statement'
 
 export const portalTabs: Array<{ id: PortalTabId; label: string }> = [
-  { id: 'personal', label: 'البيانات الشخصية' },
-  { id: 'notes', label: 'الملاحظات والمتابعة' },
-  { id: 'contacts', label: 'جهات التواصل' },
-  { id: 'guarantors', label: 'الضامنون' },
-  { id: 'installments', label: 'الأقساط' },
-  { id: 'documents', label: 'المستندات' },
   { id: 'statement', label: 'كشف الحساب' },
 ]
 
@@ -43,6 +30,7 @@ export interface PortalCustomer {
   notes: string | null
   branch_id: string
   branch_name: string | null
+  credit_balance?: number | string | null
   created_at: string
   updated_at?: string
 }

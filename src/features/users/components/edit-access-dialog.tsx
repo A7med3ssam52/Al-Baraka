@@ -1,5 +1,5 @@
 import { LoaderCircle, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -61,6 +61,22 @@ export function EditAccessDialog({
   )
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open || !user) return
+    const roles = (user.roles ?? [])
+      .map((role) => role.code)
+      .filter((code): code is UserRole => isUserRole(code))
+    const uniqueRoles = [...new Set(roles)]
+    const rolesResult = uniqueRoles.length > 0 ? uniqueRoles : user.primary_role ? [user.primary_role] : []
+    const branches = [...new Set((user.branches ?? []).map((branch) => branch.id))]
+    const branchesResult = branches.length > 0 ? branches : user.default_branch_id ? [user.default_branch_id] : []
+    setSelectedRoles(rolesResult)
+    setSelectedBranchIds(branchesResult)
+    setPrimaryRole(user.primary_role ?? rolesResult[0] ?? '')
+    setDefaultBranchId(user.default_branch_id ?? branchesResult[0] ?? '')
+    setError(null)
+  }, [open, user])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

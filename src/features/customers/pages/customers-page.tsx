@@ -1,5 +1,7 @@
-import { Archive, MoreHorizontal, RefreshCw, Search, UserPlus, Users } from 'lucide-react'
+import { Archive, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,6 +30,7 @@ import { cn, formatDateTime } from '@/lib/utils'
 
 import {
   createCustomer,
+  deleteCustomer,
   fetchCustomers,
   setCustomerStatus,
   translateCustomerError,
@@ -80,6 +83,10 @@ export function CustomersPage() {
     open: boolean
     customer: CustomerRecord | null
   }>({ open: false, customer: null })
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    customer: CustomerRecord | null
+  }>({ open: false, customer: null })
   const lastSearchSubmit = useRef(searchInput)
 
   const canCreate = hasPermission('customers.create')
@@ -126,6 +133,17 @@ export function CustomersPage() {
       await load()
     } catch (statusError) {
       throw new Error(translateCustomerError(statusError), { cause: statusError })
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteDialog.customer) return
+    try {
+      await deleteCustomer(deleteDialog.customer.id)
+      toast.success('تم حذف العميل.')
+      await load()
+    } catch (deleteError) {
+      throw new Error(translateCustomerError(deleteError), { cause: deleteError })
     }
   }
 
@@ -301,6 +319,13 @@ export function CustomersPage() {
                             <Archive className="size-4" /> أرشفة العميل
                           </DropdownMenuItem>
                         ) : null}
+                        {canArchive ? (
+                          <DropdownMenuItem
+                            onClick={() => setDeleteDialog({ open: true, customer })}
+                          >
+                            <Trash2 className="size-4 text-destructive" /> حذف نهائي
+                          </DropdownMenuItem>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -314,7 +339,7 @@ export function CustomersPage() {
       <CustomerFormDialog
         open={formDialog.open}
         customer={formDialog.customer}
-        onOpenChange={(open) => setFormDialog({ open, customer: formDialog.customer })}
+        onOpenChange={(open) => setFormDialog((current) => ({ ...current, open }))}
         onClosed={() => setFormDialog({ open: false, customer: null })}
         onSubmit={handleFormSubmit}
       />
@@ -322,8 +347,17 @@ export function CustomersPage() {
       <CustomerStatusDialog
         open={statusDialog.open}
         customer={statusDialog.customer}
-        onOpenChange={(open) => setStatusDialog({ open, customer: statusDialog.customer })}
+        onOpenChange={(open) => setStatusDialog((current) => ({ ...current, open }))}
         onConfirm={handleStatusConfirm}
+      />
+
+      <ConfirmActionDialog
+        open={deleteDialog.open}
+        title="حذف نهائي للعميل"
+        description={`العميل «${deleteDialog.customer?.full_name ?? ''}» — الحذف النهائي متاح فقط لو مفيش عقود أو فواتير أو مدفوعات مرتبطة. لو له تاريخ هتظهر رسالة ويتظل الأرشفة هي البديل.`}
+        confirmLabel="حذف نهائي"
+        onOpenChange={(open) => setDeleteDialog((current) => ({ ...current, open }))}
+        onConfirm={handleDeleteConfirm}
       />
     </>
   )

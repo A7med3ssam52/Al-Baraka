@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -75,30 +75,32 @@ export function VehicleFormDialog({
   const [error, setError] = useState<string | null>(null)
   const isEdit = vehicle !== null
 
+  useEffect(() => {
+    if (!open) return
+    setForm(
+      vehicle
+        ? {
+            chassis_no: vehicle.chassis_no,
+            engine_no: vehicle.engine_no,
+            vehicle_type: vehicle.vehicle_type,
+            brand_name: vehicle.brand_name ?? '',
+            model_name: vehicle.model_name ?? '',
+            manufacture_year: vehicle.manufacture_year ? String(vehicle.manufacture_year) : '',
+            color: vehicle.color ?? '',
+            purchase_date: vehicle.purchase_date ?? '',
+            purchase_price: String(vehicle.purchase_price),
+            notes: '',
+          }
+        : emptyForm,
+    )
+    setError(null)
+  }, [open, vehicle])
+
   function patch(next: Partial<FormState>) {
     setForm((current) => ({ ...current, ...next }))
   }
 
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setForm(
-        vehicle
-          ? {
-              chassis_no: vehicle.chassis_no,
-              engine_no: vehicle.engine_no,
-              vehicle_type: vehicle.vehicle_type,
-              brand_name: '',
-              model_name: '',
-              manufacture_year: vehicle.manufacture_year ? String(vehicle.manufacture_year) : '',
-              color: vehicle.color ?? '',
-              purchase_date: vehicle.purchase_date ?? '',
-              purchase_price: String(vehicle.purchase_price),
-              notes: '',
-            }
-          : emptyForm,
-      )
-      setError(null)
-    }
     onOpenChange(next)
   }
 

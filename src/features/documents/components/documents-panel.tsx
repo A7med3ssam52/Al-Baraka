@@ -1,4 +1,4 @@
-import { Eye, FileText, Paperclip, Plus, RefreshCw, Trash2, X } from 'lucide-react'
+import { Eye, FileText, Loader2, Paperclip, Pencil, Plus, RefreshCw, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -22,11 +22,13 @@ import { formatDate, formatDateTime } from '@/lib/utils'
 import {
   createDocument,
   deleteDocument,
+  deleteDocumentFile,
   fetchDocumentAccessLogs,
   fetchDocumentFiles,
   fetchDocuments,
   getSecureFileUrl,
   translateDocumentError,
+  updateDocument,
   uploadDocumentFile,
 } from '../api'
 import {
@@ -182,6 +184,11 @@ function DocumentCard({
   const [files, setFiles] = useState<DocumentFileRecord[] | undefined>(undefined)
   const [uploading, setUploading] = useState(false)
   const [busyFileId, setBusyFileId] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editType, setEditType] = useState<DocumentType>('other')
+  const [editNotes, setEditNotes] = useState('')
+  const [editingSaving, setEditingSaving] = useState(false)
 
   async function loadFiles() {
     try {
@@ -254,6 +261,38 @@ function DocumentCard({
     }
   }
 
+  async function handleDeleteFile(file: DocumentFileRecord) {
+    if (!window.confirm('حذف الملف نهائي؟')) return
+    try {
+      await deleteDocumentFile(file.id)
+      await loadFiles()
+      onChanged()
+      toast.success('تم حذف الملف.')
+    } catch (deleteError) {
+      toast.error(translateDocumentError(deleteError))
+    }
+  }
+
+  async function handleSaveEdit(event: React.FormEvent) {
+    event.preventDefault()
+    setEditingSaving(true)
+    try {
+      await updateDocument({
+        documentId: documentRecord.id,
+        title: editTitle,
+        docType: editType,
+        notes: editNotes,
+      })
+      toast.success('تم حفظ تعديل المستند.')
+      setEditOpen(false)
+      onChanged()
+    } catch (editError) {
+      toast.error(translateDocumentError(editError))
+    } finally {
+      setEditingSaving(false)
+    }
+  }
+
   const filesList = files ?? []
 
   return (
@@ -278,6 +317,20 @@ function DocumentCard({
           <Button variant="ghost" size="sm" onClick={() => onOpenLogs(documentRecord)}>
             <Eye className="size-4" /> سجل الوصول
           </Button>
+          {canUpload ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditTitle(documentRecord.title)
+                setEditType(documentRecord.doc_type)
+                setEditNotes(documentRecord.notes ?? '')
+                setEditOpen(true)
+              }}
+            >
+              <Pencil className="size-4" /> تعديل
+            </Button>
+          ) : null}
           {canDelete ? (
             <Button
               variant="ghost"
@@ -348,11 +401,57 @@ function DocumentCard({
                 >
                   <RefreshCw className={`size-4 ${busyFileId === file.id ? 'animate-spin' : ''}`} />
                 </Button>
+                {canDelete ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`حذف ${file.file_name ?? 'الملف'}`}
+                    onClick={() => void handleDeleteFile(file)}
+                  >
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                ) : null}
               </div>
             </li>
           ))}
         </ul>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل المستند {documentRecord.doc_number}</DialogTitle>
+            <DialogDescription>عدّل العنوان أو النوع أو الملاحظة.</DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-3" onSubmit={handleSaveEdit}>
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">العنوان *</span>
+              <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">النوع</span>
+              <Select value={editType} onChange={(e) => setEditType(e.target.value as DocumentType)}>
+                <option value="id_card">{documentTypeLabels.id_card}</option>
+                <option value="commercial_registry">{documentTypeLabels.commercial_registry}</option>
+                <option value="other">{documentTypeLabels.other}</option>
+              </Select>
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">ملاحظة</span>
+              <Input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+            </label>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                إلغاء
+              </Button>
+              <Button type="submit" disabled={editingSaving}>
+                {editingSaving ? <Loader2 className="size-4 animate-spin" /> : null}
+                حفظ التعديلات
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

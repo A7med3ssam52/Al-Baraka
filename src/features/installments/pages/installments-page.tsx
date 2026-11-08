@@ -5,15 +5,18 @@ import {
   CalendarClock,
   CreditCard,
   Loader2,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
+  Trash2,
   TriangleAlert,
   Wallet,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { PageHeader } from '@/components/layout/page-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,6 +38,7 @@ import { CollectionsReportPanel } from '@/features/reports/components/collection
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 
 import {
+  cancelActiveContract,
   collectInstallment,
   fetchInstallments,
   generateOverdueNotifications,
@@ -44,6 +48,8 @@ import {
 } from '../api'
 import { AddInstallmentDialog } from '../components/add-installment-dialog'
 import { CollectInstallmentDialog } from '../components/collect-installment-dialog'
+import { EditContractDialog } from '../components/edit-contract-dialog'
+import { EditInstallmentDialog } from '../components/edit-installment-dialog'
 import { RescheduleInstallmentDialog } from '../components/reschedule-installment-dialog'
 import { WaiveInstallmentDialog } from '../components/waive-installment-dialog'
 import {
@@ -80,6 +86,8 @@ export function InstallmentsPage() {
   const canViewCollections = hasPermission('reports.view')
   const canNotify = hasPermission('collections.create') || hasPermission('installments.collect')
   const canCreateInstallments = hasPermission('contracts.create')
+  const canUpdateContract = hasPermission('contracts.update')
+  const canCancelContract = hasPermission('contracts.cancel')
 
   const [tab, setTab] = useState<Tab>('installments')
   const [rows, setRows] = useState<InstallmentRow[]>([])
@@ -98,6 +106,9 @@ export function InstallmentsPage() {
   const [collectOpen, setCollectOpen] = useState(false)
   const [waiveOpen, setWaiveOpen] = useState(false)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editContractOpen, setEditContractOpen] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
   useEffect(() => {
@@ -500,43 +511,85 @@ export function InstallmentsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-left">
-                          {actionable ? (
-                            <div className="flex items-center justify-end gap-1">
-                              {canCollect ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openCollect(row)}
-                                  title="تحصيل"
-                                >
-                                  <Wallet className="size-4" />
-                                  <span className="hidden lg:inline">تحصيل</span>
-                                </Button>
-                              ) : null}
-                              {canReschedule ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openReschedule(row)}
-                                  title="إعادة جدولة"
-                                >
-                                  <CalendarClock className="size-4" />
-                                </Button>
-                              ) : null}
-                              {canWaive ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openWaive(row)}
-                                  title="إعفاء"
-                                >
-                                  <BadgeCheck className="size-4" />
-                                </Button>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                          <div className="flex flex-wrap items-center justify-end gap-1">
+                            {actionable ? (
+                              <>
+                                {canReschedule ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelected(row)
+                                      setEditOpen(true)
+                                    }}
+                                    title="تعديل القسط"
+                                  >
+                                    <Pencil className="size-4" />
+                                  </Button>
+                                ) : null}
+                                {canCollect ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openCollect(row)}
+                                    title="تحصيل"
+                                  >
+                                    <Wallet className="size-4" />
+                                    <span className="hidden lg:inline">تحصيل</span>
+                                  </Button>
+                                ) : null}
+                                {canReschedule ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openReschedule(row)}
+                                    title="إعادة جدولة"
+                                  >
+                                    <CalendarClock className="size-4" />
+                                  </Button>
+                                ) : null}
+                                {canWaive ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openWaive(row)}
+                                    title="إعفاء"
+                                  >
+                                    <BadgeCheck className="size-4" />
+                                  </Button>
+                                ) : null}
+                                {canUpdateContract ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelected(row)
+                                      setEditContractOpen(true)
+                                    }}
+                                    title="تعديل العقد"
+                                  >
+                                    <Pencil className="size-4" />
+                                    <span className="hidden lg:inline">العقد</span>
+                                  </Button>
+                                ) : null}
+                                {canCancelContract ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelected(row)
+                                      setCancelOpen(true)
+                                    }}
+                                    title="إلغاء العقد"
+                                  >
+                                    <Trash2 className="size-4 text-destructive" />
+                                  </Button>
+                                ) : null}
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -588,6 +641,44 @@ export function InstallmentsPage() {
           reload()
         }}
         onSubmit={handleReschedule}
+      />
+
+      <EditInstallmentDialog
+        open={editOpen}
+        installment={selected}
+        onOpenChange={setEditOpen}
+        onUpdated={() => {
+          setEditOpen(false)
+          reload()
+        }}
+      />
+
+      <EditContractDialog
+        open={editContractOpen}
+        contractId={selected?.contract_id ?? null}
+        onOpenChange={setEditContractOpen}
+        onUpdated={() => {
+          setEditContractOpen(false)
+          reload()
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={cancelOpen}
+        title="إلغاء العقد"
+        description={`العقد «${selected?.contract_number ?? ''}» — الإلغاء متاح فقط قبل أي تحصيل. المركبة هترجع متاحة، والمقدم هيتخصم من الخزنة، والفاتورة والجدول هيتلغوا.`}
+        confirmLabel="إلغاء العقد"
+        onOpenChange={setCancelOpen}
+        onConfirm={async (reason) => {
+          if (!selected) return
+          try {
+            await cancelActiveContract(selected.contract_id, reason)
+            toast.success('تم إلغاء العقد.')
+            reload()
+          } catch (cancelError) {
+            throw new Error(translateInstallmentError(cancelError), { cause: cancelError })
+          }
+        }}
       />
     </div>
   )

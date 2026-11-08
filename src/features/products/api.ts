@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
   ProductBrandRecord,
@@ -22,12 +23,15 @@ const errorMessages: Record<string, string> = {
   duplicate_barcode: 'الباركود مستخدم في منتج آخر.',
   product_missing: 'المنتج غير موجود.',
   invalid_status: 'حالة المنتج غير معروفة.',
+  has_history: 'لا يمكن الحذف — لهذا السجل تاريخ مرتبط. استخدم الأرشفة بدلًا منه.',
   unknown_code_entity: 'وحدة ترميز غير معروفة.',
 }
 
 export function translateProductError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -181,4 +185,12 @@ export async function setProductStatus(
   if (error) throw new Error(translateProductError(error.message))
 
   return (Array.isArray(data) ? data[0] : data) as unknown as ProductRecord
+}
+
+export async function deleteProduct(productId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_product', {
+    p_product_id: productId,
+  })
+
+  if (error) throw new Error(translateProductError(error.message))
 }

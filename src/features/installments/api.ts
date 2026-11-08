@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
   CollectInstallmentInput,
@@ -37,12 +38,20 @@ const errorMessages: Record<string, string> = {
   contract_create_failed: 'تعذر إنشاء العقد.',
   invalid_due_date: 'تاريخ الاستحقاق الجديد يجب أن يكون بعد تاريخ اليوم.',
   reschedule_paid: 'لا يمكن إعادة جدولة قسط مدفوع أو مسوى.',
+  installment_locked: 'القسط مدفوع أو مسوّى ولا يمكن تعديله.',
+  contract_has_payments: 'توجد تحصيلات على هذا العقد — لا يمكن تعديله أو إلغاؤه. استخدم الإعفاء أو إعادة الجدولة.',
+  contract_locked: 'العقد ملغى أو لا يمكن تعديله في حالته الحالية.',
+  invalid_custom_days: 'أيام الدورية المخصصة غير صحيحة.',
+  invalid_first_due_date: 'اختر تاريخ أول قسط صحيحًا.',
+  invoice_missing: 'فاتورة البيع غير موجودة.',
   invalid_reason: 'أدخل سببًا واضحًا للعملية.',
 }
 
 export function translateInstallmentError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
+
+  if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
 
@@ -118,7 +127,7 @@ async function fetchInChunks<T>(
     chunks.map(async (chunk) => {
       const { data, error } = await supabase.from(table).select(columns).in('id', chunk)
 
-      if (error) throw new Error(error.message)
+      if (error) throw new Error(translateInstallmentError(error.message))
 
       return (data ?? []) as T[]
     }),
@@ -269,6 +278,98 @@ export async function generateOverdueNotifications(branchId?: string | null): Pr
   if (error) throw new Error(translateInstallmentError(error.message))
 
   return Number(data ?? 0)
+}
+
+export async function updateInstallment(input: {
+  installment_id: string
+  amount?: number | null
+  due_date?: string | null
+  reason?: string
+}) {
+  const { data, error } = await supabase.rpc('update_installment', {
+    p_installment_id: input.installment_id,
+    p_amount: input.amount ?? null,
+    p_due_date: input.due_date ?? null,
+    p_reason: input.reason?.trim() || null,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return Array.isArray(data) ? data[0] : data
+}
+
+export async function updateContractTerms(input: {
+  contract_id: string
+  total_amount?: number | null
+  installment_count?: number | null
+  frequency?: string | null
+  custom_days?: number | null
+  first_due_date?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase.rpc('update_contract_terms', {
+    p_contract_id: input.contract_id,
+    p_total_amount: input.total_amount ?? null,
+    p_installment_count: input.installment_count ?? null,
+    p_frequency: input.frequency ?? null,
+    p_custom_days: input.custom_days ?? null,
+    p_first_due_date: input.first_due_date ?? null,
+    p_notes: input.notes ?? null,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return Array.isArray(data) ? data[0] : data
+}
+
+export async function cancelActiveContract(contractId: string, reason?: string) {
+  const { data, error } = await supabase.rpc('cancel_active_contract', {
+    p_contract_id: contractId,
+    p_reason: reason?.trim() || null,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return Array.isArray(data) ? data[0] : data
+}
+
+export async function fetchContract(contractId: string) {
+  const { data, error } = await supabase.rpc('get_contract', {
+    p_contract_id: contractId,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return data as { contract: Record<string, unknown>; guarantors: unknown[]; payments: unknown[] }
+}
+
+export async function listContracts(options?: {
+  status?: string
+  customerId?: string
+  search?: string
+}) {
+  const { data, error } = await supabase.rpc('list_contracts', {
+    p_status: options?.status ?? 'all',
+    p_customer_id: options?.customerId ?? null,
+    p_search: options?.search?.trim() || null,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return (data ?? []) as unknown as Array<{
+    id: string
+    number: string
+    customer_id: string
+    customer_name: string
+    customer_code: string
+    total_amount: number
+    down_payment: number
+    financed_amount: number
+    installment_count: number
+    frequency: string
+    first_due_date: string | null
+    status: string
+  }>
 }
 
 export function todayIsoDate() {

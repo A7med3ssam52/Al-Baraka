@@ -1,5 +1,5 @@
 import { Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -50,15 +50,17 @@ export function CountFormDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!open) return
+    setError(null)
+    setBranchId(defaultBranchId)
+    setCountDate(new Date().toISOString().slice(0, 10))
+    setScope('all')
+    setProductId('')
+    setNotes('')
+  }, [open, defaultBranchId])
+
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setError(null)
-      setBranchId(defaultBranchId)
-      setCountDate(new Date().toISOString().slice(0, 10))
-      setScope('all')
-      setProductId('')
-      setNotes('')
-    }
     onOpenChange(next)
   }
 

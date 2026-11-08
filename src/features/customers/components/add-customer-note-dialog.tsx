@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -37,12 +37,14 @@ export function AddCustomerNoteDialog({ open, customer, onOpenChange, onSaved, c
   const [nextFollowup, setNextFollowup] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  useEffect(() => {
+    if (!open) return
+    setNote('')
+    setNoteType('call')
+    setNextFollowup('')
+  }, [open])
+
   function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setNote('')
-      setNoteType('call')
-      setNextFollowup('')
-    }
     onOpenChange(next)
   }
 

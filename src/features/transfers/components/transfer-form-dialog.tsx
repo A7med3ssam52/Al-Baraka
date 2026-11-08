@@ -1,5 +1,5 @@
 import { Loader2, Plus, Trash2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,13 @@ interface Props {
   products: { id: string; name: string; code: string }[]
   vehicles: { id: string; code: string; chassis_no: string; branch_id: string }[]
   defaultBranchId: string
+  initial?: {
+    fromBranchId: string
+    toBranchId: string
+    transferDate: string
+    notes?: string | null
+    items: { product_id: string | null; vehicle_id: string | null; quantity: number }[]
+  } | null
   onOpenChange: (open: boolean) => void
   onClosed: () => void
   onSubmit: (input: StockTransferInput) => Promise<void>
@@ -54,6 +61,7 @@ export function TransferFormDialog({
   products,
   vehicles,
   defaultBranchId,
+  initial,
   onOpenChange,
   onClosed,
   onSubmit,
@@ -66,15 +74,32 @@ export function TransferFormDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  function handleDialogOpenChange(next: boolean) {
-    if (next) {
-      setError(null)
+  useEffect(() => {
+    if (!open) return
+    setError(null)
+    if (initial) {
+      setFromBranchId(initial.fromBranchId)
+      setToBranchId(initial.toBranchId)
+      setTransferDate(initial.transferDate.slice(0, 10))
+      setNotes(initial.notes ?? '')
+      setLines(
+        initial.items.map((item) => ({
+          key: newLine().key,
+          kind: (item.vehicle_id ? 'vehicle' : 'product') as 'product' | 'vehicle',
+          targetId: (item.vehicle_id ?? item.product_id ?? '') as string,
+          quantity: String(item.quantity),
+        })),
+      )
+    } else {
       setFromBranchId(defaultBranchId)
       setToBranchId('')
       setTransferDate(new Date().toISOString().slice(0, 10))
       setNotes('')
       setLines([newLine()])
     }
+  }, [open, initial, defaultBranchId])
+
+  function handleDialogOpenChange(next: boolean) {
     onOpenChange(next)
   }
 
@@ -140,7 +165,7 @@ export function TransferFormDialog({
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>تحويل مخزون جديد</DialogTitle>
+          <DialogTitle>{initial ? 'تعديل مسودة التحويل' : 'تحويل مخزون جديد'}</DialogTitle>
           <DialogDescription>
             يُرقَّم التحويل تلقائيًا TRF-xxxx ويبقى مسودة حتى الإرسال. لا تتغير الأرصدة قبل الإرسال.
           </DialogDescription>

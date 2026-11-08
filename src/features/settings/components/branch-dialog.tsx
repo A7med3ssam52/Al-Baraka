@@ -1,5 +1,5 @@
 import { Building2, LoaderCircle, Save, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 
@@ -36,6 +36,15 @@ export function BranchDialog({ branch, open, onOpenChange, onSaved }: BranchDial
   const [isActive, setIsActive] = useState(branch?.is_active ?? true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setCode(branch?.code ?? '')
+    setName(branch?.name ?? '')
+    setAddress(branch?.address ?? '')
+    setIsActive(branch?.is_active ?? true)
+    setError(null)
+  }, [open, branch])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

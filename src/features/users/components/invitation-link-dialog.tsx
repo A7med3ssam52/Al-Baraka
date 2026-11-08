@@ -65,7 +65,7 @@ export function InvitationLinkDialog({
       })
       .catch((linkError: unknown) => {
         if (!active) return
-        setError(linkError instanceof Error ? linkError.message : translateUserError('link_failed'))
+        setError(translateUserError(linkError instanceof Error ? linkError.message : 'link_failed'))
       })
       .finally(() => {
         if (active) setLoading(false)

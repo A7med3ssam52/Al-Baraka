@@ -1,5 +1,5 @@
 import { CalendarClock, Loader2, TriangleAlert } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -38,12 +38,14 @@ export function RescheduleInstallmentDialog({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!open) return
+    setNewDueDate(addDaysIsoDate(30))
+    setReason('')
+    setError(null)
+  }, [open])
+
   function handleOpenChange(next: boolean) {
-    if (next) {
-      setNewDueDate(addDaysIsoDate(30))
-      setReason('')
-      setError(null)
-    }
     onOpenChange(next)
   }
 

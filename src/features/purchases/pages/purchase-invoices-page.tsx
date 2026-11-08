@@ -33,6 +33,7 @@ import { fetchVehicles } from '@/features/vehicles/api'
 
 import {
   approvePurchaseInvoice,
+  cancelApprovedPurchaseInvoice,
   cancelPurchaseInvoice,
   fetchPurchaseInvoices,
   savePurchaseInvoice,
@@ -142,6 +143,16 @@ export function PurchaseInvoicesPage() {
     try {
       await cancelPurchaseInvoice(row.id, 'إلغاء من قائمة المشتريات')
       toast.success('تم إلغاء المسودة.')
+      reload()
+    } catch (cancelError) {
+      toast.error(translatePurchaseError(cancelError))
+    }
+  }
+
+  async function handleCancelApproved(row: PurchaseInvoiceRecord) {
+    try {
+      await cancelApprovedPurchaseInvoice(row.id, 'إلغاء معتمد من قائمة المشتريات')
+      toast.success(`تم إلغاء الفاتورة ${row.number} وعكس أثرها.`)
       reload()
     } catch (cancelError) {
       toast.error(translatePurchaseError(cancelError))
@@ -302,6 +313,14 @@ export function PurchaseInvoicesPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleCancel(row)}>
                               إلغاء المسودة
+                            </DropdownMenuItem>
+                          </>
+                        ) : null}
+                        {canCancel && row.status === 'approved' ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleCancelApproved(row)}>
+                              إلغاء الفاتورة المعتمدة (عكس الأثر)
                             </DropdownMenuItem>
                           </>
                         ) : null}
