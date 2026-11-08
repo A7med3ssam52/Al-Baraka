@@ -71,6 +71,8 @@ export async function fetchCustomers(options?: {
   const search = options?.search?.trim() ?? ''
 
   // Smart server-side search whenever the user typed something.
+  // Any RPC failure silently falls back to local smart filtering — search
+  // must never break the page with a red error card.
   if (search) {
     try {
       const { data, error } = await supabase.rpc('search_customers', {
@@ -81,14 +83,22 @@ export async function fetchCustomers(options?: {
       if (!error) {
         return (data ?? []) as unknown as CustomerRecord[]
       }
-      // Fall through to the client-side fallback only when the RPC is missing.
-      if (!error.message.includes('PGRST202') && !error.message.includes('Could not find')) {
-        throw new Error(translateCustomerError(error.message))
+      if (error.message.includes('PGRST202') || error.message.includes('Could not find')) {
+        // RPC not deployed yet — use the local fallback below.
+      } else if (error.message.includes('Failed to fetch')) {
+        // Network hiccup — same local fallback below.
+      } else {
+        // forbidden / sql quirks — local fallback below instead of crashing.
+        // (kept quiet in the UI; technical detail in console for devs only)
+        if (import.meta.env.DEV) console.debug('[search_customers]', error.message)
       }
     } catch (rpcError) {
-      const message = rpcError instanceof Error ? rpcError.message : String(rpcError ?? '')
-      if (message && isFriendlyArabicMessage(message)) throw rpcError
-      // Fall through to fallback below.
+      if (import.meta.env.DEV) {
+        console.debug(
+          '[search_customers fallback]',
+          rpcError instanceof Error ? rpcError.message : rpcError,
+        )
+      }
     }
   }
 

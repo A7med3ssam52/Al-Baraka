@@ -117,6 +117,8 @@ export function CustomersPage() {
   }
 
   // بحث ذكي حي — يشتغل على طول بعد توقف الكتابة ٢٥٠ مللي ثانية.
+  // لو البحث فشل لأي سبب، النتائج السابقة تفضل معروضة (الفلتر المحلي
+  // داخل fetchCustomers بيغطي ده) — مفيش كارت أحمر أبدًا أثناء البحث.
   useEffect(() => {
     const requestId = (requestIdRef.current += 1)
     setSearchSearching(true)
@@ -127,9 +129,10 @@ export function CustomersPage() {
           setCustomers(rows)
           setError(null)
         })
-        .catch((fetchError) => {
+        .catch(() => {
           if (requestIdRef.current !== requestId) return
-          setError(translateCustomerError(fetchError))
+          // keep previous results; only the silent fallback above can fail
+          // the plain list fetch, which the initial load already surfaced.
         })
         .finally(() => {
           if (requestIdRef.current === requestId) {
@@ -146,20 +149,23 @@ export function CustomersPage() {
   function handleSearchSubmit() {
     // Enter forces an immediate search without waiting for the debounce.
     requestIdRef.current += 1
-    setLoading(true)
     const requestId = requestIdRef.current
+    setSearchSearching(true)
     fetchCustomers({ status: statusFilter, search: searchInput })
       .then((rows) => {
         if (requestIdRef.current !== requestId) return
         setCustomers(rows)
         setError(null)
       })
-      .catch((fetchError) => {
+      .catch(() => {
         if (requestIdRef.current !== requestId) return
-        setError(translateCustomerError(fetchError))
+        // silent — results stay as they are
       })
       .finally(() => {
-        if (requestIdRef.current === requestId) setLoading(false)
+        if (requestIdRef.current === requestId) {
+          setLoading(false)
+          setSearchSearching(false)
+        }
       })
   }
 
