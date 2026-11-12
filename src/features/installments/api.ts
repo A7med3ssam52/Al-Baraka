@@ -38,8 +38,11 @@ const errorMessages: Record<string, string> = {
   contract_create_failed: 'تعذر إنشاء العقد.',
   invalid_due_date: 'تاريخ الاستحقاق الجديد يجب أن يكون بعد تاريخ اليوم.',
   reschedule_paid: 'لا يمكن إعادة جدولة قسط مدفوع أو مسوى.',
-  installment_locked: 'القسط مدفوع أو مسوّى ولا يمكن تعديله.',
-  contract_has_payments: 'توجد تحصيلات على هذا العقد — لا يمكن تعديله أو إلغاؤه. استخدم الإعفاء أو إعادة الجدولة.',
+  installment_locked: 'القسط مدفوع أو مسوّى ولا يمكن تعديله أو حذفه.',
+  no_selection: 'اختر قسطًا واحدًا على الأقل.',
+  cannot_delete_all_installments: 'لا يمكن حذف كل أقساط العقد — استخدم إلغاء العقد بدلًا من ذلك.',
+  contract_has_payments:
+    'توجد تحصيلات على هذا العقد — لا يمكن تعديله أو إلغاؤه. استخدم الإعفاء أو إعادة الجدولة.',
   contract_locked: 'العقد ملغى أو لا يمكن تعديله في حالته الحالية.',
   invalid_custom_days: 'أيام الدورية المخصصة غير صحيحة.',
   invalid_first_due_date: 'اختر تاريخ أول قسط صحيحًا.',
@@ -111,11 +114,7 @@ function uniqueIds(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)))
 }
 
-async function fetchInChunks<T>(
-  table: string,
-  columns: string,
-  ids: string[],
-): Promise<T[]> {
+async function fetchInChunks<T>(table: string, columns: string, ids: string[]): Promise<T[]> {
   if (ids.length === 0) return []
 
   const chunks: string[][] = []
@@ -187,7 +186,11 @@ export async function fetchInstallments(filters?: InstallmentFilters): Promise<I
       'id, code, full_name, mobile',
       uniqueIds(rows.map((row) => row.customer_id)),
     ),
-    fetchInChunks<BranchJoinRow>('branches', 'id, code, name', uniqueIds(rows.map((row) => row.branch_id))),
+    fetchInChunks<BranchJoinRow>(
+      'branches',
+      'id, code, name',
+      uniqueIds(rows.map((row) => row.branch_id)),
+    ),
   ])
 
   const contractMap = new Map(contracts.map((row) => [row.id, row]))
@@ -278,6 +281,24 @@ export async function generateOverdueNotifications(branchId?: string | null): Pr
   if (error) throw new Error(translateInstallmentError(error.message))
 
   return Number(data ?? 0)
+}
+
+export async function deleteInstallments(input: { installment_ids: string[]; reason?: string }) {
+  const { data, error } = await supabase.rpc('delete_installments', {
+    p_installment_ids: input.installment_ids,
+    p_reason: input.reason?.trim() || null,
+  })
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  return data as unknown as Array<{
+    contract_id: string
+    contract_number: string
+    deleted_count: number
+    deleted_amount: number
+    new_financed_amount: number
+    new_installment_count: number
+  }>
 }
 
 export async function updateInstallment(input: {

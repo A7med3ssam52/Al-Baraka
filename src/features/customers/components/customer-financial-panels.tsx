@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 
 import { Badge } from '@/components/ui/badge'
@@ -14,28 +14,54 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { fetchInstallments } from '@/features/installments/api'
 import {
+  fetchInstallments,
+  deleteInstallments,
+  translateInstallmentError,
+} from '@/features/installments/api'
+import {
+  canDeleteInstallment,
   installmentStatusLabels,
   resolveInstallmentStatus,
   type InstallmentRow,
 } from '@/features/installments/types'
+import { EditInstallmentDialog } from '@/features/installments/components/edit-installment-dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import { Receipt, FileText, CreditCard, Wallet, Plus } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
+import { useAuth } from '@/features/auth/use-auth'
+import { Receipt, FileText, CreditCard, Wallet, Plus, Pencil, Trash2 } from 'lucide-react'
 
-type Props = { customerId: string; reloadKey?: number; onAdd?: () => void }
+type Props = {
+  customerId: string
+  reloadKey?: number
+  onAdd?: () => void
+  /** يُستدعى بعد تعديل/حذف قسط حتى تتحدث بقية لوحات العميل (الرصيد/الكشف) */
+  onChanged?: () => void
+}
 
-function AddHeader({ title, onAdd }: { title: string; onAdd?: () => void }) {
+function AddHeader({
+  title,
+  onAdd,
+  actions,
+}: {
+  title: string
+  onAdd?: () => void
+  actions?: ReactNode
+}) {
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
       <h3 className="text-sm font-bold">{title}</h3>
-      {onAdd ? (
-        <Button size="sm" onClick={onAdd}>
-          <Plus className="size-4" />
-          إضافة جديد
-        </Button>
-      ) : null}
+      <div className="flex items-center gap-2">
+        {actions}
+        {onAdd ? (
+          <Button size="sm" onClick={onAdd}>
+            <Plus className="size-4" />
+            إضافة جديد
+          </Button>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -89,7 +115,9 @@ export function SalesPanel({ customerId, reloadKey, onAdd }: Props) {
     let active = true
     supabase
       .from('sales_invoices')
-      .select('id, number, invoice_date, sale_type, total, paid_amount, remaining_amount, payment_method, status')
+      .select(
+        'id, number, invoice_date, sale_type, total, paid_amount, remaining_amount, payment_method, status',
+      )
       .eq('customer_id', customerId)
       .order('invoice_date', { ascending: false })
       .limit(100)
@@ -99,14 +127,22 @@ export function SalesPanel({ customerId, reloadKey, onAdd }: Props) {
         setRows((data ?? []) as unknown as InvoiceRow[])
         setLoading(false)
       })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [customerId, reloadKey])
 
   return (
     <Card className="p-4">
       <AddHeader title="الفواتير" onAdd={onAdd} />
-      {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
-        <EmptyState icon={Receipt} title="لا توجد فواتير" description="لم يصدر لهذا العميل أي فواتير بيع بعد." />
+      {loading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={Receipt}
+          title="لا توجد فواتير"
+          description="لم يصدر لهذا العميل أي فواتير بيع بعد."
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -129,7 +165,9 @@ export function SalesPanel({ customerId, reloadKey, onAdd }: Props) {
                 <TableCell>{formatCurrency(r.total)}</TableCell>
                 <TableCell>{formatCurrency(r.paid_amount)}</TableCell>
                 <TableCell>{formatCurrency(r.remaining_amount)}</TableCell>
-                <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
+                <TableCell>
+                  <Badge variant="outline">{r.status}</Badge>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -147,7 +185,9 @@ export function ContractsPanel({ customerId, reloadKey, onAdd }: Props) {
     let active = true
     supabase
       .from('contracts')
-      .select('id, number, contract_date, total_amount, down_payment, financed_amount, installment_count, frequency, status')
+      .select(
+        'id, number, contract_date, total_amount, down_payment, financed_amount, installment_count, frequency, status',
+      )
       .eq('customer_id', customerId)
       .order('contract_date', { ascending: false })
       .limit(100)
@@ -157,14 +197,22 @@ export function ContractsPanel({ customerId, reloadKey, onAdd }: Props) {
         setRows((data ?? []) as unknown as ContractRow[])
         setLoading(false)
       })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [customerId, reloadKey])
 
   return (
     <Card className="p-4">
       <AddHeader title="العقود" onAdd={onAdd} />
-      {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
-        <EmptyState icon={FileText} title="لا توجد عقود" description="لم يبرم هذا العميل عقود تقسيط بعد." />
+      {loading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="لا توجد عقود"
+          description="لم يبرم هذا العميل عقود تقسيط بعد."
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -187,7 +235,9 @@ export function ContractsPanel({ customerId, reloadKey, onAdd }: Props) {
                 <TableCell>{formatCurrency(r.down_payment)}</TableCell>
                 <TableCell>{formatCurrency(r.financed_amount)}</TableCell>
                 <TableCell>{r.installment_count}</TableCell>
-                <TableCell><Badge variant="outline">{r.status}</Badge></TableCell>
+                <TableCell>
+                  <Badge variant="outline">{r.status}</Badge>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -197,31 +247,136 @@ export function ContractsPanel({ customerId, reloadKey, onAdd }: Props) {
   )
 }
 
-export function InstallmentsPanel({ customerId, reloadKey, onAdd }: Props) {
+export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: Props) {
+  const { hasPermission } = useAuth()
+  const canEdit = hasPermission('installments.reschedule')
   const [rows, setRows] = useState<InstallmentRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [localKey, setLocalKey] = useState(0)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     let active = true
     fetchInstallments({ customerId })
       .then((mine) => {
         if (!active) return
+        const deletable = new Set(mine.filter(canDeleteInstallment).map((row) => row.id))
+        setSelected((current) => {
+          const next = new Set([...current].filter((id) => deletable.has(id)))
+          return next.size === current.size ? current : next
+        })
         setRows(mine)
         setLoading(false)
       })
-      .catch(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [customerId, reloadKey])
+      .catch(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [customerId, reloadKey, localKey])
+
+  const deletableIds = rows.filter(canDeleteInstallment).map((row) => row.id)
+  const allSelected = deletableIds.length > 0 && deletableIds.every((id) => selected.has(id))
+  const someSelected = deletableIds.some((id) => selected.has(id))
+  const selectedRow =
+    selected.size === 1 ? (rows.find((row) => row.id === [...selected][0]) ?? null) : null
+
+  function toggleRow(id: string) {
+    setSelected((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setSelected((current) => {
+      if (allSelected) {
+        const next = new Set(current)
+        deletableIds.forEach((id) => next.delete(id))
+        return next
+      }
+      return new Set([...current, ...deletableIds])
+    })
+  }
+
+  function reloadAfterChange() {
+    setLocalKey((key) => key + 1)
+    onChanged?.()
+  }
+
+  async function handleDeleteConfirm(reason: string) {
+    try {
+      const result = await deleteInstallments({ installment_ids: [...selected], reason })
+      const count = result.reduce((sum, row) => sum + Number(row.deleted_count), 0)
+      const total = result.reduce((sum, row) => sum + Number(row.deleted_amount), 0)
+      toast.success(
+        `تم حذف ${count} قسطًا بقيمة ${formatCurrency(total)} وأُعيد احتساب إجمالي العقد.`,
+      )
+      setSelected(new Set())
+      reloadAfterChange()
+    } catch (deleteError) {
+      throw new Error(translateInstallmentError(deleteError), { cause: deleteError })
+    }
+  }
+
+  const selectionActions = canEdit ? (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={selected.size !== 1}
+        onClick={() => setEditOpen(true)}
+        title={selected.size === 1 ? 'تعديل القسط المحدد' : 'اختر قسطًا واحدًا فقط للتعديل'}
+      >
+        <Pencil className="size-4" />
+        تعديل
+      </Button>
+      <Button
+        size="sm"
+        variant="destructive"
+        disabled={selected.size === 0}
+        onClick={() => setDeleteOpen(true)}
+        title="حذف الأقساط غير المدفوعة المحددة دفعة واحدة"
+      >
+        <Trash2 className="size-4" />
+        حذف{selected.size > 0 ? ` (${selected.size})` : ''}
+      </Button>
+    </>
+  ) : null
 
   return (
     <Card className="p-4">
-      <AddHeader title="الأقساط" onAdd={onAdd} />
-      {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
-        <EmptyState icon={CreditCard} title="لا توجد أقساط" description="لا يوجد جدول أقساط لهذا العميل." />
+      <AddHeader title="الأقساط" onAdd={onAdd} actions={selectionActions} />
+      {loading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={CreditCard}
+          title="لا توجد أقساط"
+          description="لا يوجد جدول أقساط لهذا العميل."
+        />
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
+              {canEdit ? (
+                <TableHead className="w-10">
+                  <Checkbox
+                    aria-label="تحديد كل الأقساط القابلة للحذف"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected && !allSelected
+                    }}
+                    onChange={toggleAll}
+                    disabled={deletableIds.length === 0}
+                  />
+                </TableHead>
+              ) : null}
               <TableHead>العقد</TableHead>
               <TableHead>القسط</TableHead>
               <TableHead>الاستحقاق</TableHead>
@@ -232,20 +387,58 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="font-mono text-xs">{r.contract_number}</TableCell>
-                <TableCell>{r.installment_no}</TableCell>
-                <TableCell>{formatDate(r.due_date)}</TableCell>
-                <TableCell>{formatCurrency(r.amount)}</TableCell>
-                <TableCell>{formatCurrency(r.paid_amount)}</TableCell>
-                <TableCell>{formatCurrency(r.remaining_amount)}</TableCell>
-                <TableCell><Badge variant="outline">{installmentStatusLabels[resolveInstallmentStatus(r)]}</Badge></TableCell>
-              </TableRow>
-            ))}
+            {rows.map((r) => {
+              const deletable = canDeleteInstallment(r)
+              return (
+                <TableRow key={r.id}>
+                  {canEdit ? (
+                    <TableCell>
+                      <Checkbox
+                        aria-label={`تحديد القسط #${r.installment_no}`}
+                        checked={selected.has(r.id)}
+                        disabled={!deletable}
+                        onChange={() => toggleRow(r.id)}
+                        title={deletable ? undefined : 'لا يمكن تحديده للحذف — عليه تحصيل أو مسوى'}
+                      />
+                    </TableCell>
+                  ) : null}
+                  <TableCell className="font-mono text-xs">{r.contract_number}</TableCell>
+                  <TableCell>{r.installment_no}</TableCell>
+                  <TableCell>{formatDate(r.due_date)}</TableCell>
+                  <TableCell>{formatCurrency(r.amount)}</TableCell>
+                  <TableCell>{formatCurrency(r.paid_amount)}</TableCell>
+                  <TableCell>{formatCurrency(r.remaining_amount)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {installmentStatusLabels[resolveInstallmentStatus(r)]}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       )}
+
+      <EditInstallmentDialog
+        open={editOpen}
+        installment={selectedRow}
+        onOpenChange={setEditOpen}
+        onUpdated={() => {
+          setEditOpen(false)
+          setSelected(new Set())
+          reloadAfterChange()
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف الأقساط المحددة"
+        description={`سيتم حذف ${selected.size} قسطًا غير مدفوع نهائيًا، وإنقاص إجمالي العقد (والممول) بقيمة هذه الأقساط، وإعادة توزيع المبلغ المتبقي على باقي الأقساط وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
+        confirmLabel={`حذف ${selected.size > 0 ? selected.size : ''} قسطًا`}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+      />
     </Card>
   )
 }
@@ -268,7 +461,9 @@ export function PaymentsPanel({ customerId, reloadKey, onAdd }: Props) {
         setRows((data ?? []) as unknown as PaymentRow[])
         setLoading(false)
       })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [customerId, reloadKey])
 
   const total = rows.reduce((s, r) => s + (r.amount ?? 0), 0)
@@ -276,8 +471,14 @@ export function PaymentsPanel({ customerId, reloadKey, onAdd }: Props) {
   return (
     <Card className="p-4">
       <AddHeader title={`المدفوعات (إجمالي: ${formatCurrency(total)})`} onAdd={onAdd} />
-      {loading ? <Skeleton className="h-32 w-full" /> : rows.length === 0 ? (
-        <EmptyState icon={Wallet} title="لا توجد مدفوعات" description="لم يتم تسجيل أي مدفوعات لهذا العميل." />
+      {loading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={Wallet}
+          title="لا توجد مدفوعات"
+          description="لم يتم تسجيل أي مدفوعات لهذا العميل."
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -344,7 +545,7 @@ export function StatementPanel({
     ]).then(([txRes, mine]) => {
       if (!active) return
       if (txRes.error) toast.error('تعذر تحميل كشف الحساب')
-      setRows(((txRes.data ?? []) as unknown) as TransactionRow[])
+      setRows((txRes.data ?? []) as unknown as TransactionRow[])
       setInstallments(mine as InstallmentRow[])
       setLoading(false)
     })
@@ -407,7 +608,9 @@ export function StatementPanel({
         {/* Title */}
         <div className="flex items-center gap-3 px-4 pt-4 sm:px-8">
           <span className="h-px flex-1 bg-[#c8a24a]" />
-          <h2 className="whitespace-nowrap text-2xl font-extrabold text-[#0b1f33] sm:text-4xl">كشف حساب</h2>
+          <h2 className="whitespace-nowrap text-2xl font-extrabold text-[#0b1f33] sm:text-4xl">
+            كشف حساب
+          </h2>
           <span className="h-px flex-1 bg-[#c8a24a]" />
         </div>
 
@@ -419,13 +622,27 @@ export function StatementPanel({
             className="pointer-events-none absolute inset-0 m-auto h-64 w-64 opacity-[0.04]"
           />
           <div className="relative grid gap-2 rounded-xl border border-[#e3dbc9] bg-[#fffdf8] p-4 text-sm sm:grid-cols-2">
-            <p><span className="font-bold text-[#0b1f33]">الاسم :</span> {customerName}</p>
-            <p><span className="font-bold text-[#0b1f33]">الكود :</span> <span className="font-mono">{customerCode}</span></p>
-            <p><span className="font-bold text-[#0b1f33]">الرقم القومي :</span> {nationalId ?? '—'}</p>
-            <p><span className="font-bold text-[#0b1f33]">الموبايل :</span> <span dir="ltr">{mobile ?? '—'}</span></p>
-            <p><span className="font-bold text-[#0b1f33]">الرصيد المتاح :</span> {formatCurrency(creditBalance ?? 0)}</p>
             <p>
-              <span className="font-bold text-[#0b1f33]">التاريخ :</span> {formatDate(new Date().toISOString().slice(0, 10))}
+              <span className="font-bold text-[#0b1f33]">الاسم :</span> {customerName}
+            </p>
+            <p>
+              <span className="font-bold text-[#0b1f33]">الكود :</span>{' '}
+              <span className="font-mono">{customerCode}</span>
+            </p>
+            <p>
+              <span className="font-bold text-[#0b1f33]">الرقم القومي :</span> {nationalId ?? '—'}
+            </p>
+            <p>
+              <span className="font-bold text-[#0b1f33]">الموبايل :</span>{' '}
+              <span dir="ltr">{mobile ?? '—'}</span>
+            </p>
+            <p>
+              <span className="font-bold text-[#0b1f33]">الرصيد المتاح :</span>{' '}
+              {formatCurrency(creditBalance ?? 0)}
+            </p>
+            <p>
+              <span className="font-bold text-[#0b1f33]">التاريخ :</span>{' '}
+              {formatDate(new Date().toISOString().slice(0, 10))}
             </p>
           </div>
 
@@ -450,20 +667,27 @@ export function StatementPanel({
                 </thead>
                 <tbody>
                   {installments.map((r) => (
-                    <tr key={r.id} className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]">
+                    <tr
+                      key={r.id}
+                      className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]"
+                    >
                       <td className="px-3 py-2 font-mono text-[11px]">{r.contract_number}</td>
                       <td className="px-3 py-2">{r.installment_no}</td>
                       <td className="px-3 py-2">{formatDate(r.due_date)}</td>
                       <td className="px-3 py-2">{formatCurrency(r.amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(r.paid_amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(r.remaining_amount)}</td>
-                      <td className="px-3 py-2">{installmentStatusLabels[resolveInstallmentStatus(r)]}</td>
+                      <td className="px-3 py-2">
+                        {installmentStatusLabels[resolveInstallmentStatus(r)]}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-[#efe9dc] font-bold">
                   <tr>
-                    <td colSpan={3} className="px-3 py-2">الإجمالي</td>
+                    <td colSpan={3} className="px-3 py-2">
+                      الإجمالي
+                    </td>
                     <td className="px-3 py-2">{formatCurrency(totalAmount)}</td>
                     <td className="px-3 py-2">{formatCurrency(totalPaid)}</td>
                     <td className="px-3 py-2">{formatCurrency(totalRemaining)}</td>
@@ -489,7 +713,10 @@ export function StatementPanel({
                   </thead>
                   <tbody>
                     {withBalance.map((r) => (
-                      <tr key={r.id} className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]">
+                      <tr
+                        key={r.id}
+                        className="border-t border-[#e3dbc9] odd:bg-white even:bg-[#fffdf8]"
+                      >
                         <td className="px-3 py-2">{formatDate(r.transaction_date)}</td>
                         <td className="px-3 py-2">{r.transaction_type}</td>
                         <td className="px-3 py-2">{formatCurrency(r.amount)}</td>

@@ -35,11 +35,13 @@ import {
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/use-auth'
 import { CollectionsReportPanel } from '@/features/reports/components/collections-report-panel'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn, formatCurrency, formatDate } from '@/lib/utils'
 
 import {
   cancelActiveContract,
   collectInstallment,
+  deleteInstallments,
   fetchInstallments,
   generateOverdueNotifications,
   rescheduleInstallment,
@@ -53,6 +55,7 @@ import { EditInstallmentDialog } from '../components/edit-installment-dialog'
 import { RescheduleInstallmentDialog } from '../components/reschedule-installment-dialog'
 import { WaiveInstallmentDialog } from '../components/waive-installment-dialog'
 import {
+  canDeleteInstallment,
   installmentStatusBadge,
   installmentStatusLabels,
   resolveInstallmentStatus,
@@ -110,6 +113,8 @@ export function InstallmentsPage() {
   const [editContractOpen, setEditContractOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -120,6 +125,11 @@ export function InstallmentsPage() {
     })
       .then((data) => {
         if (!active) return
+        const deletable = new Set(data.filter(canDeleteInstallment).map((row) => row.id))
+        setCheckedIds((current) => {
+          const next = new Set([...current].filter((id) => deletable.has(id)))
+          return next.size === current.size ? current : next
+        })
         setRows(data)
         setError(null)
       })
@@ -154,8 +164,40 @@ export function InstallmentsPage() {
 
   const summary = useMemo(() => summarizeInstallments(rows), [rows])
 
+  // التحديد مقصور على الأقساط الظاهرة المقبولة للحذف (غير المدفوعة/غير المسوى).
+  const deletableVisibleIds = useMemo(
+    () => visibleRows.filter(canDeleteInstallment).map((row) => row.id),
+    [visibleRows],
+  )
+  const allSelected =
+    deletableVisibleIds.length > 0 && deletableVisibleIds.every((id) => checkedIds.has(id))
+  const someSelected = deletableVisibleIds.some((id) => checkedIds.has(id))
+  const checkedRow =
+    checkedIds.size === 1 ? (rows.find((row) => row.id === [...checkedIds][0]) ?? null) : null
+
+  function toggleRow(id: string) {
+    setCheckedIds((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    setCheckedIds((current) => {
+      if (allSelected) {
+        const next = new Set(current)
+        deletableVisibleIds.forEach((id) => next.delete(id))
+        return next
+      }
+      return new Set([...current, ...deletableVisibleIds])
+    })
+  }
+
   function reload() {
     setLoading(true)
+    setCheckedIds(new Set())
     setReloadKey((key) => key + 1)
   }
 
@@ -201,12 +243,20 @@ export function InstallmentsPage() {
     await rescheduleInstallment(input)
   }
 
+  async function handleDeleteConfirm(reason: string) {
+    const result = await deleteInstallments({ installment_ids: [...checkedIds], reason })
+    const count = result.reduce((sum, row) => sum + Number(row.deleted_count), 0)
+    const total = result.reduce((sum, row) => sum + Number(row.deleted_amount), 0)
+    toast.success(
+      `تم حذف ${count} قسطًا بقيمة ${formatCurrency(total)} وأُعيد احتساب إجمالي العقد.`,
+    )
+    reload()
+  }
+
   async function handleGenerateOverdue() {
     setGenerating(true)
     try {
-      const count = await generateOverdueNotifications(
-        branchFilter === 'all' ? null : branchFilter,
-      )
+      const count = await generateOverdueNotifications(branchFilter === 'all' ? null : branchFilter)
 
       if (count > 0) {
         toast.success(`تم إنشاء ${count} تنبيهًا للمتأخرات.`)
@@ -266,6 +316,34 @@ export function InstallmentsPage() {
                 <Plus className="size-4" />
                 إضافة أقساط
               </Button>
+            ) : null}
+            {canReschedule ? (
+              <>
+                <Button
+                  variant="outline"
+                  disabled={checkedIds.size !== 1}
+                  onClick={() => {
+                    if (!checkedRow) return
+                    setSelected(checkedRow)
+                    setEditOpen(true)
+                  }}
+                  title={
+                    checkedIds.size === 1 ? 'تعديل القسط المحدد' : 'حدد قسطًا واحدًا فقط لتعديله'
+                  }
+                >
+                  <Pencil className="size-4" />
+                  تعديل
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={checkedIds.size === 0}
+                  onClick={() => setDeleteOpen(true)}
+                  title="حذف الأقساط غير المدفوعة المحددة دفعة واحدة"
+                >
+                  <Trash2 className="size-4" />
+                  حذف{checkedIds.size > 0 ? ` (${checkedIds.size})` : ''}
+                </Button>
+              </>
             ) : null}
             <Button variant="outline" onClick={reload} disabled={loading}>
               <RefreshCw className={cn('size-4', loading && 'animate-spin')} />
@@ -387,9 +465,7 @@ export function InstallmentsPage() {
               <span className="font-semibold">الحالة</span>
               <Select
                 value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as InstallmentStatusFilter)
-                }
+                onChange={(event) => setStatusFilter(event.target.value as InstallmentStatusFilter)}
               >
                 {statusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -401,10 +477,7 @@ export function InstallmentsPage() {
 
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">الفرع</span>
-              <Select
-                value={branchFilter}
-                onChange={(event) => updateBranch(event.target.value)}
-              >
+              <Select value={branchFilter} onChange={(event) => updateBranch(event.target.value)}>
                 <option value="all">كل الفروع</option>
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
@@ -425,7 +498,11 @@ export function InstallmentsPage() {
 
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">استحقاق إلى</span>
-              <Input type="date" value={dueTo} onChange={(event) => updateDueTo(event.target.value)} />
+              <Input
+                type="date"
+                value={dueTo}
+                onChange={(event) => updateDueTo(event.target.value)}
+              />
             </label>
           </Card>
 
@@ -461,6 +538,19 @@ export function InstallmentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {canReschedule ? (
+                      <TableHead className="w-10">
+                        <Checkbox
+                          aria-label="تحديد كل الأقساط القابلة للحذف"
+                          checked={allSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someSelected && !allSelected
+                          }}
+                          onChange={toggleAll}
+                          disabled={deletableVisibleIds.length === 0}
+                        />
+                      </TableHead>
+                    ) : null}
                     <TableHead>العميل</TableHead>
                     <TableHead>العقد</TableHead>
                     <TableHead className="hidden sm:table-cell">القسط</TableHead>
@@ -476,12 +566,26 @@ export function InstallmentsPage() {
                   {visibleRows.map((row) => {
                     const status = resolveInstallmentStatus(row)
                     const actionable = status !== 'paid' && status !== 'waived'
+                    const deletable = canDeleteInstallment(row)
 
                     return (
                       <TableRow
                         key={row.id}
                         className={cn(status === 'overdue' && 'bg-destructive/[0.04]')}
                       >
+                        {canReschedule ? (
+                          <TableCell>
+                            <Checkbox
+                              aria-label={`تحديد القسط #${row.installment_no} من عقد ${row.contract_number}`}
+                              checked={checkedIds.has(row.id)}
+                              disabled={!deletable}
+                              onChange={() => toggleRow(row.id)}
+                              title={
+                                deletable ? undefined : 'لا يمكن تحديده للحذف — عليه تحصيل أو مسوّى'
+                              }
+                            />
+                          </TableCell>
+                        ) : null}
                         <TableCell>
                           <div className="grid gap-0.5">
                             <span className="font-semibold">{row.customer_name}</span>
@@ -651,6 +755,15 @@ export function InstallmentsPage() {
           setEditOpen(false)
           reload()
         }}
+      />
+
+      <ConfirmActionDialog
+        open={deleteOpen}
+        title="حذف الأقساط المحددة"
+        description={`سيتم حذف ${checkedIds.size} قسطًا غير مدفوع نهائيًا، وإنقاص إجمالي العقد والفاتورة بقيمة هذه الأقساط، وإعادة توزيع المتبقي على باقي الأقساط غير المدفوعة وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
+        confirmLabel={`حذف ${checkedIds.size > 0 ? checkedIds.size : ''} قسطًا`}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
       />
 
       <EditContractDialog

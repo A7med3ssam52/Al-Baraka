@@ -24,10 +24,7 @@ import { AddCustomerNoteDialog } from '../components/add-customer-note-dialog'
 import { CustomerBalancePanel } from '../components/balance-panel'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
-import {
-  InstallmentsPanel,
-  StatementPanel,
-} from '../components/customer-financial-panels'
+import { InstallmentsPanel, StatementPanel } from '../components/customer-financial-panels'
 import { AddInstallmentDialog } from '@/features/installments/components/add-installment-dialog'
 import type { CustomerNote } from '../types'
 import {
@@ -66,11 +63,7 @@ export function CustomerProfile({
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
     if (tabId === 'documents') return hasPermission('documents.view')
-    if (
-      tabId === 'installments' ||
-      tabId === 'statement' ||
-      tabId === 'balance'
-    ) {
+    if (tabId === 'installments' || tabId === 'statement' || tabId === 'balance') {
       return true
     }
     return availability?.[tabId] === true
@@ -104,7 +97,8 @@ export function CustomerProfile({
         </p>
         {Number(customer.credit_balance ?? 0) > 0 ? (
           <p className="text-sm font-bold text-success">
-            الرصيد المتاح: {new Intl.NumberFormat('ar-EG').format(Number(customer.credit_balance))} جنيه
+            الرصيد المتاح: {new Intl.NumberFormat('ar-EG').format(Number(customer.credit_balance))}{' '}
+            جنيه
           </p>
         ) : null}
       </div>
@@ -142,7 +136,14 @@ export function CustomerProfile({
       {activeTab === 'documents' ? (
         <DocumentsPanel ownerType="customer" ownerId={customer.id} ownerLabel={customer.code} />
       ) : null}
-      {activeTab === 'installments' ? <InstallmentsPanel customerId={customer.id} reloadKey={reloadKey} onAdd={() => setAddOpen(true)} /> : null}
+      {activeTab === 'installments' ? (
+        <InstallmentsPanel
+          customerId={customer.id}
+          reloadKey={reloadKey}
+          onAdd={() => setAddOpen(true)}
+          onChanged={() => setReloadKey((k) => k + 1)}
+        />
+      ) : null}
       {activeTab === 'balance' ? (
         <CustomerBalancePanel
           customerId={customer.id}
@@ -327,7 +328,9 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{noteTypeLabels[note.note_type]}</Badge>
                     {note.next_followup_at ? (
-                      <Badge variant="warning">متابعة: {formatDateTime(note.next_followup_at)}</Badge>
+                      <Badge variant="warning">
+                        متابعة: {formatDateTime(note.next_followup_at)}
+                      </Badge>
                     ) : null}
                     <span className="text-xs text-muted-foreground">
                       {note.created_by_name} • {formatDateTime(note.created_at)}
@@ -335,10 +338,20 @@ export function NotesPanel({ customer }: { customer: CustomerRecord }) {
                   </div>
                   {canWrite ? (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" aria-label="تعديل الملاحظة" onClick={() => void handleEdit(note)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="تعديل الملاحظة"
+                        onClick={() => void handleEdit(note)}
+                      >
                         <Pencil className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" aria-label="حذف الملاحظة" onClick={() => setDeleting(note)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="حذف الملاحظة"
+                        onClick={() => setDeleting(note)}
+                      >
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </div>
