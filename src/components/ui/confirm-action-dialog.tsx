@@ -42,7 +42,7 @@ export function ConfirmActionDialog({
 
   const ready =
     (!requireReason || reason.trim().length >= 3) &&
-    (!requireText || typed.trim() === requireText.trim())
+    (!requireText || typed.trim().toUpperCase() === requireText.trim().toUpperCase())
 
   async function handleConfirm() {
     setSubmitting(true)
@@ -100,8 +100,12 @@ export function ConfirmActionDialog({
               <span className="font-semibold">اكتب «{requireText}» للتأكيد</span>
               <Input
                 value={typed}
-                onChange={(event) => setTyped(event.target.value)}
+                onChange={(event) => setTyped(event.target.value.toUpperCase())}
                 placeholder={requireText}
+                className="font-mono uppercase tracking-wide"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </label>
           ) : null}
