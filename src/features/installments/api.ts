@@ -60,6 +60,21 @@ export function translateInstallmentError(error: unknown) {
 
   const lower = key.toLowerCase()
 
+  if (
+    lower.includes('pgrst202') ||
+    lower.includes('schema cache') ||
+    lower.includes('could not find the function')
+  ) {
+    return 'قاعدة البيانات لسه ماحدّثتش الدالة الجديدة — حدّث الصفحة وحاول مرة أخرى، أو بلغ الإدارة لإجبار تحديث الكاش.'
+  }
+
+  if (
+    lower.includes('permission denied for function') ||
+    lower.includes('insufficient_privilege')
+  ) {
+    return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
+  }
+
   if (lower.includes('permission denied') || lower.includes('forbidden')) {
     return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
   }
