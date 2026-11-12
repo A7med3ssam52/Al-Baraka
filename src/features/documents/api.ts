@@ -10,9 +10,10 @@ import type {
   DocumentRecord,
   DocumentType,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 export async function deleteDocument(documentId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_document', {
+  const { error } = await rpcOfflineAware('delete_document', {
     p_document_id: documentId,
   })
 
@@ -25,7 +26,7 @@ export async function updateDocument(input: {
   docType: DocumentType
   notes?: string
 }): Promise<DocumentRecord> {
-  const { data, error } = await supabase.rpc('update_document', {
+  const { data, error } = await rpcOfflineAware('update_document', {
     p_document_id: input.documentId,
     p_title: input.title,
     p_doc_type: input.docType,
@@ -38,7 +39,7 @@ export async function updateDocument(input: {
 }
 
 export async function deleteDocumentFile(fileId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_document_file', {
+  const { error } = await rpcOfflineAware('delete_document_file', {
     p_file_id: fileId,
   })
 
@@ -81,7 +82,7 @@ export async function fetchDocuments(
   ownerType: DocumentOwnerType,
   ownerId: string,
 ): Promise<DocumentRecord[]> {
-  const { data, error } = await supabase.rpc('list_documents', {
+  const { data, error } = await rpcOfflineAware('list_documents', {
     p_owner_type: ownerType,
     p_owner_id: ownerId,
   })
@@ -99,7 +100,7 @@ export async function createDocument(input: {
   supplierId?: string | null
   notes?: string
 }): Promise<DocumentRecord> {
-  const { data, error } = await supabase.rpc('create_document', {
+  const { data, error } = await rpcOfflineAware('create_document', {
     p_title: input.title,
     p_doc_type: input.docType,
     p_owner_type: input.ownerType,
@@ -123,7 +124,7 @@ export async function uploadDocumentFile(
 ): Promise<DocumentFileRecord> {
   const upload = await uploadToCloudinary(file, { resourceType: 'image' })
 
-  const { data, error } = await supabase.rpc('attach_document_file', {
+  const { data, error } = await rpcOfflineAware('attach_document_file', {
     p_document_id: documentId,
     p_public_id: upload.publicId,
     p_format: upload.format,
@@ -204,7 +205,7 @@ export async function fetchDocumentFiles(documentId: string): Promise<DocumentFi
 export async function fetchDocumentAccessLogs(
   documentId: string,
 ): Promise<DocumentAccessLogRecord[]> {
-  const { data, error } = await supabase.rpc('list_document_access_logs', {
+  const { data, error } = await rpcOfflineAware('list_document_access_logs', {
     p_document_id: documentId,
   })
 

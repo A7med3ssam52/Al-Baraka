@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
@@ -7,6 +6,7 @@ import type {
   StockMovementInput,
   StockMovementRecord,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -40,7 +40,7 @@ export async function fetchStockMovements(options?: {
   from?: string
   to?: string
 }): Promise<StockMovementRecord[]> {
-  const { data, error } = await supabase.rpc('list_stock_movements', {
+  const { data, error } = await rpcOfflineAware('list_stock_movements', {
     p_product_id: options?.productId ?? null,
     p_vehicle_id: options?.vehicleId ?? null,
     p_movement_type: options?.movementType ?? null,
@@ -54,7 +54,7 @@ export async function fetchStockMovements(options?: {
 }
 
 export async function recordStockMovement(input: StockMovementInput): Promise<StockMovementRecord> {
-  const { data, error } = await supabase.rpc('record_stock_movement', {
+  const { data, error } = await rpcOfflineAware('record_stock_movement', {
     p_movement_type: input.movement_type,
     p_quantity: input.quantity,
     p_product_id: input.product_id ?? null,
@@ -72,7 +72,7 @@ export async function recordStockMovement(input: StockMovementInput): Promise<St
 }
 
 export async function fetchProductStock(branchId?: string, search?: string) {
-  const { data, error } = await supabase.rpc('list_product_stock', {
+  const { data, error } = await rpcOfflineAware('list_product_stock', {
     p_branch_id: branchId ?? null,
     p_search: search?.trim() || null,
   })

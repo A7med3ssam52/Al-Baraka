@@ -15,10 +15,18 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import {
   fetchContract,
+  fetchInstallments,
   translateInstallmentError,
   updateContractTerms,
 } from '@/features/installments/api'
 import { frequencyLabels } from '@/features/installments/types'
+import { ManualInstallmentRows } from './manual-installment-rows'
+import {
+  newManualRow,
+  sumManualRows,
+  validateManualRows,
+  type ManualInstallmentRow,
+} from '../manual-installment-shared'
 
 interface Props {
   open: boolean
@@ -27,7 +35,7 @@ interface Props {
   onUpdated: () => void
 }
 
-const FREQUENCIES = ['monthly', 'weekly', 'biweekly', 'custom'] as const
+const FREQUENCIES = ['monthly', 'weekly', 'biweekly', 'custom', 'manual'] as const
 
 export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }: Props) {
   const [loading, setLoading] = useState(false)
@@ -40,18 +48,27 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
   const [firstDue, setFirstDue] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [manualRows, setManualRows] = useState<ManualInstallmentRow[]>([newManualRow()])
+  const [hasPayments, setHasPayments] = useState(false)
 
+  const isManual = frequency === 'manual'
+  const manualSum = sumManualRows(manualRows)
   const parsedCount = Number(count)
-  const totalPreview = Number.isFinite(Number(perPeriod)) && Number.isInteger(parsedCount) && parsedCount > 0
-    ? Number(perPeriod) * parsedCount + (Number(down) || 0)
-    : 0
+  const totalPreview = isManual
+    ? manualSum + (Number(down) || 0)
+    : Number.isFinite(Number(perPeriod)) && Number.isInteger(parsedCount) && parsedCount > 0
+      ? Number(perPeriod) * parsedCount + (Number(down) || 0)
+      : 0
 
   useEffect(() => {
     if (!open || !contractId) return
     setLoading(true)
     setError(null)
-    fetchContract(contractId)
-      .then((detail) => {
+    Promise.all([
+      fetchContract(contractId),
+      fetchInstallments({ contractId }).catch(() => []),
+    ])
+      .then(([detail, installmentRows]) => {
         const c = detail.contract
         const cCount = Number(c.installment_count ?? 1)
         const cFinanced = Number(c.financed_amount ?? 0)
@@ -62,6 +79,21 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
         setCustomDays(c.custom_days ? String(c.custom_days) : '')
         setFirstDue(c.first_due_date ? String(c.first_due_date).slice(0, 10) : '')
         setNotes(String(c.notes ?? ''))
+
+        const sorted = [...installmentRows].sort((a, b) => a.installment_no - b.installment_no)
+        setHasPayments(
+          sorted.some((row) => Number(row.paid_amount) > 0 || row.legacy_paid),
+        )
+        setManualRows(
+          sorted.length > 0
+            ? sorted.map((row) => ({
+                key: row.id,
+                due_date: String(row.due_date).slice(0, 10),
+                amount: String(row.amount),
+                legacy: Boolean(row.legacy_paid),
+              }))
+            : [newManualRow()],
+        )
       })
       .catch((loadError) => setError(translateInstallmentError(loadError)))
       .finally(() => setLoading(false))
@@ -70,6 +102,47 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!contractId) return
+    if (hasPayments) {
+      setError('في أقساط اتحصّل منها أو «دفتر قديم» — التعديل غير متاح. استخدم «تعديل القسط» أو «إعادة الجدولة».')
+      return
+    }
+
+    if (isManual) {
+      const manualError = validateManualRows(manualRows, manualSum)
+      if (manualError) {
+        setError(manualError)
+        return
+      }
+
+      const newTotal = Math.round((manualSum + (Number(down) || 0)) * 100) / 100
+      setSubmitting(true)
+      try {
+        await updateContractTerms({
+          contract_id: contractId,
+          total_amount: newTotal,
+          installment_count: manualRows.length,
+          frequency: 'manual',
+          custom_days: null,
+          first_due_date: manualRows[0].due_date,
+          notes: notes.trim() || null,
+          items: manualRows.map((row) => ({
+            due_date: row.due_date,
+            amount: Math.round(Number(row.amount) * 100) / 100,
+          })),
+        })
+        toast.success('تم حفظ تعديل العقد وإعادة توليد الجدول.')
+        onUpdated()
+        onOpenChange(false)
+      } catch (submitError) {
+        const message = translateInstallmentError(submitError)
+        setError(message)
+        toast.error(message)
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
+
     const cCount = Number(count)
     if (!Number.isInteger(cCount) || cCount < 1) {
       setError('أدخل عدد أقساط صحيحًا (1 أو أكثر).')
@@ -105,7 +178,7 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>تعديل العقد</DialogTitle>
           <DialogDescription>
@@ -116,18 +189,28 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
           <p className="text-sm text-muted-foreground">جارٍ التحميل…</p>
         ) : (
           <form className="grid gap-3" onSubmit={handleSubmit}>
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">تكلفة القسط *</span>
-              <Input type="number" min="0" step="0.01" value={perPeriod} onChange={(e) => setPerPeriod(e.target.value)} required />
-              <span className="text-[11px] text-muted-foreground">
-                اللي النظام هيخصمها كل دورية — المقدم ثابت: {down}
-                {totalPreview > 0 ? ` — الإجمالي الجديد: ${totalPreview}` : ''}
-              </span>
-            </label>
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">عدد الأقساط *</span>
-              <Input type="number" min="1" step="1" value={count} onChange={(e) => setCount(e.target.value)} required />
-            </label>
+            {hasPayments ? (
+              <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-xs text-warning">
+                في أقساط اتحصّل منها أو معلّمة «دفتر قديم» — لا يمكن تغيير العقد بالكامل. استخدم «تعديل
+                القسط» أو «إعادة الجدولة» للتعديل على قسط واحد.
+              </p>
+            ) : null}
+            {!isManual ? (
+              <label className="grid gap-1.5 text-sm">
+                <span className="font-semibold">تكلفة القسط *</span>
+                <Input type="number" min="0" step="0.01" value={perPeriod} onChange={(e) => setPerPeriod(e.target.value)} required />
+                <span className="text-[11px] text-muted-foreground">
+                  اللي النظام هيخصمها كل دورية — المقدم ثابت: {down}
+                  {totalPreview > 0 ? ` — الإجمالي الجديد: ${totalPreview}` : ''}
+                </span>
+              </label>
+            ) : null}
+            {!isManual ? (
+              <label className="grid gap-1.5 text-sm">
+                <span className="font-semibold">عدد الأقساط *</span>
+                <Input type="number" min="1" step="1" value={count} onChange={(e) => setCount(e.target.value)} required />
+              </label>
+            ) : null}
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">الدورية *</span>
               <Select value={frequency} onChange={(e) => setFrequency(e.target.value as (typeof FREQUENCIES)[number])}>
@@ -144,10 +227,24 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
                 <Input type="number" min="1" value={customDays} onChange={(e) => setCustomDays(e.target.value)} />
               </label>
             ) : null}
-            <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">أول قسط</span>
-              <Input type="date" value={firstDue} onChange={(e) => setFirstDue(e.target.value)} />
-            </label>
+            {isManual ? (
+              <ManualInstallmentRows
+                rows={manualRows}
+                financed={manualSum}
+                onChange={setManualRows}
+                disabled={hasPayments}
+              />
+            ) : (
+              <label className="grid gap-1.5 text-sm">
+                <span className="font-semibold">أول قسط</span>
+                <Input type="date" value={firstDue} onChange={(e) => setFirstDue(e.target.value)} />
+              </label>
+            )}
+            {isManual ? (
+              <p className="text-[11px] text-muted-foreground">
+                المقدم ثابت: {down} — الإجمالي الجديد: {totalPreview}. التعديل يعيد توليد الجدول بالكامل بعد الحفظ.
+              </p>
+            ) : null}
             <label className="grid gap-1.5 text-sm">
               <span className="font-semibold">ملاحظات</span>
               <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -161,7 +258,7 @@ export function EditContractDialog({ open, contractId, onOpenChange, onUpdated }
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 إلغاء
               </Button>
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={submitting || hasPayments}>
                 {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
                 حفظ التعديلات
               </Button>

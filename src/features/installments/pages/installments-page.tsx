@@ -601,9 +601,16 @@ export function InstallmentsPage() {
                           {formatCurrency(Math.max(row.remaining_amount, 0))}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={installmentStatusBadge[status]}>
-                            {installmentStatusLabels[status]}
-                          </Badge>
+                          <div className="grid gap-1">
+                            <Badge variant={installmentStatusBadge[status]}>
+                              {installmentStatusLabels[status]}
+                            </Badge>
+                            {row.legacy_paid ? (
+                              <span className="w-fit rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-[#7a5a13]">
+                                دفتر قديم
+                              </span>
+                            ) : null}
+                          </div>
                         </TableCell>
                         <TableCell className="text-left">
                           <div className="flex flex-wrap items-center justify-end gap-1">
@@ -742,8 +749,22 @@ export function InstallmentsPage() {
         open={editOpen}
         installment={selected}
         onOpenChange={setEditOpen}
-        onUpdated={() => {
+        onUpdated={(summary) => {
           setEditOpen(false)
+          if (summary) {
+            setRows((current) =>
+              current.map((row) =>
+                row.id === summary.installmentId
+                  ? {
+                      ...row,
+                      amount: summary.amount,
+                      due_date: summary.dueDate,
+                      remaining_amount: Math.max(summary.amount - row.paid_amount, 0),
+                    }
+                  : row,
+              ),
+            )
+          }
           reload()
         }}
       />

@@ -1,7 +1,7 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
-import { supabase } from '@/lib/supabase'
 
 import type { PortalLookupInput, PortalSnapshot } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 export function translatePortalError(error: unknown): string {
   const raw: Record<string, unknown> =
@@ -43,7 +43,7 @@ export async function lookupPortal(input: PortalLookupInput): Promise<PortalSnap
       ? { p_national_id: input.value, p_mobile: null }
       : { p_national_id: null, p_mobile: input.value }
 
-  const { data, error } = await supabase.rpc('public_portal_lookup', params)
+  const { data, error } = await rpcOfflineAware('public_portal_lookup', params)
 
   if (error) throw new Error(translatePortalError(error))
 

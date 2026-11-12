@@ -190,10 +190,12 @@ export function CustomersPage() {
   }
 
   async function handleDeleteConfirm(_reason: string, confirmCode: string) {
-    if (!deleteDialog.customer) return
+    const target = deleteDialog.customer
+    if (!target) return
     try {
-      await forceDeleteCustomer(deleteDialog.customer.id, confirmCode)
-      toast.success('تم حذف العميل نهائيًا — محى كل بياناته وتاريخه.')
+      await forceDeleteCustomer(target.id, confirmCode)
+      setCustomers((current) => current.filter((customer) => customer.id !== target.id))
+      toast.success('تم حذف العميل.')
       await load()
     } catch (deleteError) {
       throw new Error(translateCustomerError(deleteError), { cause: deleteError })
@@ -211,7 +213,15 @@ export function CustomersPage() {
     notes: string
   }) {
     if (formDialog.customer) {
-      await updateCustomer(formDialog.customer.id, input)
+      const id = formDialog.customer.id
+      setCustomers((current) =>
+        current.map((customer) =>
+          customer.id === id
+            ? { ...customer, ...input, code: input.code ?? customer.code }
+            : customer,
+        ),
+      )
+      await updateCustomer(id, input)
     } else {
       await createCustomer(input)
     }

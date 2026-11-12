@@ -15,6 +15,7 @@ import type {
   StaffInvitationPreview,
   UserActionLinkResult,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   email_exists: 'يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل.',
@@ -101,7 +102,7 @@ function buildInviteLink(token: string) {
 }
 
 export async function fetchDirectoryUsers(searchText = ''): Promise<DirectoryUser[]> {
-  const { data, error } = await supabase.rpc('list_users', {
+  const { data, error } = await rpcOfflineAware('list_users', {
     search_text: searchText.trim() || null,
   })
 
@@ -160,7 +161,7 @@ export function fallbackRoleOptions(isOwner: boolean): RoleOption[] {
 }
 
 export async function fetchStaffInvitations(searchText = ''): Promise<StaffInvitation[]> {
-  const { data, error } = await supabase.rpc('list_staff_invitations', {
+  const { data, error } = await rpcOfflineAware('list_staff_invitations', {
     search_text: searchText.trim() || null,
   })
 
@@ -172,7 +173,7 @@ export async function fetchStaffInvitations(searchText = ''): Promise<StaffInvit
 export async function createStaffInvitation(
   input: CreateInvitationInput,
 ): Promise<CreateInvitationResult> {
-  const { data, error } = await supabase.rpc('create_staff_invitation', {
+  const { data, error } = await rpcOfflineAware('create_staff_invitation', {
     invite_full_name: input.fullName.trim(),
     invite_phone: input.phone.trim(),
     invite_roles: input.access.roles,
@@ -198,7 +199,7 @@ export async function createStaffInvitation(
 }
 
 export async function cancelStaffInvitation(invitationId: string) {
-  const { error } = await supabase.rpc('cancel_staff_invitation', {
+  const { error } = await rpcOfflineAware('cancel_staff_invitation', {
     invitation_id: invitationId,
   })
 
@@ -208,7 +209,7 @@ export async function cancelStaffInvitation(invitationId: string) {
 export async function regenerateStaffInvitation(
   invitationId: string,
 ): Promise<InvitationLinkResult> {
-  const { data, error } = await supabase.rpc('regenerate_staff_invitation', {
+  const { data, error } = await rpcOfflineAware('regenerate_staff_invitation', {
     invitation_id: invitationId,
   })
 
@@ -230,7 +231,7 @@ export async function regenerateStaffInvitation(
 export async function fetchStaffInvitationPreview(
   token: string,
 ): Promise<StaffInvitationPreview | null> {
-  const { data, error } = await supabase.rpc('get_staff_invitation', {
+  const { data, error } = await rpcOfflineAware('get_staff_invitation', {
     invite_token: token,
   })
 
@@ -240,7 +241,7 @@ export async function fetchStaffInvitationPreview(
 }
 
 export async function verifyStaffInvitation(token: string, phone: string) {
-  const { data, error } = await supabase.rpc('verify_staff_invitation', {
+  const { data, error } = await rpcOfflineAware('verify_staff_invitation', {
     invite_token: token,
     invite_phone: phone,
   })
@@ -269,7 +270,7 @@ export async function acceptStaffInvitation(input: {
 }
 
 export async function assignUserAccess(targetUserId: string, access: AccessSelection) {
-  const { error } = await supabase.rpc('assign_user_access', {
+  const { error } = await rpcOfflineAware('assign_user_access', {
     target_user_id: targetUserId,
     target_roles: access.roles,
     target_branch_ids: access.branchIds,
@@ -285,7 +286,7 @@ export async function updateUserProfile(
   fullName: string,
   phone: string | null,
 ) {
-  const { error } = await supabase.rpc('update_user_profile', {
+  const { error } = await rpcOfflineAware('update_user_profile', {
     target_user_id: targetUserId,
     target_full_name: fullName.trim(),
     target_phone: phone?.trim() || null,
@@ -295,7 +296,7 @@ export async function updateUserProfile(
 }
 
 export async function setUserActive(targetUserId: string, active: boolean) {
-  const { error } = await supabase.rpc('set_user_active', {
+  const { error } = await rpcOfflineAware('set_user_active', {
     target_user_id: targetUserId,
     target_active: active,
   })

@@ -2,6 +2,7 @@ import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
 
 import type { NotificationRecord } from './types'
+import { rpcOfflineAware, tableOfflineAware } from '@/lib/offline'
 
 export function translateNotificationError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? '')
@@ -28,25 +29,31 @@ export async function fetchNotifications(limit = 50): Promise<NotificationRecord
 }
 
 export async function markNotificationRead(notificationId: string): Promise<void> {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ is_read: true })
-    .eq('id', notificationId)
+  const { error } = await tableOfflineAware({
+    table: 'notifications',
+    op: 'update',
+    payload: { is_read: true },
+    match: { id: notificationId },
+    label: 'تحديد إشعار كمقروء',
+  })
 
   if (error) throw new Error(translateNotificationError(error.message))
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const { error } = await supabase
-    .from('notifications')
-    .update({ is_read: true })
-    .eq('is_read', false)
+  const { error } = await tableOfflineAware({
+    table: 'notifications',
+    op: 'update',
+    payload: { is_read: true },
+    match: { is_read: false },
+    label: 'تحديد كل الإشعارات كمقروءة',
+  })
 
   if (error) throw new Error(translateNotificationError(error.message))
 }
 
 export async function generateOverdueNotifications(branchId?: string | null): Promise<number> {
-  const { data, error } = await supabase.rpc('generate_overdue_notifications', {
+  const { data, error } = await rpcOfflineAware('generate_overdue_notifications', {
     p_branch_id: branchId ?? null,
   })
 

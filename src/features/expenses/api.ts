@@ -1,7 +1,9 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 import { supabase } from '@/lib/supabase'
+import { tableOfflineAware } from '@/lib/offline'
 
 import type { ExpenseRecord, ExpenseStatus } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 export function translateExpenseError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? '')
@@ -49,10 +51,11 @@ export async function createExpense(input: {
   expenseDate?: string
   cashboxId?: string | null
   notes?: string
-}): Promise<ExpenseRecord> {
-  const { data, error } = await supabase
-    .from('expenses')
-    .insert({
+}): Promise<void> {
+  const { error } = await tableOfflineAware({
+    table: 'expenses',
+    op: 'insert',
+    payload: {
       branch_id: input.branchId,
       title: input.title,
       category: input.category ?? 'general',
@@ -61,11 +64,11 @@ export async function createExpense(input: {
       cashbox_id: input.cashboxId ?? null,
       notes: input.notes || null,
       status: 'draft',
-    })
-    .select()
-    .single()
+    },
+    label: `إضافة مصروف «${input.title}»`,
+  })
+
   if (error) throw new Error(translateExpenseError(error.message))
-  return data as unknown as ExpenseRecord
 }
 
 export async function updateExpense(input: {
@@ -77,7 +80,7 @@ export async function updateExpense(input: {
   cashboxId?: string | null
   notes?: string
 }): Promise<ExpenseRecord> {
-  const { data, error } = await supabase.rpc('update_expense', {
+  const { data, error } = await rpcOfflineAware('update_expense', {
     p_expense_id: input.expenseId,
     p_title: input.title,
     p_category: input.category ?? null,
@@ -92,7 +95,7 @@ export async function updateExpense(input: {
 }
 
 export async function deleteExpense(expenseId: string): Promise<ExpenseRecord> {
-  const { data, error } = await supabase.rpc('delete_expense', {
+  const { data, error } = await rpcOfflineAware('delete_expense', {
     p_expense_id: expenseId,
   })
 

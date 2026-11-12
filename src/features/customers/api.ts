@@ -10,6 +10,7 @@ import type {
   CustomerRecord,
   CustomerStatus,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -78,7 +79,7 @@ export async function fetchCustomers(options?: {
   // must never break the page with a red error card.
   if (search) {
     try {
-      const { data, error } = await supabase.rpc('search_customers', {
+      const { data, error } = await rpcOfflineAware('search_customers', {
         p_search: search,
         p_status: status,
         p_limit: 200,
@@ -142,7 +143,7 @@ export async function checkCustomerDuplicates(
   mobile: string,
   excludeId?: string,
 ): Promise<CustomerDuplicates> {
-  const { data, error } = await supabase.rpc('check_customer_duplicates', {
+  const { data, error } = await rpcOfflineAware('check_customer_duplicates', {
     p_national_id: nationalId,
     p_mobile: mobile,
     p_exclude_id: excludeId ?? null,
@@ -154,7 +155,7 @@ export async function checkCustomerDuplicates(
 }
 
 export async function createCustomer(input: CustomerInput): Promise<CustomerRecord> {
-  const { data, error } = await supabase.rpc('create_customer', {
+  const { data, error } = await rpcOfflineAware('create_customer', {
     p_full_name: input.full_name,
     p_national_id: input.national_id,
     p_mobile: input.mobile,
@@ -175,7 +176,7 @@ export async function updateCustomer(
   customerId: string,
   input: Omit<CustomerInput, 'national_id' | 'branch_id'>,
 ): Promise<CustomerRecord> {
-  const { data, error } = await supabase.rpc('update_customer', {
+  const { data, error } = await rpcOfflineAware('update_customer', {
     p_customer_id: customerId,
     p_full_name: input.full_name,
     p_mobile: input.mobile,
@@ -194,7 +195,7 @@ export async function setCustomerStatus(
   customerId: string,
   status: CustomerStatus,
 ): Promise<CustomerRecord> {
-  const { data, error } = await supabase.rpc('set_customer_status', {
+  const { data, error } = await rpcOfflineAware('set_customer_status', {
     p_customer_id: customerId,
     p_status: status,
   })
@@ -210,7 +211,7 @@ const noteTypeMessages: Record<string, string> = {
 }
 
 export async function fetchCustomerNotes(customerId: string, limit = 50): Promise<CustomerNote[]> {
-  const { data, error } = await supabase.rpc('list_customer_notes', {
+  const { data, error } = await rpcOfflineAware('list_customer_notes', {
     p_customer_id: customerId,
     p_limit: limit,
   })
@@ -228,7 +229,7 @@ export async function addCustomerNote(input: {
   noteType?: CustomerNote['note_type']
   nextFollowupAt?: string | null
 }): Promise<CustomerNote> {
-  const { data, error } = await supabase.rpc('add_customer_note', {
+  const { data, error } = await rpcOfflineAware('add_customer_note', {
     p_customer_id: input.customerId,
     p_note: input.note,
     p_note_type: input.noteType ?? 'note',
@@ -248,7 +249,7 @@ export async function updateCustomerNote(input: {
   noteType?: CustomerNote['note_type']
   nextFollowupAt?: string | null
 }): Promise<CustomerNote> {
-  const { data, error } = await supabase.rpc('update_customer_note', {
+  const { data, error } = await rpcOfflineAware('update_customer_note', {
     p_note_id: input.noteId,
     p_note: input.note,
     p_note_type: input.noteType ?? 'note',
@@ -263,7 +264,7 @@ export async function updateCustomerNote(input: {
 }
 
 export async function deleteCustomerNote(noteId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_customer_note', {
+  const { error } = await rpcOfflineAware('delete_customer_note', {
     p_note_id: noteId,
   })
 
@@ -283,7 +284,7 @@ function translateContactError(error: unknown) {
 }
 
 export async function listCustomerContacts(customerId: string): Promise<unknown[]> {
-  const { data, error } = await supabase.rpc('list_customer_contacts', {
+  const { data, error } = await rpcOfflineAware<unknown[]>('list_customer_contacts', {
     p_customer_id: customerId,
   })
 
@@ -298,7 +299,7 @@ export async function addCustomerContact(input: {
   mobile: string
   note?: string
 }): Promise<unknown> {
-  const { data, error } = await supabase.rpc('add_customer_contact', {
+  const { data, error } = await rpcOfflineAware('add_customer_contact', {
     p_customer_id: input.customerId,
     p_label: input.label,
     p_mobile: input.mobile,
@@ -311,7 +312,7 @@ export async function addCustomerContact(input: {
 }
 
 export async function deleteCustomerContact(contactId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_customer_contact', {
+  const { error } = await rpcOfflineAware('delete_customer_contact', {
     p_contact_id: contactId,
   })
 
@@ -324,7 +325,7 @@ export async function updateCustomerContact(input: {
   mobile: string
   note?: string
 }): Promise<unknown> {
-  const { data, error } = await supabase.rpc('update_customer_contact', {
+  const { data, error } = await rpcOfflineAware('update_customer_contact', {
     p_contact_id: input.contactId,
     p_label: input.label,
     p_mobile: input.mobile,
@@ -342,7 +343,7 @@ export async function updateCustomerContact(input: {
  * العملية غير قابلة للتراجع.
  */
 export async function forceDeleteCustomer(customerId: string, confirmCode: string): Promise<void> {
-  const { error } = await supabase.rpc('force_delete_customer', {
+  const { error } = await rpcOfflineAware('force_delete_customer', {
     p_customer_id: customerId,
     p_confirm_code: confirmCode,
   })
@@ -366,7 +367,7 @@ function translateGuarantorError(error: unknown) {
 }
 
 export async function listGuarantors(search?: string): Promise<unknown[]> {
-  const { data, error } = await supabase.rpc('list_guarantors', {
+  const { data, error } = await rpcOfflineAware<unknown[]>('list_guarantors', {
     p_search: search?.trim() || null,
   })
 
@@ -379,7 +380,7 @@ export async function listCustomerGuarantors(
   customerId: string,
   search?: string,
 ): Promise<unknown[]> {
-  const { data, error } = await supabase.rpc('list_customer_guarantors', {
+  const { data, error } = await rpcOfflineAware<unknown[]>('list_customer_guarantors', {
     p_customer_id: customerId,
     p_search: search?.trim() || null,
   })
@@ -397,7 +398,7 @@ export async function addGuarantor(input: {
   address?: string
   customerId?: string
 }): Promise<unknown> {
-  const { data, error } = await supabase.rpc('add_guarantor', {
+  const { data, error } = await rpcOfflineAware('add_guarantor', {
     p_full_name: input.full_name,
     p_national_id: input.national_id,
     p_mobile: input.mobile,
@@ -419,7 +420,7 @@ export async function updateGuarantor(input: {
   job?: string
   address?: string
 }): Promise<unknown> {
-  const { data, error } = await supabase.rpc('update_guarantor', {
+  const { data, error } = await rpcOfflineAware('update_guarantor', {
     p_guarantor_id: input.guarantorId,
     p_full_name: input.full_name,
     p_national_id: input.national_id,
@@ -434,7 +435,7 @@ export async function updateGuarantor(input: {
 }
 
 export async function deleteGuarantor(guarantorId: string, customerId?: string): Promise<unknown> {
-  const { data, error } = await supabase.rpc('delete_guarantor', {
+  const { data, error } = await rpcOfflineAware('delete_guarantor', {
     p_guarantor_id: guarantorId,
     p_customer_id: customerId ?? null,
   })
@@ -448,7 +449,7 @@ export async function listCustomerBalanceTransactions(
   customerId: string,
   limit = 100,
 ): Promise<CustomerBalanceTransaction[]> {
-  const { data, error } = await supabase.rpc('list_customer_balance_transactions', {
+  const { data, error } = await rpcOfflineAware('list_customer_balance_transactions', {
     p_customer_id: customerId,
     p_limit: limit,
   })
@@ -470,7 +471,7 @@ export async function addCustomerBalance(input: {
   applied_count: number
   remaining_balance: number
 }> {
-  const { data, error } = await supabase.rpc('add_customer_balance', {
+  const { data, error } = await rpcOfflineAware('add_customer_balance', {
     p_customer_id: input.customerId,
     p_amount: input.amount,
     p_payment_method: input.paymentMethod,
@@ -494,7 +495,7 @@ export async function applyCustomerBalance(customerId: string): Promise<{
   applied_amount: number
   remaining_balance: number
 }> {
-  const { data, error } = await supabase.rpc('apply_customer_balance', {
+  const { data, error } = await rpcOfflineAware('apply_customer_balance', {
     p_customer_id: customerId,
     p_branch_id: null,
   })

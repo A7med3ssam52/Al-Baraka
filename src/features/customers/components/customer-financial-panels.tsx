@@ -421,9 +421,23 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
         open={editOpen}
         installment={selectedRow}
         onOpenChange={setEditOpen}
-        onUpdated={() => {
+        onUpdated={(summary) => {
           setEditOpen(false)
           setSelected(new Set())
+          if (summary) {
+            setRows((current) =>
+              current.map((row) =>
+                row.id === summary.installmentId
+                  ? {
+                      ...row,
+                      amount: summary.amount,
+                      due_date: summary.dueDate,
+                      remaining_amount: Math.max(summary.amount - row.paid_amount, 0),
+                    }
+                  : row,
+              ),
+            )
+          }
           reloadAfterChange()
         }}
       />

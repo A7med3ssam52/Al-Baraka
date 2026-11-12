@@ -112,6 +112,10 @@ export async function uploadToCloudinary(
   file: File,
   options: CloudinaryUploadOptions = {},
 ): Promise<CloudinaryUploadResult> {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    throw new Error('في مشكلة اتصال — رفع الملفات يتطلب اتصال، حاول مرة أخرى عند عودته.')
+  }
+
   const signatureData = await requestUploadSignature(options)
   const formData = new FormData()
 

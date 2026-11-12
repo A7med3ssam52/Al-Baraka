@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type { AuditFilterOptions, AuditFilters, AuditLogEntry } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك صلاحية عرض سجل المراجعة.',
@@ -40,7 +40,7 @@ export async function fetchAuditLogs(
   page: number,
   pageSize: number,
 ): Promise<AuditLogEntry[]> {
-  const { data, error } = await supabase.rpc('list_audit_logs', {
+  const { data, error } = await rpcOfflineAware('list_audit_logs', {
     p_search: filters.search.trim() || null,
     p_action: filters.action || null,
     p_table: filters.table || null,
@@ -58,7 +58,7 @@ export async function fetchAuditLogs(
 }
 
 export async function fetchAuditFilterOptions(): Promise<AuditFilterOptions> {
-  const { data, error } = await supabase.rpc('audit_log_filter_options')
+  const { data, error } = await rpcOfflineAware('audit_log_filter_options')
 
   if (error) throw new Error(translateAuditError(error.message))
 

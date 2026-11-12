@@ -24,6 +24,7 @@ export interface InstallmentRow {
   contract_number: string
   contract_status: string
   frequency: string
+  legacy_paid: boolean
   customer_name: string
   customer_code: string
   customer_mobile: string | null
@@ -33,6 +34,7 @@ export interface InstallmentRow {
 export interface InstallmentFilters {
   branchId?: string | null
   customerId?: string | null
+  contractId?: string | null
   status?: InstallmentStatusFilter
   search?: string
   dueFrom?: string | null
@@ -51,6 +53,11 @@ export interface InstallmentSummary {
   pending_count: number
   paid_count: number
   waived_count: number
+}
+
+export interface ManualInstallmentItem {
+  due_date: string
+  amount: number
 }
 
 export interface CollectInstallmentInput {
@@ -103,6 +110,7 @@ export const frequencyLabels: Record<string, string> = {
   biweekly: 'كل أسبوعين',
   monthly: 'شهري',
   custom: 'مخصص',
+  manual: 'مواعيد مخصصة',
 }
 
 /**

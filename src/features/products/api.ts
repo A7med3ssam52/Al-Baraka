@@ -10,6 +10,7 @@ import type {
   ProductStatus,
   ProductUnitRecord,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -92,7 +93,7 @@ export async function fetchProductUnits(): Promise<ProductUnitRecord[]> {
 }
 
 export async function saveProductCategory(name: string, parentId?: string) {
-  const { error } = await supabase.rpc('save_product_category', {
+  const { error } = await rpcOfflineAware('save_product_category', {
     p_name: name,
     p_parent_id: parentId ?? null,
   })
@@ -101,13 +102,13 @@ export async function saveProductCategory(name: string, parentId?: string) {
 }
 
 export async function saveProductBrand(name: string) {
-  const { data, error } = await supabase.rpc('save_product_brand', { p_name: name })
+  const { data, error } = await rpcOfflineAware('save_product_brand', { p_name: name })
   if (error) throw new Error(translateProductError(error.message))
   return Array.isArray(data) ? data[0] : data
 }
 
 export async function saveProductModel(brandId: string, name: string) {
-  const { data, error } = await supabase.rpc('save_product_model', {
+  const { data, error } = await rpcOfflineAware('save_product_model', {
     p_brand_id: brandId,
     p_name: name,
   })
@@ -120,7 +121,7 @@ export async function fetchProducts(options?: {
   search?: string
   categoryId?: string
 }): Promise<ProductRecord[]> {
-  const { data, error } = await supabase.rpc('list_products', {
+  const { data, error } = await rpcOfflineAware('list_products', {
     p_status: options?.status ?? 'active',
     p_search: options?.search?.trim() || null,
     p_category_id: options?.categoryId ?? null,
@@ -132,7 +133,7 @@ export async function fetchProducts(options?: {
 }
 
 export async function createProduct(input: ProductInput): Promise<ProductRecord> {
-  const { data, error } = await supabase.rpc('create_product', {
+  const { data, error } = await rpcOfflineAware('create_product', {
     p_name: input.name,
     p_category_id: input.category_id ?? null,
     p_brand_id: input.brand_id ?? null,
@@ -154,7 +155,7 @@ export async function updateProduct(
   productId: string,
   input: ProductInput,
 ): Promise<ProductRecord> {
-  const { data, error } = await supabase.rpc('update_product', {
+  const { data, error } = await rpcOfflineAware('update_product', {
     p_product_id: productId,
     p_name: input.name,
     p_category_id: input.category_id ?? null,
@@ -177,7 +178,7 @@ export async function setProductStatus(
   productId: string,
   status: ProductStatus,
 ): Promise<ProductRecord> {
-  const { data, error } = await supabase.rpc('set_product_status', {
+  const { data, error } = await rpcOfflineAware('set_product_status', {
     p_product_id: productId,
     p_status: status,
   })
@@ -188,7 +189,7 @@ export async function setProductStatus(
 }
 
 export async function deleteProduct(productId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_product', {
+  const { error } = await rpcOfflineAware('delete_product', {
     p_product_id: productId,
   })
 

@@ -15,11 +15,17 @@ import { Input } from '@/components/ui/input'
 import { translateInstallmentError, updateInstallment } from '@/features/installments/api'
 import type { InstallmentRow } from '@/features/installments/types'
 
+interface UpdateSummary {
+  installmentId: string
+  amount: number
+  dueDate: string
+}
+
 interface Props {
   open: boolean
   installment: InstallmentRow | null
   onOpenChange: (open: boolean) => void
-  onUpdated: () => void
+  onUpdated: (summary?: UpdateSummary) => void
 }
 
 export function EditInstallmentDialog({ open, installment, onOpenChange, onUpdated }: Props) {
@@ -43,14 +49,25 @@ export function EditInstallmentDialog({ open, installment, onOpenChange, onUpdat
     if (!installment) return
     setSubmitting(true)
     try {
-      await updateInstallment({
+      const result = await updateInstallment({
         installment_id: installment.id,
         amount: amount ? Number(amount) : null,
         due_date: dueDate || null,
         reason: reason.trim() || undefined,
       })
-      toast.success('تم حفظ تعديل القسط.')
-      onUpdated()
+
+      const queued = result === null || (Array.isArray(result) && result.length === 0)
+      if (queued) {
+        // offline save — the toast with «اتحفظت على الجهاز» already appeared from the RPC layer
+      } else {
+        toast.success('تم حفظ تعديل القسط.')
+      }
+
+      onUpdated({
+        installmentId: installment.id,
+        amount: amount ? Number(amount) : installment.amount,
+        dueDate: dueDate || installment.due_date,
+      })
       onOpenChange(false)
     } catch (submitError) {
       toast.error(translateInstallmentError(submitError))
@@ -95,7 +112,11 @@ export function EditInstallmentDialog({ open, installment, onOpenChange, onUpdat
           </label>
           <label className="grid gap-1.5 text-sm">
             <span className="font-semibold">سبب التعديل</span>
-            <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="اختياري" />
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="اختياري"
+            />
           </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

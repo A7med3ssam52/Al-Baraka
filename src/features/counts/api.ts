@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
@@ -8,6 +7,7 @@ import type {
   StockCountRecord,
   StockCountStatus,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -41,7 +41,7 @@ export async function fetchStockCounts(options?: {
   status?: StockCountStatus | 'all'
   branchId?: string | null
 }): Promise<StockCountRecord[]> {
-  const { data, error } = await supabase.rpc('list_stock_counts', {
+  const { data, error } = await rpcOfflineAware('list_stock_counts', {
     p_status: options?.status ?? 'all',
     p_branch_id: options?.branchId ?? null,
   })
@@ -52,7 +52,7 @@ export async function fetchStockCounts(options?: {
 }
 
 export async function fetchStockCount(countId: string): Promise<StockCountDetail> {
-  const { data, error } = await supabase.rpc('get_stock_count', {
+  const { data, error } = await rpcOfflineAware('get_stock_count', {
     p_count_id: countId,
   })
 
@@ -62,7 +62,7 @@ export async function fetchStockCount(countId: string): Promise<StockCountDetail
 }
 
 export async function createStockCount(input: StockCountInput): Promise<StockCountRecord> {
-  const { data, error } = await supabase.rpc('create_stock_count', {
+  const { data, error } = await rpcOfflineAware('create_stock_count', {
     p_product_ids: input.product_ids && input.product_ids.length > 0 ? input.product_ids : null,
     p_count_date: input.count_date,
     p_notes: input.notes?.trim() || null,
@@ -78,7 +78,7 @@ export async function updateStockCount(
   countId: string,
   lines: StockCountLineUpdate[],
 ): Promise<StockCountRecord> {
-  const { data, error } = await supabase.rpc('update_stock_count', {
+  const { data, error } = await rpcOfflineAware('update_stock_count', {
     p_count_id: countId,
     p_items: lines,
   })
@@ -89,7 +89,7 @@ export async function updateStockCount(
 }
 
 export async function approveStockCount(countId: string): Promise<StockCountRecord> {
-  const { data, error } = await supabase.rpc('approve_stock_count', {
+  const { data, error } = await rpcOfflineAware('approve_stock_count', {
     p_count_id: countId,
   })
 
@@ -102,7 +102,7 @@ export async function cancelStockCount(
   countId: string,
   reason?: string,
 ): Promise<StockCountRecord> {
-  const { data, error } = await supabase.rpc('cancel_stock_count', {
+  const { data, error } = await rpcOfflineAware('cancel_stock_count', {
     p_count_id: countId,
     p_reason: reason?.trim() || null,
   })

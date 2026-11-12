@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
@@ -7,6 +6,7 @@ import type {
   StockTransferRecord,
   StockTransferStatus,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -45,7 +45,7 @@ export async function fetchStockTransfers(options?: {
   status?: StockTransferStatus | 'all'
   branchId?: string | null
 }): Promise<StockTransferRecord[]> {
-  const { data, error } = await supabase.rpc('list_stock_transfers', {
+  const { data, error } = await rpcOfflineAware('list_stock_transfers', {
     p_status: options?.status ?? 'all',
     p_branch_id: options?.branchId ?? null,
   })
@@ -56,7 +56,7 @@ export async function fetchStockTransfers(options?: {
 }
 
 export async function fetchStockTransfer(transferId: string): Promise<StockTransferDetail> {
-  const { data, error } = await supabase.rpc('get_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('get_stock_transfer', {
     p_transfer_id: transferId,
   })
 
@@ -66,7 +66,7 @@ export async function fetchStockTransfer(transferId: string): Promise<StockTrans
 }
 
 export async function createStockTransfer(input: StockTransferInput): Promise<StockTransferRecord> {
-  const { data, error } = await supabase.rpc('create_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('create_stock_transfer', {
     p_from_branch_id: input.from_branch_id,
     p_to_branch_id: input.to_branch_id,
     p_items: input.items,
@@ -80,7 +80,7 @@ export async function createStockTransfer(input: StockTransferInput): Promise<St
 }
 
 export async function sendStockTransfer(transferId: string): Promise<StockTransferRecord> {
-  const { data, error } = await supabase.rpc('send_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('send_stock_transfer', {
     p_transfer_id: transferId,
   })
 
@@ -90,7 +90,7 @@ export async function sendStockTransfer(transferId: string): Promise<StockTransf
 }
 
 export async function receiveStockTransfer(transferId: string): Promise<StockTransferRecord> {
-  const { data, error } = await supabase.rpc('receive_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('receive_stock_transfer', {
     p_transfer_id: transferId,
   })
 
@@ -103,7 +103,7 @@ export async function cancelStockTransfer(
   transferId: string,
   reason?: string,
 ): Promise<StockTransferRecord> {
-  const { data, error } = await supabase.rpc('cancel_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('cancel_stock_transfer', {
     p_transfer_id: transferId,
     p_reason: reason?.trim() || null,
   })
@@ -117,7 +117,7 @@ export async function updateStockTransfer(
   transferId: string,
   input: StockTransferInput,
 ): Promise<StockTransferRecord> {
-  const { data, error } = await supabase.rpc('update_stock_transfer', {
+  const { data, error } = await rpcOfflineAware('update_stock_transfer', {
     p_transfer_id: transferId,
     p_from_branch_id: input.from_branch_id,
     p_to_branch_id: input.to_branch_id,

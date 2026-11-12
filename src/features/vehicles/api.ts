@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type { VehicleCreateInput, VehicleRecord, VehicleStatus, VehicleUpdateInput } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -41,7 +41,7 @@ export async function fetchVehicles(options?: {
   status?: VehicleStatus | 'active' | 'all'
   search?: string
 }): Promise<VehicleRecord[]> {
-  const { data, error } = await supabase.rpc('list_vehicles', {
+  const { data, error } = await rpcOfflineAware('list_vehicles', {
     p_status: options?.status ?? 'active',
     p_search: options?.search?.trim() || null,
   })
@@ -52,7 +52,7 @@ export async function fetchVehicles(options?: {
 }
 
 export async function createVehicle(input: VehicleCreateInput): Promise<VehicleRecord> {
-  const { data, error } = await supabase.rpc('create_vehicle', {
+  const { data, error } = await rpcOfflineAware('create_vehicle', {
     p_chassis_no: input.chassis_no,
     p_engine_no: input.engine_no,
     p_vehicle_type: input.vehicle_type,
@@ -80,7 +80,7 @@ export async function updateVehicle(
   vehicleId: string,
   input: VehicleUpdateInput,
 ): Promise<VehicleRecord> {
-  const { data, error } = await supabase.rpc('update_vehicle', {
+  const { data, error } = await rpcOfflineAware('update_vehicle', {
     p_vehicle_id: vehicleId,
     p_vehicle_type: input.vehicle_type,
     p_vehicle_class: input.vehicle_class ?? null,
@@ -103,7 +103,7 @@ export async function setVehicleStatus(
   vehicleId: string,
   status: VehicleStatus,
 ): Promise<VehicleRecord> {
-  const { data, error } = await supabase.rpc('set_vehicle_status', {
+  const { data, error } = await rpcOfflineAware('set_vehicle_status', {
     p_vehicle_id: vehicleId,
     p_status: status,
   })
@@ -114,7 +114,7 @@ export async function setVehicleStatus(
 }
 
 export async function deleteVehicle(vehicleId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_vehicle', {
+  const { error } = await rpcOfflineAware('delete_vehicle', {
     p_vehicle_id: vehicleId,
   })
 

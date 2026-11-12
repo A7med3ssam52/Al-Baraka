@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
@@ -8,6 +7,7 @@ import type {
   SupplierStatementRow,
   SupplierStatus,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -40,7 +40,7 @@ export async function fetchSuppliers(options?: {
   status?: SupplierStatus | 'all'
   search?: string
 }): Promise<SupplierRecord[]> {
-  const { data, error } = await supabase.rpc('list_suppliers', {
+  const { data, error } = await rpcOfflineAware('list_suppliers', {
     p_status: options?.status ?? 'active',
     p_search: options?.search?.trim() || null,
   })
@@ -51,7 +51,7 @@ export async function fetchSuppliers(options?: {
 }
 
 export async function createSupplier(input: SupplierInput): Promise<SupplierRecord> {
-  const { data, error } = await supabase.rpc('create_supplier', {
+  const { data, error } = await rpcOfflineAware('create_supplier', {
     p_full_name: input.full_name,
     p_phone: input.phone,
     p_contact_name: input.contact_name || null,
@@ -70,7 +70,7 @@ export async function updateSupplier(
   supplierId: string,
   input: Omit<SupplierInput, 'branch_id'>,
 ): Promise<SupplierRecord> {
-  const { data, error } = await supabase.rpc('update_supplier', {
+  const { data, error } = await rpcOfflineAware('update_supplier', {
     p_supplier_id: supplierId,
     p_full_name: input.full_name,
     p_phone: input.phone,
@@ -89,7 +89,7 @@ export async function setSupplierStatus(
   supplierId: string,
   status: SupplierStatus,
 ): Promise<SupplierRecord> {
-  const { data, error } = await supabase.rpc('set_supplier_status', {
+  const { data, error } = await rpcOfflineAware('set_supplier_status', {
     p_supplier_id: supplierId,
     p_status: status,
   })
@@ -100,7 +100,7 @@ export async function setSupplierStatus(
 }
 
 export async function fetchSupplierProfile(supplierId: string): Promise<SupplierProfile> {
-  const { data, error } = await supabase.rpc('get_supplier_profile', {
+  const { data, error } = await rpcOfflineAware('get_supplier_profile', {
     p_supplier_id: supplierId,
   })
 
@@ -113,7 +113,7 @@ export async function fetchSupplierStatement(
   supplierId: string,
   range?: { from?: string; to?: string },
 ): Promise<SupplierStatementRow[]> {
-  const { data, error } = await supabase.rpc('list_supplier_statement', {
+  const { data, error } = await rpcOfflineAware('list_supplier_statement', {
     p_supplier_id: supplierId,
     p_from: range?.from || null,
     p_to: range?.to || null,
@@ -125,7 +125,7 @@ export async function fetchSupplierStatement(
 }
 
 export async function deleteSupplier(supplierId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_supplier', {
+  const { error } = await rpcOfflineAware('delete_supplier', {
     p_supplier_id: supplierId,
   })
 

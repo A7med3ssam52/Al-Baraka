@@ -11,6 +11,7 @@ import type {
   WaiveInstallmentInput,
 } from './types'
 import { resolveInstallmentStatus } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -46,6 +47,13 @@ const errorMessages: Record<string, string> = {
   contract_locked: 'العقد ملغى أو لا يمكن تعديله في حالته الحالية.',
   invalid_custom_days: 'أيام الدورية المخصصة غير صحيحة.',
   invalid_first_due_date: 'اختر تاريخ أول قسط صحيحًا.',
+  invalid_installment_date: 'أدخل تاريخًا صحيحًا — التواريخ لازم تكون تصاعدية وبدون تكرار.',
+  invalid_installment_amount: 'أدخل مبلغًا صحيحًا أكبر من صفر لكل قسط.',
+  manual_items_required: 'أدخل صفوف الأقساط المخصصة (تاريخ + مبلغ لكل قسط).',
+  manual_items_date_order: 'التواريخ لازم تكون تصاعدية بدون تواريخ متكررة.',
+  installment_items_count_mismatch: 'عدد صفوف الأقساط لا يطابق عدد الأقساط المحدد في العقد.',
+  installment_sum_mismatch: 'مجموع مبالغ الأقساط لازم يساوي المبلغ الممول بالظبط.',
+  legacy_installment_invalid: 'تعذر تعليم القسط كدفعة قديمة — لازم يكون القسط غير مدفوع.',
   invoice_missing: 'فاتورة البيع غير موجودة.',
   invalid_reason: 'أدخل سببًا واضحًا للعملية.',
 }
@@ -103,6 +111,7 @@ interface InstallmentViewRow {
   contract_id: string
   customer_id: string
   branch_id: string
+  legacy_paid: boolean
 }
 
 interface ContractJoinRow {
@@ -160,7 +169,7 @@ export async function fetchInstallments(filters?: InstallmentFilters): Promise<I
   let query = supabase
     .from('v_installment_status')
     .select(
-      'id, schedule_id, installment_no, due_date, amount, paid_amount, stored_status, computed_status, remaining_amount, contract_id, customer_id, branch_id',
+      'id, schedule_id, installment_no, due_date, amount, paid_amount, stored_status, computed_status, remaining_amount, contract_id, customer_id, branch_id, legacy_paid',
     )
     .order('due_date', { ascending: true })
     .order('installment_no', { ascending: true })
@@ -172,6 +181,10 @@ export async function fetchInstallments(filters?: InstallmentFilters): Promise<I
 
   if (filters?.customerId) {
     query = query.eq('customer_id', filters.customerId)
+  }
+
+  if (filters?.contractId) {
+    query = query.eq('contract_id', filters.contractId)
   }
 
   if (filters?.dueFrom) {
@@ -252,7 +265,7 @@ export async function fetchInstallments(filters?: InstallmentFilters): Promise<I
 }
 
 export async function collectInstallment(input: CollectInstallmentInput) {
-  const { data, error } = await supabase.rpc('collect_installment', {
+  const { data, error } = await rpcOfflineAware('collect_installment', {
     p_installment_id: input.installment_id,
     p_amount: input.amount,
     p_payment_method: input.payment_method,
@@ -266,7 +279,7 @@ export async function collectInstallment(input: CollectInstallmentInput) {
 }
 
 export async function waiveInstallment(input: WaiveInstallmentInput) {
-  const { data, error } = await supabase.rpc('waive_installment', {
+  const { data, error } = await rpcOfflineAware('waive_installment', {
     p_installment_id: input.installment_id,
     p_reason: input.reason?.trim() || null,
   })
@@ -277,7 +290,7 @@ export async function waiveInstallment(input: WaiveInstallmentInput) {
 }
 
 export async function rescheduleInstallment(input: RescheduleInstallmentInput) {
-  const { data, error } = await supabase.rpc('reschedule_installment', {
+  const { data, error } = await rpcOfflineAware('reschedule_installment', {
     p_installment_id: input.installment_id,
     p_new_due_date: input.new_due_date,
     p_reason: input.reason?.trim() || null,
@@ -289,7 +302,7 @@ export async function rescheduleInstallment(input: RescheduleInstallmentInput) {
 }
 
 export async function generateOverdueNotifications(branchId?: string | null): Promise<number> {
-  const { data, error } = await supabase.rpc('generate_overdue_notifications', {
+  const { data, error } = await rpcOfflineAware('generate_overdue_notifications', {
     p_branch_id: branchId ?? null,
   })
 
@@ -299,7 +312,7 @@ export async function generateOverdueNotifications(branchId?: string | null): Pr
 }
 
 export async function deleteInstallments(input: { installment_ids: string[] }) {
-  const { data, error } = await supabase.rpc('delete_installments', {
+  const { data, error } = await rpcOfflineAware('delete_installments', {
     p_installment_ids: input.installment_ids,
   })
 
@@ -321,7 +334,7 @@ export async function updateInstallment(input: {
   due_date?: string | null
   reason?: string
 }) {
-  const { data, error } = await supabase.rpc('update_installment', {
+  const { data, error } = await rpcOfflineAware('update_installment', {
     p_installment_id: input.installment_id,
     p_amount: input.amount ?? null,
     p_due_date: input.due_date ?? null,
@@ -341,8 +354,9 @@ export async function updateContractTerms(input: {
   custom_days?: number | null
   first_due_date?: string | null
   notes?: string | null
+  items?: Array<{ due_date: string; amount: number }> | null
 }) {
-  const { data, error } = await supabase.rpc('update_contract_terms', {
+  const { data, error } = await rpcOfflineAware('update_contract_terms', {
     p_contract_id: input.contract_id,
     p_total_amount: input.total_amount ?? null,
     p_installment_count: input.installment_count ?? null,
@@ -350,6 +364,7 @@ export async function updateContractTerms(input: {
     p_custom_days: input.custom_days ?? null,
     p_first_due_date: input.first_due_date ?? null,
     p_notes: input.notes ?? null,
+    p_items: input.items ?? null,
   })
 
   if (error) throw new Error(translateInstallmentError(error.message))
@@ -358,7 +373,7 @@ export async function updateContractTerms(input: {
 }
 
 export async function cancelActiveContract(contractId: string, reason?: string) {
-  const { data, error } = await supabase.rpc('cancel_active_contract', {
+  const { data, error } = await rpcOfflineAware('cancel_active_contract', {
     p_contract_id: contractId,
     p_reason: reason?.trim() || null,
   })
@@ -369,7 +384,7 @@ export async function cancelActiveContract(contractId: string, reason?: string) 
 }
 
 export async function fetchContract(contractId: string) {
-  const { data, error } = await supabase.rpc('get_contract', {
+  const { data, error } = await rpcOfflineAware('get_contract', {
     p_contract_id: contractId,
   })
 
@@ -383,7 +398,7 @@ export async function listContracts(options?: {
   customerId?: string
   search?: string
 }) {
-  const { data, error } = await supabase.rpc('list_contracts', {
+  const { data, error } = await rpcOfflineAware('list_contracts', {
     p_status: options?.status ?? 'all',
     p_customer_id: options?.customerId ?? null,
     p_search: options?.search?.trim() || null,

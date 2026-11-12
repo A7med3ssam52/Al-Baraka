@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
 
 import type {
@@ -9,6 +8,7 @@ import type {
   PurchasePaymentMethod,
   PurchaseStatus,
 } from './types'
+import { rpcOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -51,7 +51,7 @@ export async function fetchPurchaseInvoices(options?: {
   supplierId?: string
   search?: string
 }): Promise<PurchaseInvoiceRecord[]> {
-  const { data, error } = await supabase.rpc('list_purchase_invoices', {
+  const { data, error } = await rpcOfflineAware('list_purchase_invoices', {
     p_status: options?.status ?? 'all',
     p_supplier_id: options?.supplierId ?? null,
     p_search: options?.search?.trim() || null,
@@ -63,7 +63,7 @@ export async function fetchPurchaseInvoices(options?: {
 }
 
 export async function fetchPurchaseInvoice(invoiceId: string): Promise<PurchaseInvoiceDetail> {
-  const { data, error } = await supabase.rpc('get_purchase_invoice', {
+  const { data, error } = await rpcOfflineAware('get_purchase_invoice', {
     p_invoice_id: invoiceId,
   })
 
@@ -73,7 +73,7 @@ export async function fetchPurchaseInvoice(invoiceId: string): Promise<PurchaseI
 }
 
 export async function fetchPurchaseInvoicePrint(invoiceId: string): Promise<PurchaseInvoicePrint> {
-  const { data, error } = await supabase.rpc('get_purchase_invoice_print', {
+  const { data, error } = await rpcOfflineAware('get_purchase_invoice_print', {
     p_invoice_id: invoiceId,
   })
 
@@ -86,7 +86,7 @@ export async function savePurchaseInvoice(
   input: PurchaseInvoiceInput,
   invoiceId?: string,
 ): Promise<PurchaseInvoiceRecord> {
-  const { data, error } = await supabase.rpc('save_purchase_invoice', {
+  const { data, error } = await rpcOfflineAware('save_purchase_invoice', {
     p_supplier_id: input.supplier_id,
     p_items: input.items,
     p_invoice_id: invoiceId ?? null,
@@ -106,7 +106,7 @@ export async function savePurchaseInvoice(
 }
 
 export async function approvePurchaseInvoice(invoiceId: string) {
-  const { data, error } = await supabase.rpc('approve_purchase_invoice', {
+  const { data, error } = await rpcOfflineAware('approve_purchase_invoice', {
     p_invoice_id: invoiceId,
   })
 
@@ -116,7 +116,7 @@ export async function approvePurchaseInvoice(invoiceId: string) {
 }
 
 export async function cancelPurchaseInvoice(invoiceId: string, reason?: string) {
-  const { data, error } = await supabase.rpc('cancel_purchase_invoice', {
+  const { data, error } = await rpcOfflineAware('cancel_purchase_invoice', {
     p_invoice_id: invoiceId,
     p_reason: reason ?? null,
   })
@@ -127,7 +127,7 @@ export async function cancelPurchaseInvoice(invoiceId: string, reason?: string) 
 }
 
 export async function cancelApprovedPurchaseInvoice(invoiceId: string, reason?: string) {
-  const { data, error } = await supabase.rpc('cancel_approved_purchase_invoice', {
+  const { data, error } = await rpcOfflineAware('cancel_approved_purchase_invoice', {
     p_invoice_id: invoiceId,
     p_reason: reason ?? null,
   })

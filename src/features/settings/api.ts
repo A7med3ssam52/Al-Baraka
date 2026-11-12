@@ -8,6 +8,7 @@ import type {
   SystemSettings,
   SystemSettingsInput,
 } from './types'
+import { rpcOfflineAware, tableOfflineAware } from '@/lib/offline'
 
 const errorMessages: Record<string, string> = {
   forbidden: 'لا تملك الصلاحية لتنفيذ هذه العملية.',
@@ -61,7 +62,7 @@ export async function fetchSystemSettings(): Promise<SystemSettings> {
 }
 
 export async function updateSystemSettings(input: SystemSettingsInput): Promise<SystemSettings> {
-  const { data, error } = await supabase.rpc('update_system_settings', {
+  const { data, error } = await rpcOfflineAware('update_system_settings', {
     p_app_name: input.app_name,
     p_logo_url: input.logo_url,
     p_address: input.address,
@@ -90,45 +91,43 @@ export async function fetchBranches(): Promise<BranchRecord[]> {
   return (data ?? []) as BranchRecord[]
 }
 
-export async function createBranch(input: BranchInput): Promise<BranchRecord> {
-  const { data, error } = await supabase
-    .from('branches')
-    .insert({
+export async function createBranch(input: BranchInput): Promise<void> {
+  const { error } = await tableOfflineAware({
+    table: 'branches',
+    op: 'insert',
+    payload: {
       code: input.code.trim().toUpperCase(),
       name: input.name.trim(),
       address: input.address?.trim() || null,
       is_active: input.is_active,
-    })
-    .select('id, code, name, address, is_active, created_at, updated_at')
-    .single()
+    },
+    label: `تعديل الفرع ${input.code}`,
+  })
 
   if (error) throw new Error(translateSettingsError(error.message))
-
-  return data as BranchRecord
 }
 
 export async function updateBranch(
   branchId: string,
   input: Omit<BranchInput, 'code'>,
-): Promise<BranchRecord> {
-  const { data, error } = await supabase
-    .from('branches')
-    .update({
+): Promise<void> {
+  const { error } = await tableOfflineAware({
+    table: 'branches',
+    op: 'update',
+    payload: {
       name: input.name.trim(),
       address: input.address?.trim() || null,
       is_active: input.is_active,
-    })
-    .eq('id', branchId)
-    .select('id, code, name, address, is_active, created_at, updated_at')
-    .single()
+    },
+    match: { id: branchId },
+    label: `تعديل الفرع ${input.name}`,
+  })
 
   if (error) throw new Error(translateSettingsError(error.message))
-
-  return data as BranchRecord
 }
 
 export async function fetchDocumentSequences(branchId: string): Promise<DocumentSequence[]> {
-  const { data, error } = await supabase.rpc('list_document_sequences', {
+  const { data, error } = await rpcOfflineAware('list_document_sequences', {
     p_branch_id: branchId,
   })
 
