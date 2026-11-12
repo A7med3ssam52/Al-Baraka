@@ -339,7 +339,7 @@ export async function updateCustomerContact(input: {
 /**
  * حذف قسري للعميل — يفشل إلا إذا كان الكود المكتوب مطابقًا لكود العميل،
  * ويمحى العميل وكل ما يتعلق به (عقود، فواتير، أقساط، مدفوعات، سجلات بوابة...).
- * العملية غير قابلة للتراجع، ولا تُحذف ملفات Cloudinary.
+ * العملية غير قابلة للتراجع.
  */
 export async function forceDeleteCustomer(customerId: string, confirmCode: string): Promise<void> {
   const { error } = await supabase.rpc('force_delete_customer', {

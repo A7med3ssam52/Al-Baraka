@@ -437,7 +437,7 @@ export function CustomersPage() {
       <ConfirmActionDialog
         open={deleteDialog.open}
         title="حذف قسري نهائي للعميل"
-        description={`العميل «${deleteDialog.customer?.full_name ?? ''}» (${deleteDialog.customer?.code ?? ''}) — سيُمحى نهائيًا مع كل تاريخه: العقود، الفواتير، الأقساط، المدفوعات، كشف الحساب، الرصيد، المستندات، ملاحظات ومتابعة بوابة العملاء، وكل المرتبط به. العملية لا يمكن التراجع عنها — ولا تُحذف ملفات Cloudinary. اكتب كود العميل «${deleteDialog.customer?.code ?? ''}» ليتفعل زر التأكيد.`}
+        description={`العميل «${deleteDialog.customer?.full_name ?? ''}» (${deleteDialog.customer?.code ?? ''}) — سيُمحى نهائيًا مع كل تاريخه: العقود، الفواتير، الأقساط، المدفوعات، كشف الحساب، الرصيد، المستندات، ملاحظات ومتابعة بوابة العملاء، وكل المرتبط به. العملية لا يمكن التراجع عنها. اكتب كود العميل «${deleteDialog.customer?.code ?? ''}» ليتفعل زر التأكيد.`}
         confirmLabel="حذف قسري نهائي"
         requireReason={false}
         requireText={deleteDialog.customer?.code ?? ''}
