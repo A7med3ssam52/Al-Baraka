@@ -298,10 +298,9 @@ export async function generateOverdueNotifications(branchId?: string | null): Pr
   return Number(data ?? 0)
 }
 
-export async function deleteInstallments(input: { installment_ids: string[]; reason?: string }) {
+export async function deleteInstallments(input: { installment_ids: string[] }) {
   const { data, error } = await supabase.rpc('delete_installments', {
     p_installment_ids: input.installment_ids,
-    p_reason: input.reason?.trim() || null,
   })
 
   if (error) throw new Error(translateInstallmentError(error.message))

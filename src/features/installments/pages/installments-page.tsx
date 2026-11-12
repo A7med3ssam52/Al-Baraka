@@ -55,7 +55,6 @@ import { EditInstallmentDialog } from '../components/edit-installment-dialog'
 import { RescheduleInstallmentDialog } from '../components/reschedule-installment-dialog'
 import { WaiveInstallmentDialog } from '../components/waive-installment-dialog'
 import {
-  canDeleteInstallment,
   installmentStatusBadge,
   installmentStatusLabels,
   resolveInstallmentStatus,
@@ -125,9 +124,9 @@ export function InstallmentsPage() {
     })
       .then((data) => {
         if (!active) return
-        const deletable = new Set(data.filter(canDeleteInstallment).map((row) => row.id))
+        const existing = new Set(data.map((row) => row.id))
         setCheckedIds((current) => {
-          const next = new Set([...current].filter((id) => deletable.has(id)))
+          const next = new Set([...current].filter((id) => existing.has(id)))
           return next.size === current.size ? current : next
         })
         setRows(data)
@@ -164,14 +163,10 @@ export function InstallmentsPage() {
 
   const summary = useMemo(() => summarizeInstallments(rows), [rows])
 
-  // التحديد مقصور على الأقساط الظاهرة المقبولة للحذف (غير المدفوعة/غير المسوى).
-  const deletableVisibleIds = useMemo(
-    () => visibleRows.filter(canDeleteInstallment).map((row) => row.id),
-    [visibleRows],
-  )
-  const allSelected =
-    deletableVisibleIds.length > 0 && deletableVisibleIds.every((id) => checkedIds.has(id))
-  const someSelected = deletableVisibleIds.some((id) => checkedIds.has(id))
+  // الحذف القسري متاح على أي قسط (حتى المدفوع) — التحديد على الصفوف الظاهرة.
+  const visibleIds = useMemo(() => visibleRows.map((row) => row.id), [visibleRows])
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => checkedIds.has(id))
+  const someSelected = visibleIds.some((id) => checkedIds.has(id))
   const checkedRow =
     checkedIds.size === 1 ? (rows.find((row) => row.id === [...checkedIds][0]) ?? null) : null
 
@@ -188,10 +183,10 @@ export function InstallmentsPage() {
     setCheckedIds((current) => {
       if (allSelected) {
         const next = new Set(current)
-        deletableVisibleIds.forEach((id) => next.delete(id))
+        visibleIds.forEach((id) => next.delete(id))
         return next
       }
-      return new Set([...current, ...deletableVisibleIds])
+      return new Set([...current, ...visibleIds])
     })
   }
 
@@ -243,8 +238,8 @@ export function InstallmentsPage() {
     await rescheduleInstallment(input)
   }
 
-  async function handleDeleteConfirm(reason: string) {
-    const result = await deleteInstallments({ installment_ids: [...checkedIds], reason })
+  async function handleDeleteConfirm() {
+    const result = await deleteInstallments({ installment_ids: [...checkedIds] })
     const count = result.reduce((sum, row) => sum + Number(row.deleted_count), 0)
     const total = result.reduce((sum, row) => sum + Number(row.deleted_amount), 0)
     toast.success(
@@ -541,13 +536,13 @@ export function InstallmentsPage() {
                     {canReschedule ? (
                       <TableHead className="w-10">
                         <Checkbox
-                          aria-label="تحديد كل الأقساط القابلة للحذف"
+                          aria-label="تحديد كل الأقساط الظاهرة"
                           checked={allSelected}
                           ref={(el) => {
                             if (el) el.indeterminate = someSelected && !allSelected
                           }}
                           onChange={toggleAll}
-                          disabled={deletableVisibleIds.length === 0}
+                          disabled={visibleIds.length === 0}
                         />
                       </TableHead>
                     ) : null}
@@ -566,7 +561,6 @@ export function InstallmentsPage() {
                   {visibleRows.map((row) => {
                     const status = resolveInstallmentStatus(row)
                     const actionable = status !== 'paid' && status !== 'waived'
-                    const deletable = canDeleteInstallment(row)
 
                     return (
                       <TableRow
@@ -578,11 +572,8 @@ export function InstallmentsPage() {
                             <Checkbox
                               aria-label={`تحديد القسط #${row.installment_no} من عقد ${row.contract_number}`}
                               checked={checkedIds.has(row.id)}
-                              disabled={!deletable}
                               onChange={() => toggleRow(row.id)}
-                              title={
-                                deletable ? undefined : 'لا يمكن تحديده للحذف — عليه تحصيل أو مسوّى'
-                              }
+                              title="حذف قسري — سيُحذف حتى لو فيه تحصيل"
                             />
                           </TableCell>
                         ) : null}
@@ -759,8 +750,9 @@ export function InstallmentsPage() {
 
       <ConfirmActionDialog
         open={deleteOpen}
-        title="حذف الأقساط المحددة"
-        description={`سيتم حذف ${checkedIds.size} قسطًا غير مدفوع نهائيًا، وإنقاص إجمالي العقد والفاتورة بقيمة هذه الأقساط، وإعادة توزيع المتبقي على باقي الأقساط غير المدفوعة وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
+        requireReason={false}
+        title="حذف قسري للأقساط المحددة"
+        description={`سيتم حذف ${checkedIds.size} قسطًا نهائيًا (حتى لو فيه تحصيل أو تسوية)، وإنقاص إجمالي العقد والفاتورة بقيمة هذه الأقساط، وإعادة توزيع المتبقي على باقي الأقساط غير المدفوعة وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
         confirmLabel={`حذف ${checkedIds.size > 0 ? checkedIds.size : ''} قسطًا`}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDeleteConfirm}

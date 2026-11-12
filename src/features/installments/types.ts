@@ -106,19 +106,6 @@ export const frequencyLabels: Record<string, string> = {
 }
 
 /**
- * An installment can only be bulk-deleted when it carries no money:
- * nothing collected (paid_amount = 0) and not waived either.
- */
-export function canDeleteInstallment(row: {
-  stored_status: InstallmentStoredStatus
-  paid_amount: number
-}): boolean {
-  return (
-    row.paid_amount === 0 && (row.stored_status === 'pending' || row.stored_status === 'overdue')
-  )
-}
-
-/**
  * `computed_status` ignores the waived flag, so a waived installment would show
  * as paid. The stored status is the source of truth for waiving.
  */

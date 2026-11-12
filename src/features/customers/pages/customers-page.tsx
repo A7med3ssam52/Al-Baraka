@@ -1,4 +1,14 @@
-import { Archive, Loader2, MoreHorizontal, RefreshCw, Search, Trash2, UserPlus, Users, X } from 'lucide-react'
+import {
+  Archive,
+  Loader2,
+  MoreHorizontal,
+  RefreshCw,
+  Search,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
@@ -30,8 +40,8 @@ import { cn, formatDateTime } from '@/lib/utils'
 
 import {
   createCustomer,
-  deleteCustomer,
   fetchCustomers,
+  forceDeleteCustomer,
   setCustomerStatus,
   translateCustomerError,
   updateCustomer,
@@ -110,6 +120,7 @@ export function CustomersPage() {
   const canCreate = hasPermission('customers.create')
   const canUpdate = hasPermission('customers.update')
   const canArchive = hasPermission('customers.archive')
+  const canForceDelete = hasPermission('customers.force_delete')
 
   const load = async () => {
     setLoading(true)
@@ -178,11 +189,11 @@ export function CustomersPage() {
     }
   }
 
-  async function handleDeleteConfirm() {
+  async function handleDeleteConfirm(_reason: string, confirmCode: string) {
     if (!deleteDialog.customer) return
     try {
-      await deleteCustomer(deleteDialog.customer.id)
-      toast.success('تم حذف العميل.')
+      await forceDeleteCustomer(deleteDialog.customer.id, confirmCode)
+      toast.success('تم حذف العميل نهائيًا — محى كل بياناته وتاريخه.')
       await load()
     } catch (deleteError) {
       throw new Error(translateCustomerError(deleteError), { cause: deleteError })
@@ -391,11 +402,11 @@ export function CustomersPage() {
                             <Archive className="size-4" /> أرشفة العميل
                           </DropdownMenuItem>
                         ) : null}
-                        {canArchive ? (
+                        {canForceDelete ? (
                           <DropdownMenuItem
                             onClick={() => setDeleteDialog({ open: true, customer })}
                           >
-                            <Trash2 className="size-4 text-destructive" /> حذف نهائي
+                            <Trash2 className="size-4 text-destructive" /> حذف قسري نهائي
                           </DropdownMenuItem>
                         ) : null}
                       </DropdownMenuContent>
@@ -425,9 +436,11 @@ export function CustomersPage() {
 
       <ConfirmActionDialog
         open={deleteDialog.open}
-        title="حذف نهائي للعميل"
-        description={`العميل «${deleteDialog.customer?.full_name ?? ''}» — الحذف النهائي متاح فقط لو مفيش عقود أو فواتير أو مدفوعات مرتبطة. لو له تاريخ هتظهر رسالة ويتظل الأرشفة هي البديل.`}
-        confirmLabel="حذف نهائي"
+        title="حذف قسري نهائي للعميل"
+        description={`العميل «${deleteDialog.customer?.full_name ?? ''}» (${deleteDialog.customer?.code ?? ''}) — سيُمحى نهائيًا مع كل تاريخه: العقود، الفواتير، الأقساط، المدفوعات، كشف الحساب، الرصيد، المستندات، ملاحظات ومتابعة بوابة العملاء، وكل المرتبط به. العملية لا يمكن التراجع عنها — ولا تُحذف ملفات Cloudinary. اكتب كود العميل «${deleteDialog.customer?.code ?? ''}» ليتفعل زر التأكيد.`}
+        confirmLabel="حذف قسري نهائي"
+        requireReason={false}
+        requireText={deleteDialog.customer?.code ?? ''}
         onOpenChange={(open) => setDeleteDialog((current) => ({ ...current, open }))}
         onConfirm={handleDeleteConfirm}
       />

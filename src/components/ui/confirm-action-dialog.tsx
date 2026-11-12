@@ -19,8 +19,10 @@ interface Props {
   confirmLabel: string
   /** When set, the user must type this text to confirm (for hard deletes). */
   requireText?: string
+  /** When false, no reason is required or shown (for forced deletes). Defaults to true. */
+  requireReason?: boolean
   onOpenChange: (open: boolean) => void
-  onConfirm: (reason: string) => Promise<void>
+  onConfirm: (reason: string, typed: string) => Promise<void>
 }
 
 export function ConfirmActionDialog({
@@ -29,6 +31,7 @@ export function ConfirmActionDialog({
   description,
   confirmLabel,
   requireText,
+  requireReason = true,
   onOpenChange,
   onConfirm,
 }: Props) {
@@ -38,18 +41,21 @@ export function ConfirmActionDialog({
   const [error, setError] = useState<string | null>(null)
 
   const ready =
-    reason.trim().length >= 3 && (!requireText || typed.trim() === requireText.trim())
+    (!requireReason || reason.trim().length >= 3) &&
+    (!requireText || typed.trim() === requireText.trim())
 
   async function handleConfirm() {
     setSubmitting(true)
     setError(null)
     try {
-      await onConfirm(reason.trim())
+      await onConfirm(reason.trim(), typed.trim())
       setReason('')
       setTyped('')
       onOpenChange(false)
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'تعذر إكمال العملية. حاول مرة أخرى.')
+      setError(
+        submitError instanceof Error ? submitError.message : 'تعذر إكمال العملية. حاول مرة أخرى.',
+      )
     } finally {
       setSubmitting(false)
     }
@@ -77,21 +83,21 @@ export function ConfirmActionDialog({
         </DialogHeader>
 
         <div className="grid gap-3">
-          <label className="grid gap-1.5 text-sm">
-            <span className="font-semibold">سبب العملية *</span>
-            <Input
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder="اكتب السبب (3 أحرف على الأقل)"
-              required
-            />
-          </label>
+          {requireReason ? (
+            <label className="grid gap-1.5 text-sm">
+              <span className="font-semibold">سبب العملية *</span>
+              <Input
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder="اكتب السبب (3 أحرف على الأقل)"
+                required
+              />
+            </label>
+          ) : null}
 
           {requireText ? (
             <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">
-                اكتب «{requireText}» للتأكيد
-              </span>
+              <span className="font-semibold">اكتب «{requireText}» للتأكيد</span>
               <Input
                 value={typed}
                 onChange={(event) => setTyped(event.target.value)}

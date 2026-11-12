@@ -26,10 +26,13 @@ const errorMessages: Record<string, string> = {
   customer_missing: 'العميل غير موجود.',
   customer_archived: 'العميل مؤرشف ولا يمكن تعديله. فعّله أولًا.',
   customer_delete_forbidden: 'لا يمكن حذف العميل. استخدم الأرشفة بدلًا من الحذف.',
-  has_history: 'لا يمكن الحذف — لهذا السجل تاريخ مرتبط (عقود أو فواتير أو مدفوعات). استخدم الأرشفة بدلًا منه.',
+  has_history:
+    'لا يمكن الحذف — لهذا السجل تاريخ مرتبط (عقود أو فواتير أو مدفوعات). استخدم الأرشفة بدلًا منه.',
   has_payments: 'توجد مدفوعات مرتبطة — لا يمكن الحذف.',
+  confirmation_mismatch: 'الكود المكتوب غير مطابق — اكتب كود العميل بالضبط للتأكيد.',
   installment_locked: 'القسط مدفوع أو مسوّى ولا يمكن تعديله.',
-  contract_has_payments: 'توجد تحصيلات على هذا العقد — لا يمكن تعديله أو إلغاؤه. استخدم الإعفاء أو إعادة الجدولة.',
+  contract_has_payments:
+    'توجد تحصيلات على هذا العقد — لا يمكن تعديله أو إلغاؤه. استخدم الإعفاء أو إعادة الجدولة.',
   contract_locked: 'العقد ملغى أو لا يمكن تعديله في حالته الحالية.',
   expense_missing: 'المصروف غير موجود.',
   expense_archived: 'المصروف ملغى ولا يمكن تعديله.',
@@ -333,9 +336,15 @@ export async function updateCustomerContact(input: {
   return data
 }
 
-export async function deleteCustomer(customerId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_customer', {
+/**
+ * حذف قسري للعميل — يفشل إلا إذا كان الكود المكتوب مطابقًا لكود العميل،
+ * ويمحى العميل وكل ما يتعلق به (عقود، فواتير، أقساط، مدفوعات، سجلات بوابة...).
+ * العملية غير قابلة للتراجع، ولا تُحذف ملفات Cloudinary.
+ */
+export async function forceDeleteCustomer(customerId: string, confirmCode: string): Promise<void> {
+  const { error } = await supabase.rpc('force_delete_customer', {
     p_customer_id: customerId,
+    p_confirm_code: confirmCode,
   })
 
   if (error) throw new Error(translateCustomerError(error.message))

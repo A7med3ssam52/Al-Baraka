@@ -20,7 +20,6 @@ import {
   translateInstallmentError,
 } from '@/features/installments/api'
 import {
-  canDeleteInstallment,
   installmentStatusLabels,
   resolveInstallmentStatus,
   type InstallmentRow,
@@ -262,9 +261,9 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
     fetchInstallments({ customerId })
       .then((mine) => {
         if (!active) return
-        const deletable = new Set(mine.filter(canDeleteInstallment).map((row) => row.id))
+        const existing = new Set(mine.map((row) => row.id))
         setSelected((current) => {
-          const next = new Set([...current].filter((id) => deletable.has(id)))
+          const next = new Set([...current].filter((id) => existing.has(id)))
           return next.size === current.size ? current : next
         })
         setRows(mine)
@@ -278,9 +277,9 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
     }
   }, [customerId, reloadKey, localKey])
 
-  const deletableIds = rows.filter(canDeleteInstallment).map((row) => row.id)
-  const allSelected = deletableIds.length > 0 && deletableIds.every((id) => selected.has(id))
-  const someSelected = deletableIds.some((id) => selected.has(id))
+  const visibleIds = rows.map((row) => row.id)
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id))
+  const someSelected = visibleIds.some((id) => selected.has(id))
   const selectedRow =
     selected.size === 1 ? (rows.find((row) => row.id === [...selected][0]) ?? null) : null
 
@@ -297,10 +296,10 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
     setSelected((current) => {
       if (allSelected) {
         const next = new Set(current)
-        deletableIds.forEach((id) => next.delete(id))
+        visibleIds.forEach((id) => next.delete(id))
         return next
       }
-      return new Set([...current, ...deletableIds])
+      return new Set([...current, ...visibleIds])
     })
   }
 
@@ -309,9 +308,9 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
     onChanged?.()
   }
 
-  async function handleDeleteConfirm(reason: string) {
+  async function handleDeleteConfirm() {
     try {
-      const result = await deleteInstallments({ installment_ids: [...selected], reason })
+      const result = await deleteInstallments({ installment_ids: [...selected] })
       const count = result.reduce((sum, row) => sum + Number(row.deleted_count), 0)
       const total = result.reduce((sum, row) => sum + Number(row.deleted_amount), 0)
       toast.success(
@@ -341,7 +340,7 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
         variant="destructive"
         disabled={selected.size === 0}
         onClick={() => setDeleteOpen(true)}
-        title="حذف الأقساط غير المدفوعة المحددة دفعة واحدة"
+        title="حذف قسري للأقساط المحددة دفعة واحدة"
       >
         <Trash2 className="size-4" />
         حذف{selected.size > 0 ? ` (${selected.size})` : ''}
@@ -367,13 +366,13 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
               {canEdit ? (
                 <TableHead className="w-10">
                   <Checkbox
-                    aria-label="تحديد كل الأقساط القابلة للحذف"
+                    aria-label="تحديد كل الأقساط"
                     checked={allSelected}
                     ref={(el) => {
                       if (el) el.indeterminate = someSelected && !allSelected
                     }}
                     onChange={toggleAll}
-                    disabled={deletableIds.length === 0}
+                    disabled={visibleIds.length === 0}
                   />
                 </TableHead>
               ) : null}
@@ -388,7 +387,6 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
           </TableHeader>
           <TableBody>
             {rows.map((r) => {
-              const deletable = canDeleteInstallment(r)
               return (
                 <TableRow key={r.id}>
                   {canEdit ? (
@@ -396,9 +394,8 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
                       <Checkbox
                         aria-label={`تحديد القسط #${r.installment_no}`}
                         checked={selected.has(r.id)}
-                        disabled={!deletable}
                         onChange={() => toggleRow(r.id)}
-                        title={deletable ? undefined : 'لا يمكن تحديده للحذف — عليه تحصيل أو مسوى'}
+                        title="حذف قسري — سيُحذف حتى لو فيه تحصيل"
                       />
                     </TableCell>
                   ) : null}
@@ -433,8 +430,9 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
 
       <ConfirmActionDialog
         open={deleteOpen}
-        title="حذف الأقساط المحددة"
-        description={`سيتم حذف ${selected.size} قسطًا غير مدفوع نهائيًا، وإنقاص إجمالي العقد (والممول) بقيمة هذه الأقساط، وإعادة توزيع المبلغ المتبقي على باقي الأقساط وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
+        requireReason={false}
+        title="حذف قسري للأقساط المحددة"
+        description={`سيتم حذف ${selected.size} قسطًا نهائيًا (حتى لو فيه تحصيل أو تسوية)، وإنقاص إجمالي العقد (والممول) بقيمة هذه الأقساط، وإعادة توزيع المبلغ المتبقي على باقي الأقساط غير المدفوعة وتحديث رقمها بالتسلسل. التحصيل المسدد على أقساط أخرى لن يتأثر. العملية لا يمكن التراجع عنها.`}
         confirmLabel={`حذف ${selected.size > 0 ? selected.size : ''} قسطًا`}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDeleteConfirm}
