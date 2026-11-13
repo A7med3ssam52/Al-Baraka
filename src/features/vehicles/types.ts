@@ -59,6 +59,8 @@ export interface VehicleUpdateInput {
   purchase_date?: string | null
   suggested_price?: number
   notes?: string | null
+  chassis_no?: string | null
+  engine_no?: string | null
 }
 
 export const vehicleStatusLabels: Record<VehicleStatus, string> = {

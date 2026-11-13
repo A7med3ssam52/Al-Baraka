@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { fetchProductBrands, fetchProductModels, saveProductBrand, saveProductModel } from '@/features/products/api'
@@ -73,7 +74,13 @@ export function VehicleFormDialog({
   const [form, setForm] = useState<FormState>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [serialNote, setSerialNote] = useState('')
+  const [confirmSerialsOpen, setConfirmSerialsOpen] = useState(false)
   const isEdit = vehicle !== null
+  const serialDirty =
+    isEdit && vehicle !== null
+      ? form.chassis_no.trim() !== vehicle.chassis_no || form.engine_no.trim() !== vehicle.engine_no
+      : false
 
   useEffect(() => {
     if (!open) return
@@ -94,6 +101,8 @@ export function VehicleFormDialog({
         : emptyForm,
     )
     setError(null)
+    setSerialNote('')
+    setConfirmSerialsOpen(false)
   }, [open, vehicle])
 
   function patch(next: Partial<FormState>) {
@@ -137,8 +146,7 @@ export function VehicleFormDialog({
     return { brand_id: brandId, model_id: modelId }
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
+  async function doSubmit() {
     setSubmitting(true)
     setError(null)
 
@@ -146,12 +154,22 @@ export function VehicleFormDialog({
       const ids = isEdit ? { brand_id: null, model_id: null } : await resolveBrandModelIds()
 
       if (isEdit) {
+        let notesPayload = form.notes.trim() ? form.notes : null
+        if (serialDirty && serialNote.trim()) {
+          const stamp = new Date().toISOString().slice(0, 10)
+          notesPayload = `تغيير الشاسيه/الموتور (${stamp}): ${serialNote.trim()}${
+            notesPayload ? ' — ' + notesPayload : ''
+          }`
+        }
+
         await onSubmitUpdate(vehicle.id, {
           vehicle_type: form.vehicle_type,
           manufacture_year: form.manufacture_year ? Number(form.manufacture_year) : null,
           color: form.color || null,
           purchase_date: form.purchase_date || null,
-          notes: form.notes || null,
+          notes: notesPayload,
+          chassis_no: form.chassis_no,
+          engine_no: form.engine_no,
         })
         toast.success('تم حفظ بيانات المركبة.')
       } else {
@@ -176,14 +194,24 @@ export function VehicleFormDialog({
     }
   }
 
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    if (isEdit && serialDirty) {
+      setConfirmSerialsOpen(true)
+      return
+    }
+    await doSubmit()
+  }
+
   return (
+    <>
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'تعديل المركبة' : 'مركبة جديدة'}</DialogTitle>
           <DialogDescription>
             {isEdit
-              ? `تعديل بيانات ${vehicle.code} — الشاسيه والموتور غير قابلين للتعديل.`
+              ? `تعديل بيانات ${vehicle.code} — الشاسيه والموتور قابلين للتعديل بحذر، ويتسجل التغيير في سجل المراقبة.`
               : 'تُرقَّم المركبات تلقائيًا VEH-xxxx بعد التحقق من الشاسيه والموتور.'}
           </DialogDescription>
         </DialogHeader>
@@ -197,7 +225,6 @@ export function VehicleFormDialog({
                 className="text-left font-mono"
                 value={form.chassis_no}
                 onChange={(event) => patch({ chassis_no: event.target.value })}
-                disabled={isEdit}
                 required
               />
             </label>
@@ -208,11 +235,28 @@ export function VehicleFormDialog({
                 className="text-left font-mono"
                 value={form.engine_no}
                 onChange={(event) => patch({ engine_no: event.target.value })}
-                disabled={isEdit}
                 required
               />
             </label>
           </div>
+
+          {serialDirty ? (
+            <div className="grid gap-2 rounded-md border border-warning/40 bg-warning/5 p-3 text-xs text-warning">
+              <div className="flex items-start gap-2">
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  هتغيّر رقم <strong>الشاسيه/الموتور</strong> — التغيير بيتسجل في سجل المراقبة،
+                  والفواتير والعقود بتفضل متسجلة على نفس المركبة. الأرقام لازم تكون فريدة.
+                </span>
+              </div>
+              <Input
+                value={serialNote}
+                onChange={(event) => setSerialNote(event.target.value)}
+                placeholder="سبب التغيير (اختياري) — مثال: تصحيح خطأ إدخال من الدفتر القديم"
+                aria-label="سبب تغيير رقم الشاسيه/الموتور"
+              />
+            </div>
+          ) : null}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1.5 text-sm">
@@ -325,5 +369,17 @@ export function VehicleFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+    <ConfirmActionDialog
+      open={confirmSerialsOpen}
+      onOpenChange={setConfirmSerialsOpen}
+      title="تغيير رقم الشاسيه/الموتور"
+      description="هيتم تغيير أرقام الشاسيه/الموتور وتسجيلها في سجل المراقبة. الفواتير والعقود الخاصة بالمركبة هتفضل محفوظة بأرقامها — مفيش حاجة هتتمسح."
+      confirmLabel="تأكيد التغيير"
+      requireReason={false}
+      onConfirm={async () => {
+        await doSubmit()
+      }}
+    />
+    </>
   )
 }

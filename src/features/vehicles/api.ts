@@ -128,6 +128,8 @@ export async function updateVehicle(
     p_purchase_date: input.purchase_date ?? null,
     p_suggested_price: input.suggested_price ?? null,
     p_notes: input.notes ?? null,
+    p_chassis_no: input.chassis_no ?? null,
+    p_engine_no: input.engine_no ?? null,
   })
 
   if (error) throw new Error(translateVehicleError(error.message))
