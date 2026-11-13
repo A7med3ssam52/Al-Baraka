@@ -144,6 +144,90 @@ function uniqueIds(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)))
 }
 
+export interface DraftInstallmentAttempt {
+  invoiceId: string
+  invoiceNumber: string
+  contractId: string | null
+  contractNumber: string | null
+}
+
+/**
+ * Looks for a previous, incomplete "إضافة أقساط" attempt with the exact same
+ * data: a draft installment sales invoice for the same customer listing the
+ * same vehicles. Used to offer "تحديث البيانات" instead of creating a new one.
+ * Any failure here is non-fatal — callers must treat it as "no attempt found"
+ * and continue with the normal flow.
+ */
+export async function findDraftInstallmentAttempt(
+  customerId: string,
+  vehicleIds: string[],
+): Promise<DraftInstallmentAttempt | null> {
+  if (!customerId || vehicleIds.length === 0) return null
+
+  const { data: invoices, error } = await supabase
+    .from('sales_invoices')
+    .select('id, number')
+    .eq('customer_id', customerId)
+    .eq('sale_type', 'installment')
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) throw new Error(translateInstallmentError(error.message))
+
+  const drafts = (invoices ?? []) as Array<{ id: string; number: string }>
+  if (drafts.length === 0) return null
+
+  const draftIds = drafts.map((row) => row.id)
+  const { data: items, error: itemsError } = await supabase
+    .from('sales_invoice_items')
+    .select('invoice_id, vehicle_id')
+    .in('invoice_id', draftIds)
+    .in('vehicle_id', vehicleIds)
+
+  if (itemsError) throw new Error(translateInstallmentError(itemsError.message))
+
+  // Vehicle set per invoice (limited to the selected vehicles).
+  const vehiclesByInvoice = new Map<string, Set<string>>()
+  for (const item of (items ?? []) as Array<{ invoice_id: string; vehicle_id: string | null }>) {
+    if (!item.vehicle_id) continue
+    const set = vehiclesByInvoice.get(item.invoice_id) ?? new Set<string>()
+    set.add(item.vehicle_id)
+    vehiclesByInvoice.set(item.invoice_id, set)
+  }
+
+  const wanted = [...new Set(vehicleIds)].sort()
+  const match = drafts.find((draft) => {
+    const set = vehiclesByInvoice.get(draft.id)
+    if (!set) return false
+    const current = [...set].sort()
+    return current.length === wanted.length && current.every((id, index) => id === wanted[index])
+  })
+
+  if (!match) return null
+
+  const { data: contracts, error: contractsError } = await supabase
+    .from('contracts')
+    .select('id, number, status')
+    .eq('sale_invoice_id', match.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (contractsError) throw new Error(translateInstallmentError(contractsError.message))
+
+  const contract = ((contracts ?? []) as Array<{ id: string; number: string; status: string }>)[0]
+  // An approved/cancelled contract means the old attempt already went through —
+  // treat it as "no reusable draft" and let the normal flow run.
+  if (contract && contract.status !== 'draft') return null
+
+  return {
+    invoiceId: match.id,
+    invoiceNumber: match.number,
+    contractId: contract?.id ?? null,
+    contractNumber: contract?.number ?? null,
+  }
+}
+
 async function fetchInChunks<T>(table: string, columns: string, ids: string[]): Promise<T[]> {
   if (ids.length === 0) return []
 

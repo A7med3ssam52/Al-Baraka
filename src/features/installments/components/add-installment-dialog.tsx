@@ -22,7 +22,12 @@ import { createVehicle, fetchVehicles } from '@/features/vehicles/api'
 import { VehicleFormDialog } from '@/features/vehicles/components/vehicle-form-dialog'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
-import { translateInstallmentError } from '../api'
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog'
+import {
+  translateInstallmentError,
+  findDraftInstallmentAttempt,
+  type DraftInstallmentAttempt,
+} from '../api'
 import { frequencyLabels } from '../types'
 import { ManualInstallmentRows } from './manual-installment-rows'
 import {
@@ -144,6 +149,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingMatch, setPendingMatch] = useState<DraftInstallmentAttempt | null>(null)
   const [vehicleDialogOpen, setVehicleDialogOpen] = useState(false)
   const [manualRows, setManualRows] = useState<ManualInstallmentRow[]>([newManualRow()])
   const [legacyNos, setLegacyNos] = useState<number[]>([])
@@ -171,6 +177,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       setManualRows([newManualRow()])
       setLegacyNos([])
       setLegacyDown(false)
+      setPendingMatch(null)
     }
   }
 
@@ -298,9 +305,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
 
   const handleVehicleUpdated = async () => {}
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-
+  async function performSave(match?: DraftInstallmentAttempt | null) {
     if (!customerId) {
       setError('اختر العميل.')
       return
@@ -384,6 +389,20 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       legacyNosPayload = legacyNos.length > 0 ? [...legacyNos].sort((a, b) => a - b) : null
     }
 
+    // نفس البيانات موجودة بالفعل في محاولة سابقة لم تكتمل؟ اعرض تأكيد «تحديث» بدل
+    // ما ننشئ فاتورة/عقد/جدول مكرر. فحص اختياري — أي خطأ فيه ما يمنعش الحفظ.
+    if (match === undefined) {
+      try {
+        match = await findDraftInstallmentAttempt(customerId, vehicleIds)
+      } catch {
+        match = null
+      }
+      if (match) {
+        setPendingMatch(match)
+        return
+      }
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -431,6 +450,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
         p_discount: 0,
         p_paid_amount: 0,
         p_notes: notes.trim() || 'عقد تقسيط من شاشة الأقساط',
+        p_invoice_id: match?.invoiceId ?? null,
       })
 
       if (invoice.error) throw new Error(invoice.error.message)
@@ -450,7 +470,7 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
         p_first_due_date: firstDue,
         p_guarantor_ids: null,
         p_notes: notes.trim() || null,
-        p_contract_id: null,
+        p_contract_id: match?.contractId ?? null,
       })
 
       if (contract.error) throw new Error(contract.error.message)
@@ -478,9 +498,11 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       if (approval.error) throw new Error(approval.error.message)
 
       toast.success(
-        validLines.length === 1
-          ? 'تم إنشاء العقد وجدول الأقساط واعتماده.'
-          : `تم إنشاء عقد واحد يشمل ${validLines.length} مركبات واعتماده.`,
+        match
+          ? 'تم تحديث الفاتورة والعقد وجدول الأقساط بالبيانات الجديدة واعتمادها.'
+          : validLines.length === 1
+            ? 'تم إنشاء العقد وجدول الأقساط واعتماده.'
+            : `تم إنشاء عقد واحد يشمل ${validLines.length} مركبات واعتماده.`,
       )
       onCreated()
     } catch (submitError) {
@@ -494,6 +516,11 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
     } finally {
       setSubmitting(false)
     }
+  }
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    void performSave(undefined)
   }
 
   return (
@@ -581,7 +608,9 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                       </Select>
                     </label>
                     <label className="grid gap-1.5 text-sm">
-                      <span className="font-semibold">{isManual ? 'سعر المركبة *' : 'تكلفة القسط *'}</span>
+                      <span className="font-semibold">
+                        {isManual ? 'سعر المركبة *' : 'تكلفة القسط *'}
+                      </span>
                       <Input
                         type="number"
                         min="0"
@@ -592,7 +621,9 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                         disabled={!line.vehicleId}
                       />
                       <span className="text-[11px] text-muted-foreground">
-                        {isManual ? 'السعر الإجمالي للمركبة (قبل المقدم)' : 'اللي النظام هيخصمها كل دورية'}
+                        {isManual
+                          ? 'السعر الإجمالي للمركبة (قبل المقدم)'
+                          : 'اللي النظام هيخصمها كل دورية'}
                       </span>
                     </label>
                     <Button
@@ -747,8 +778,8 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
 
               {isManual && manualLegacySum > 0 ? (
                 <p className="rounded-md border border-warning/40 bg-warning/5 px-3 py-2 text-[11px] text-warning">
-                  {manualRows.filter((row) => row.legacy).length} قسط معلّم كقديم ({formatCurrency(manualLegacySum)}) —
-                  هيتسجلوا «مدفوع» بدون أي حركة خزنة أو قيد.
+                  {manualRows.filter((row) => row.legacy).length} قسط معلّم كقديم (
+                  {formatCurrency(manualLegacySum)}) — هيتسجلوا «مدفوع» بدون أي حركة خزنة أو قيد.
                 </p>
               ) : null}
 
@@ -758,14 +789,14 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
                     <>
                       سعر المركبات: <strong>{formatCurrency(vehicleTotal)}</strong> — المقدم:{' '}
                       <strong>{formatCurrency(downAmount)}</strong> — الممول:{' '}
-                      <strong>{formatCurrency(Math.max(financed, 0))}</strong> على {manualRows.length} قسط —
-                      الإجمالي: <strong>{formatCurrency(total)}</strong>.
+                      <strong>{formatCurrency(Math.max(financed, 0))}</strong> على{' '}
+                      {manualRows.length} قسط — الإجمالي: <strong>{formatCurrency(total)}</strong>.
                     </>
                   ) : (
                     <>
-                      تكلفة القسط في الدورية: <strong>{formatCurrency(vehicleTotal)}</strong> — الممول:{' '}
-                      <strong>{formatCurrency(financed)}</strong> على {installmentCount} قسط — الإجمالي:{' '}
-                      <strong>{formatCurrency(total)}</strong>.
+                      تكلفة القسط في الدورية: <strong>{formatCurrency(vehicleTotal)}</strong> —
+                      الممول: <strong>{formatCurrency(financed)}</strong> على {installmentCount} قسط
+                      — الإجمالي: <strong>{formatCurrency(total)}</strong>.
                     </>
                   )}
                 </div>
@@ -810,6 +841,27 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
         onClosed={() => setVehicleDialogOpen(false)}
         onSubmitCreate={handleVehicleCreated}
         onSubmitUpdate={handleVehicleUpdated}
+      />
+
+      <ConfirmActionDialog
+        open={pendingMatch !== null}
+        requireReason={false}
+        title="سجل بنفس البيانات موجود بالفعل"
+        description={
+          pendingMatch
+            ? `في محاولة سابقة بنفس البيانات ولم تكتمل: فاتورة مسودة «${pendingMatch.invoiceNumber}»${
+                pendingMatch.contractNumber ? ` وعقد «${pendingMatch.contractNumber}»` : ''
+              } لنفس العميل ونفس المركبات. التحديث هيكتب البيانات الجديدة فوق القديمة بالكامل (الفاتورة ← العقد ← جدول الأقساط).`
+            : ''
+        }
+        confirmLabel="تحديث البيانات"
+        onOpenChange={(next) => {
+          if (!next) setPendingMatch(null)
+        }}
+        onConfirm={async () => {
+          if (!pendingMatch) return
+          await performSave(pendingMatch)
+        }}
       />
     </>
   )
