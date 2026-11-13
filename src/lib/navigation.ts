@@ -46,18 +46,18 @@ export const mainNavigation: NavItem[] = [
     permission: 'installments.view',
   },
   {
-    label: 'الموردون',
-    href: '/suppliers',
-    icon: Truck,
-    description: 'سجل الموردين والتواصل',
-    permission: 'suppliers.view',
-  },
-  {
     label: 'المركبات',
     href: '/inventory/vehicles',
     icon: Car,
     description: 'ملفات المركبات والشواصي والحالة',
     permission: 'vehicles.view',
+  },
+  {
+    label: 'الموردون',
+    href: '/suppliers',
+    icon: Truck,
+    description: 'سجل الموردين والتواصل',
+    permission: 'suppliers.view',
   },
   {
     label: 'المخزون',
