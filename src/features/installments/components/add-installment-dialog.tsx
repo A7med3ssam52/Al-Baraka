@@ -123,11 +123,17 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const [vehicles, setVehicles] = useState<VehicleOption[]>([])
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
   const [models, setModels] = useState<{ id: string; brand_id: string; name: string }[]>([])
-  const [loadingOptions, setLoadingOptions] = useState(false)
+  const [loadingOptions, setLoadingOptions] = useState(true)
   const [customerSearch, setCustomerSearch] = useState('')
-  const [remoteCustomers, setRemoteCustomers] = useState<CustomerOption[] | null>(null)
+  const [remoteResult, setRemoteResult] = useState<{ term: string; rows: CustomerOption[] } | null>(
+    null,
+  )
 
-  const filteredCustomers = remoteCustomers ?? filterCustomersSmart(customers, customerSearch)
+  const searchTerm = customerSearch.trim()
+  const filteredCustomers =
+    searchTerm && remoteResult?.term === searchTerm
+      ? remoteResult.rows
+      : filterCustomersSmart(customers, customerSearch)
   const [customerId, setCustomerId] = useState('')
   const [lines, setLines] = useState<VehicleLine[]>([newLine()])
   const [downPayment, setDownPayment] = useState('0')
@@ -143,11 +149,34 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   const [legacyNos, setLegacyNos] = useState<number[]>([])
   const [legacyDown, setLegacyDown] = useState(false)
 
+  // Reset transient UI state whenever the dialog opens — render-phase adjustment.
+  const [wasOpen, setWasOpen] = useState(false)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      setLoadingOptions(true)
+      setError(null)
+      const today = new Date()
+      today.setDate(today.getDate() + 30)
+      setFirstDueDate(today.toISOString().slice(0, 10))
+      setCustomerId(initialCustomerId ?? '')
+      setCustomerSearch('')
+      setRemoteResult(null)
+      setLines([newLine()])
+      setDownPayment('0')
+      setInstallmentCount('6')
+      setFrequency('monthly')
+      setCustomDays('')
+      setNotes('')
+      setManualRows([newManualRow()])
+      setLegacyNos([])
+      setLegacyDown(false)
+    }
+  }
+
   useEffect(() => {
     if (!open) return
     let active = true
-    setLoadingOptions(true)
-    setError(null)
 
     Promise.all([
       fetchCustomers({ status: 'active' }),
@@ -183,52 +212,34 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
   useEffect(() => {
     if (!open) return
     const term = customerSearch.trim()
-    if (!term) {
-      setRemoteCustomers(null)
-      return
-    }
+    if (!term) return
     let active = true
     const timer = window.setTimeout(() => {
       searchCustomers(term, { status: 'active' })
         .then((rows) => {
           if (!active) return
-          setRemoteCustomers(rows.map((c) => ({ id: c.id, code: c.code, full_name: c.full_name })))
+          setRemoteResult({
+            term,
+            rows: rows.map((c) => ({ id: c.id, code: c.code, full_name: c.full_name })),
+          })
         })
         .catch(() => {
           if (!active) return
-          setRemoteCustomers(
-            filterCustomersSmart(customers, term).map((c) => ({
+          setRemoteResult({
+            term,
+            rows: filterCustomersSmart(customers, term).map((c) => ({
               id: c.id,
               code: c.code,
               full_name: c.full_name,
             })),
-          )
+          })
         })
     }, 250)
     return () => {
       active = false
       window.clearTimeout(timer)
     }
-  }, [customerSearch, open])
-
-  useEffect(() => {
-    if (!open) return
-    const today = new Date()
-    today.setDate(today.getDate() + 30)
-    setFirstDueDate(today.toISOString().slice(0, 10))
-    setCustomerId(initialCustomerId ?? '')
-    setCustomerSearch('')
-    setLines([newLine()])
-    setDownPayment('0')
-    setInstallmentCount('6')
-    setFrequency('monthly')
-    setCustomDays('')
-    setNotes('')
-    setManualRows([newManualRow()])
-    setLegacyNos([])
-    setLegacyDown(false)
-    setError(null)
-  }, [open, initialCustomerId])
+  }, [customerSearch, open, customers])
 
   const patchLine = (key: string, patch: Partial<VehicleLine>) => {
     setLines((current) => current.map((l) => (l.key === key ? { ...l, ...patch } : l)))
