@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   BarChart3,
   Bike,
+  Car,
   CreditCard,
   FileText,
   History,
@@ -50,6 +51,13 @@ export const mainNavigation: NavItem[] = [
     icon: Truck,
     description: 'سجل الموردين والتواصل',
     permission: 'suppliers.view',
+  },
+  {
+    label: 'المركبات',
+    href: '/inventory/vehicles',
+    icon: Car,
+    description: 'ملفات المركبات والشواصي والحالة',
+    permission: 'vehicles.view',
   },
   {
     label: 'المخزون',
