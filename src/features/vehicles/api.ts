@@ -37,6 +37,42 @@ export function translateVehicleError(error: unknown) {
   return 'تعذر إكمال العملية. تحقق من الاتصال وحاول مرة أخرى.'
 }
 
+export async function fetchCustomerVehicles(customerId: string): Promise<
+  Array<{
+    id: string
+    code: string
+    vehicle_type: string
+    brand_name: string | null
+    model_name: string | null
+    manufacture_year: number | null
+    color: string | null
+    chassis_no: string
+    engine_no: string
+    status: VehicleStatus
+    purchase_date: string | null
+  }>
+> {
+  const { data, error } = await rpcOfflineAware('list_customer_vehicles', {
+    p_customer_id: customerId,
+  })
+
+  if (error) throw new Error(translateVehicleError(error.message))
+
+  return (data ?? []) as unknown as Array<{
+    id: string
+    code: string
+    vehicle_type: string
+    brand_name: string | null
+    model_name: string | null
+    manufacture_year: number | null
+    color: string | null
+    chassis_no: string
+    engine_no: string
+    status: VehicleStatus
+    purchase_date: string | null
+  }>
+}
+
 export async function fetchVehicles(options?: {
   status?: VehicleStatus | 'active' | 'all'
   search?: string

@@ -25,6 +25,7 @@ import { CustomerBalancePanel } from '../components/balance-panel'
 import { ContactsPanel, GuarantorsPanel } from '../components/contact-panels'
 import { DocumentsPanel } from '@/features/documents/components/documents-panel'
 import { InstallmentsPanel, StatementPanel } from '../components/customer-financial-panels'
+import { CustomerVehiclesPanel } from '../components/customer-vehicles-panel'
 import { AddInstallmentDialog } from '@/features/installments/components/add-installment-dialog'
 import type { CustomerNote } from '../types'
 import {
@@ -62,6 +63,7 @@ export function CustomerProfile({
   function isAvailable(tabId: CustomerTabId) {
     if (tabId === 'personal' || tabId === 'notes') return true
     if (tabId === 'contacts' || tabId === 'guarantors') return true
+    if (tabId === 'vehicles') return hasPermission('vehicles.view')
     if (tabId === 'documents') return hasPermission('documents.view')
     if (tabId === 'installments' || tabId === 'statement' || tabId === 'balance') {
       return true
@@ -130,6 +132,7 @@ export function CustomerProfile({
       </nav>
 
       {activeTab === 'personal' ? <PersonalDataPanel customer={customer} /> : null}
+      {activeTab === 'vehicles' ? <CustomerVehiclesPanel key={customer.id} customerId={customer.id} /> : null}
       {activeTab === 'notes' ? <NotesPanel customer={customer} /> : null}
       {activeTab === 'contacts' ? <ContactsPanel customer={customer} /> : null}
       {activeTab === 'guarantors' ? <GuarantorsPanel customer={customer} /> : null}
@@ -165,6 +168,7 @@ export function CustomerProfile({
         />
       ) : null}
       {activeTab !== 'personal' &&
+      activeTab !== 'vehicles' &&
       activeTab !== 'notes' &&
       activeTab !== 'contacts' &&
       activeTab !== 'guarantors' &&

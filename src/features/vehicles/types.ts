@@ -24,6 +24,9 @@ export interface VehicleRecord {
   branch_id: string
   status: VehicleStatus
   created_at: string
+  current_customer_id: string | null
+  current_customer_name: string | null
+  current_customer_code: string | null
 }
 
 export interface VehicleCreateInput {

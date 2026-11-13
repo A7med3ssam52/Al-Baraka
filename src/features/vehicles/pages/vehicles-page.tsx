@@ -203,7 +203,7 @@ export function VehiclesPage() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="بحث بالكود أو الشاسيه أو الموتور"
+              placeholder="بحث بالكود أو الشاسيه أو الموتور أو اسم العميل"
               className="pr-9"
             />
           </form>
@@ -269,7 +269,17 @@ export function VehiclesPage() {
                 const transitions = allowedTransitions(row)
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className="font-mono text-xs">{row.code}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {row.code}
+                      {row.current_customer_name ? (
+                        <p className="mt-0.5 font-sans text-[11px] font-semibold text-primary">
+                          عند: {row.current_customer_name}
+                          {row.current_customer_code ? (
+                            <span className="text-muted-foreground"> ({row.current_customer_code})</span>
+                          ) : null}
+                        </p>
+                      ) : null}
+                    </TableCell>
                     <TableCell>
                       <span className="font-semibold">
                         {[row.brand_name, row.model_name].filter(Boolean).join(' ') ||

@@ -10,6 +10,7 @@ export type CustomerTabId =
   | 'balance'
   | 'documents'
   | 'statement'
+  | 'vehicles'
 
 export interface TabDefinition {
   id: CustomerTabId
@@ -18,6 +19,7 @@ export interface TabDefinition {
 
 export const customerProfileTabs: TabDefinition[] = [
   { id: 'personal', label: 'البيانات الشخصية' },
+  { id: 'vehicles', label: 'المركبات' },
   { id: 'notes', label: 'الملاحظات والمتابعة' },
   { id: 'contacts', label: 'جهات التواصل' },
   { id: 'guarantors', label: 'الضامنون' },
