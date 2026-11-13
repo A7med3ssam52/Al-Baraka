@@ -60,6 +60,11 @@ export function CollectInstallmentDialog({
 
     if (!installment) return
 
+    if (!paymentDate) {
+      setError('اختر تاريخ التحصيل.')
+      return
+    }
+
     const value = Number(amount)
 
     if (!Number.isFinite(value) || value <= 0) {
@@ -158,13 +163,17 @@ export function CollectInstallmentDialog({
           </div>
 
           <label className="grid gap-1.5 text-sm">
-            <span className="font-semibold">تاريخ الدفع</span>
+            <span className="font-semibold">تاريخ التحصيل *</span>
             <Input
               type="date"
+              required
               value={paymentDate}
               max={todayIsoDate()}
               onChange={(event) => setPaymentDate(event.target.value)}
             />
+            <span className="text-[11px] text-muted-foreground">
+              لو العميل سدد متأخر اكتب تاريخ السداد الحقيقي — مش يوم النهاردة.
+            </span>
           </label>
 
           <label className="grid gap-1.5 text-sm">

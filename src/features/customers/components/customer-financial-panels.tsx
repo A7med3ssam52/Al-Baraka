@@ -104,6 +104,8 @@ type TransactionRow = {
   transaction_type: string
   amount: number
   notes: string | null
+  reference_type?: string | null
+  reference_id?: string | null
 }
 
 export function SalesPanel({ customerId, reloadKey, onAdd }: Props) {
@@ -549,7 +551,7 @@ export function StatementPanel({
     Promise.all([
       supabase
         .from('customer_transactions')
-        .select('id, transaction_date, transaction_type, amount, notes')
+        .select('id, transaction_date, transaction_type, amount, notes, reference_type, reference_id')
         .eq('customer_id', customerId)
         .order('transaction_date', { ascending: true })
         .limit(200),
@@ -574,6 +576,15 @@ export function StatementPanel({
     },
     [],
   )
+
+  // آخر تاريخ تحصيل لكل قسط (من سطور الدفتر: reference_type='installment').
+  // السطور مرتبة تصاعديًا بالتاريخ، فالأخير يتغلب = تاريخ آخر تحصيل.
+  const collectionDateByInstallment = new Map<string, string>()
+  for (const transactionRow of rows) {
+    if (transactionRow.reference_type === 'installment' && transactionRow.reference_id) {
+      collectionDateByInstallment.set(transactionRow.reference_id, transactionRow.transaction_date)
+    }
+  }
 
   const totalAmount = installments.reduce((s, r) => s + (r.amount ?? 0), 0)
   const totalPaid = installments.reduce((s, r) => s + (r.paid_amount ?? 0), 0)
@@ -665,12 +676,13 @@ export function StatementPanel({
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-[#e3dbc9]">
-              <table className="w-full min-w-[640px] text-xs sm:text-sm">
+              <table className="w-full min-w-[720px] text-xs sm:text-sm">
                 <thead className="bg-[#0b1f33] text-white">
                   <tr>
                     <th className="px-3 py-2 text-start font-bold">العقد</th>
                     <th className="px-3 py-2 text-start font-bold">القسط</th>
                     <th className="px-3 py-2 text-start font-bold">الاستحقاق</th>
+                    <th className="px-3 py-2 text-start font-bold">تاريخ التحصيل</th>
                     <th className="px-3 py-2 text-start font-bold">المبلغ</th>
                     <th className="px-3 py-2 text-start font-bold">المدفوع</th>
                     <th className="px-3 py-2 text-start font-bold">المتبقي</th>
@@ -686,6 +698,11 @@ export function StatementPanel({
                       <td className="px-3 py-2 font-mono text-[11px]">{r.contract_number}</td>
                       <td className="px-3 py-2">{r.installment_no}</td>
                       <td className="px-3 py-2">{formatDate(r.due_date)}</td>
+                      <td className="px-3 py-2">
+                        {collectionDateByInstallment.get(r.id)
+                          ? formatDate(collectionDateByInstallment.get(r.id) as string)
+                          : '—'}
+                      </td>
                       <td className="px-3 py-2">{formatCurrency(r.amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(r.paid_amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(r.remaining_amount)}</td>
@@ -697,7 +714,7 @@ export function StatementPanel({
                 </tbody>
                 <tfoot className="bg-[#efe9dc] font-bold">
                   <tr>
-                    <td colSpan={3} className="px-3 py-2">
+                    <td colSpan={4} className="px-3 py-2">
                       الإجمالي
                     </td>
                     <td className="px-3 py-2">{formatCurrency(totalAmount)}</td>
