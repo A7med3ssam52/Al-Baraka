@@ -1,6 +1,6 @@
 import { Building2, MoreHorizontal } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { getRoleLabel } from '@/features/auth/roles'
 import { useAuth } from '@/features/auth/use-auth'
@@ -17,23 +17,32 @@ interface SidebarLinkProps {
 }
 
 function SidebarLink({ href, label, icon: Icon, onNavigate }: SidebarLinkProps) {
+  const location = useLocation()
+  const pathname = location.pathname
+
+  // Longest-match semantics per item: /inventory/vehicles highlights المركبات
+  // alone; everything else under /inventory highlights المخزون alone.
+  const isActive =
+    href === '/dashboard'
+      ? pathname === '/dashboard'
+      : href === '/inventory'
+        ? pathname.startsWith('/inventory') && !pathname.startsWith('/inventory/vehicles')
+        : pathname === href || pathname.startsWith(`${href}/`)
+
   return (
-    <NavLink
+    <Link
       to={href}
-      end={href === '/dashboard'}
       onClick={onNavigate}
-      className={({ isActive }) =>
-        cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
-          isActive
-            ? 'bg-sidebar-active text-sidebar-active-foreground shadow-sm'
-            : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
-        )
-      }
+      className={cn(
+        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
+        isActive
+          ? 'bg-sidebar-active text-sidebar-active-foreground shadow-sm'
+          : 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground',
+      )}
     >
       <Icon className="size-4 shrink-0" />
       <span>{label}</span>
-    </NavLink>
+    </Link>
   )
 }
 
