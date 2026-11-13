@@ -106,6 +106,8 @@ export interface PortalTransaction {
   transaction_type: string
   amount: number
   notes: string | null
+  reference_type?: string | null
+  reference_id?: string | null
 }
 
 export interface PortalSummary {

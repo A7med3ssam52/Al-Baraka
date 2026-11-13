@@ -162,6 +162,13 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
   const customer = snapshot.customer!
   const installments = snapshot.installments
   const rows = snapshot.transactions
+  // آخر تاريخ تحصيل لكل قسط (من سطور الدفتر: reference_type='installment').
+  const collectionDateByInstallment = new Map<string, string>()
+  for (const row of rows) {
+    if (row.reference_type === 'installment' && row.reference_id) {
+      collectionDateByInstallment.set(row.reference_id, row.transaction_date)
+    }
+  }
   const summary = snapshot.summary
   const withBalance = rows.reduce<Array<(typeof rows)[number] & { balance: number }>>(
     (accumulator, row) => {
@@ -226,12 +233,13 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-[#e3dbc9]">
-              <table className="w-full min-w-[640px] text-xs sm:text-sm">
+              <table className="w-full min-w-[720px] text-xs sm:text-sm">
                 <thead className="bg-[#0b1f33] text-white">
                   <tr>
                     <th className="px-3 py-2 text-start font-bold">العقد</th>
                     <th className="px-3 py-2 text-start font-bold">القسط</th>
                     <th className="px-3 py-2 text-start font-bold">الاستحقاق</th>
+                    <th className="px-3 py-2 text-start font-bold">تاريخ التحصيل</th>
                     <th className="px-3 py-2 text-start font-bold">المبلغ</th>
                     <th className="px-3 py-2 text-start font-bold">المدفوع</th>
                     <th className="px-3 py-2 text-start font-bold">المتبقي</th>
@@ -244,6 +252,11 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
                       <td className="px-3 py-2 font-mono text-[11px]">{row.contract_number}</td>
                       <td className="px-3 py-2">{row.installment_no}</td>
                       <td className="px-3 py-2">{formatDate(row.due_date)}</td>
+                      <td className="px-3 py-2">
+                        {collectionDateByInstallment.get(row.id)
+                          ? formatDate(collectionDateByInstallment.get(row.id) as string)
+                          : '—'}
+                      </td>
                       <td className="px-3 py-2">{formatCurrency(row.amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(row.paid_amount)}</td>
                       <td className="px-3 py-2">{formatCurrency(row.remaining_amount)}</td>
@@ -253,7 +266,7 @@ function StatementPanel({ snapshot }: { snapshot: PortalSnapshot }) {
                 </tbody>
                 <tfoot className="bg-[#efe9dc] font-bold">
                   <tr>
-                    <td colSpan={3} className="px-3 py-2">الإجمالي</td>
+                    <td colSpan={4} className="px-3 py-2">الإجمالي</td>
                     <td className="px-3 py-2">{formatCurrency(totalAmount)}</td>
                     <td className="px-3 py-2">{formatCurrency(totalPaid)}</td>
                     <td className="px-3 py-2">{formatCurrency(totalRemaining)}</td>

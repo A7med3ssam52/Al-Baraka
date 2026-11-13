@@ -253,6 +253,7 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
   const canEdit = hasPermission('installments.reschedule')
   const [rows, setRows] = useState<InstallmentRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [collectionDates, setCollectionDates] = useState<Map<string, string>>(new Map())
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [localKey, setLocalKey] = useState(0)
   const [editOpen, setEditOpen] = useState(false)
@@ -260,9 +261,27 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
 
   useEffect(() => {
     let active = true
-    fetchInstallments({ customerId })
-      .then((mine) => {
+    Promise.all([
+      fetchInstallments({ customerId }),
+      supabase
+        .from('customer_transactions')
+        .select('reference_id, transaction_date')
+        .eq('customer_id', customerId)
+        .eq('reference_type', 'installment')
+        .order('transaction_date', { ascending: true })
+        .limit(1000),
+    ])
+      .then(([mine, ledger]) => {
         if (!active) return
+        const ledgerRows = (ledger.data ?? []) as unknown as Array<{
+          reference_id: string | null
+          transaction_date: string
+        }>
+        const map = new Map<string, string>()
+        for (const t of ledgerRows) {
+          if (t.reference_id) map.set(t.reference_id, t.transaction_date)
+        }
+        setCollectionDates(map)
         const existing = new Set(mine.map((row) => row.id))
         setSelected((current) => {
           const next = new Set([...current].filter((id) => existing.has(id)))
@@ -381,6 +400,7 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
               <TableHead>العقد</TableHead>
               <TableHead>القسط</TableHead>
               <TableHead>الاستحقاق</TableHead>
+              <TableHead>تاريخ التحصيل</TableHead>
               <TableHead>المبلغ</TableHead>
               <TableHead>المدفوع</TableHead>
               <TableHead>المتبقي</TableHead>
@@ -404,6 +424,9 @@ export function InstallmentsPanel({ customerId, reloadKey, onAdd, onChanged }: P
                   <TableCell className="font-mono text-xs">{r.contract_number}</TableCell>
                   <TableCell>{r.installment_no}</TableCell>
                   <TableCell>{formatDate(r.due_date)}</TableCell>
+                  <TableCell>
+                    {collectionDates.get(r.id) ? formatDate(collectionDates.get(r.id) as string) : '—'}
+                  </TableCell>
                   <TableCell>{formatCurrency(r.amount)}</TableCell>
                   <TableCell>{formatCurrency(r.paid_amount)}</TableCell>
                   <TableCell>{formatCurrency(r.remaining_amount)}</TableCell>
