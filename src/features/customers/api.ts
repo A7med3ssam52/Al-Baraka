@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 
 import { filterCustomersSmart } from './smart-search'
 import type {
@@ -55,6 +56,11 @@ export function translateCustomerError(error: unknown) {
   if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
+
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+
+  const common = mapTechnicalMessage(key)
+  if (common) return common
 
   if (key.toLowerCase().includes('duplicate key') && key.includes('national_id')) {
     return 'يوجد عميل آخر بنفس الرقم القومي.'

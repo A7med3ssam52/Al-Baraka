@@ -473,7 +473,13 @@ export function AddInstallmentDialog({ open, onOpenChange, onCreated, initialCus
       )
       onCreated()
     } catch (submitError) {
+      const raw = submitError instanceof Error ? submitError.message : String(submitError ?? '')
       setError(translateInstallmentError(submitError))
+      // المركبة ممكن تكون اتباعت/تأرشفت بين ما فتحت الشاشة وما حفظت — حدّث القائمة
+      // عشان تبان المركبات المتاحة فعلًا بدل ما المستخدم يفضل يضغط على نفسها.
+      if (/vehicle_(unavailable|not_available|missing)/i.test(raw)) {
+        void refreshVehicles().catch(() => undefined)
+      }
     } finally {
       setSubmitting(false)
     }

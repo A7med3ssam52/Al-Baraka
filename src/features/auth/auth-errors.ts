@@ -1,3 +1,5 @@
+import { mapTechnicalMessage } from '@/lib/error-messages'
+
 export function translateAuthError(message: string) {
   const trimmed = message.trim()
   if (/[\u0600-\u06FF]/.test(trimmed)) return trimmed
@@ -30,6 +32,9 @@ export function translateAuthError(message: string) {
   if (normalized.includes('invalid email')) {
     return 'صيغة البريد الإلكتروني غير صحيحة.'
   }
+
+  const common = mapTechnicalMessage(normalized)
+  if (common) return common
 
   return 'تعذر إكمال العملية. تحقق من الاتصال وحاول مرة أخرى.'
 }

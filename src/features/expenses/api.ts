@@ -1,4 +1,5 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 import { supabase } from '@/lib/supabase'
 import { tableOfflineAware } from '@/lib/offline'
 
@@ -16,6 +17,9 @@ export function translateExpenseError(error: unknown): string {
     invalid_amount: 'أدخل مبلغًا صحيحًا أكبر من صفر.',
   }
   if (map[key]) return map[key]
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+  const common = mapTechnicalMessage(key)
+  if (common) return common
   if (key.toLowerCase().includes('permission denied') || key === 'forbidden') {
     return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
   }

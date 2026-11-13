@@ -1,4 +1,5 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 import { supabase } from '@/lib/supabase'
 
 import type { CashTransactionRecord, CashTransactionType, CashboxRecord } from './types'
@@ -7,6 +8,9 @@ export function translateTreasuryError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? '')
   const key = message.trim()
   if (isFriendlyArabicMessage(key)) return key
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+  const common = mapTechnicalMessage(key)
+  if (common) return common
   if (key.toLowerCase().includes('permission denied')) {
     return 'لا تملك الصلاحية لتنفيذ هذه العملية.'
   }

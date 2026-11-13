@@ -1,5 +1,6 @@
 import { isUserRole, roleDescriptions, roleLabels, userRoles } from '@/features/auth/roles'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/types'
 
@@ -73,6 +74,11 @@ export function translateUserError(codeOrMessage: string) {
   const key = codeOrMessage.trim()
   if (isFriendlyArabicMessage(key)) return key
   if (errorMessages[key]) return errorMessages[key]
+
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+
+  const common = mapTechnicalMessage(key)
+  if (common) return common
 
   if (key.toLowerCase().includes('permission denied')) {
     return 'لا تملك الصلاحية لتنفيذ هذه العملية.'

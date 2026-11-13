@@ -1,4 +1,5 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 
 import type { PortalLookupInput, PortalSnapshot } from './types'
 import { rpcOfflineAware } from '@/lib/offline'
@@ -25,6 +26,9 @@ export function translatePortalError(error: unknown): string {
     rate_limited: 'تم تجاوز عدد المحاولات المسموح. انتظر قليلًا وحاول مرة أخرى.',
   }
   if (map[key]) return map[key]
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+  const common = mapTechnicalMessage(key)
+  if (common) return common
   const haystack = `${message} ${details} ${code}`.toLowerCase()
   if (haystack.includes('rate_limited')) return map.rate_limited
   if (haystack.includes('invalid_national_id')) return map.invalid_national_id

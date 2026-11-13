@@ -1,4 +1,5 @@
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 
 import type {
   CollectionsReport,
@@ -25,6 +26,11 @@ export function translateReportError(error: unknown) {
   if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
+
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+
+  const common = mapTechnicalMessage(key)
+  if (common) return common
 
   if (key.toLowerCase().includes('permission denied')) {
     return 'لا تملك الصلاحية لعرض هذا التقرير.'

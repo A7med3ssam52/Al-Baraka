@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { isFriendlyArabicMessage } from '@/lib/friendly-error'
+import { databaseErrorMessages, mapTechnicalMessage } from '@/lib/error-messages'
 
 import type {
   ProductBrandRecord,
@@ -35,6 +36,11 @@ export function translateProductError(error: unknown) {
   if (isFriendlyArabicMessage(key)) return key
 
   if (errorMessages[key]) return errorMessages[key]
+
+  if (databaseErrorMessages[key]) return databaseErrorMessages[key]
+
+  const common = mapTechnicalMessage(key)
+  if (common) return common
 
   if (key.toLowerCase().includes('duplicate key') && key.includes('product_brands_name')) {
     return 'يوجد ماركة أخرى بنفس الاسم.'
